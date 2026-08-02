@@ -32,24 +32,40 @@ INSTALL
 There is nothing to build, install or pip. It is plain Python + JavaScript.
 
 
-REQUIRED CUSTOM NODE PACKS
---------------------------
-Install these through ComfyUI-Manager. Without them the node still loads, but
-the pipeline that needs a missing pack raises an error naming it.
+REQUIRED CUSTOM NODE PACKS  (one-click zips, all verified)
+---------------------------------------------------------
+Unzip each into ComfyUI/custom_nodes/ and restart. Or install by name in
+ComfyUI-Manager, whichever you prefer.
 
-  comfyui-krea2edit                  Krea2EditGroundedEncode, Krea2EditModelPatch
-  ComfyUI-Krea2-Ostris-Edit          TextEncodeKrea2OstrisEdit
-  ComfyUI-KreaImageAspectPreserve    KreaImageAspectPreservePrepare,
-                                     KreaImageUniversalAspectPreserveRestore
-  ComfyUI-KreaAspectPreserveOutpaint KreaAspectPreservePrepare,
-                                     KreaAspectPreserveRestore
-  rgthree-comfy                      Image Comparer
-  comfyui-impact-pack + subpack      FaceDetailer, SAMLoader,
-                                     UltralyticsDetectorProvider  (optional stage)
-  comfyui-easy-use                   easy imageRemBg  (pipeline 1, off by default)
+  comfyui-krea2edit                P1 + P2 MODE A
+    https://github.com/lbouaraba/comfyui-krea2edit/archive/HEAD.zip
+  ComfyUI-Krea2-Ostris-Edit        P2 MODE B + P3
+    https://github.com/ostris/ComfyUI-Krea2-Ostris-Edit/archive/HEAD.zip
+  ComfyUI-KreaImageAspectPreserve  P2 restore
+    https://github.com/aitrepreneur/ComfyUI-KreaImageAspectPreserve/archive/HEAD.zip
+  ComfyUI-KreaAspectPreserveOutpaint  P3 green mask
+    https://github.com/aitrepreneur/ComfyUI-KreaAspectPreserveOutpaint/archive/HEAD.zip
+  rgthree-comfy                    Image Comparer
+    https://github.com/rgthree/rgthree-comfy/archive/HEAD.zip
+  ComfyUI-Impact-Pack              face detail (optional)
+    https://github.com/ltdrdata/ComfyUI-Impact-Pack/archive/HEAD.zip
+  ComfyUI-Impact-Subpack           face detail (optional)
+    https://github.com/ltdrdata/ComfyUI-Impact-Subpack/archive/HEAD.zip
+  ComfyUI-Easy-Use                 P1 background removal (optional)
+    https://github.com/yolain/ComfyUI-Easy-Use/archive/HEAD.zip
 
 FluxKontextMultiReferenceLatentMethod, ColorMatch, ImageSharpen, Flux2Scheduler
 and SamplerCustomAdvanced are ComfyUI core — nothing to install.
+
+The same links are inside the node itself, under "Required nodes & LoRAs".
+
+
+LORAS  (direct downloads, into ComfyUI/models/loras/Krea2/)
+-----------------------------------------------------------
+  INPAINTKREA-V1            P3 inpaint/outpaint, 229 MB
+    https://huggingface.co/Aitrepreneur/INPAINTKREA/resolve/main/INPAINTKREA-V1.safetensors
+  krea2_identity_edit_v1_2  P2 MODE A, required for that mode
+    https://huggingface.co/conradlocke/krea2-identity-edit/resolve/main/krea2_identity_edit_v1_2.safetensors
 
 
 REQUIRED MODELS
@@ -64,9 +80,8 @@ Pipeline 5 (upscale only):
   text_encoders/     Qwen/qwen_3_8b_fp8mixed.safetensors         (CLIP type: flux2)
   vae/               Flux 2 9b/full_encoder_small_decoder.safetensors
 
-LoRAs (pick per mode, they are NOT interchangeable):
-  MODE A  loras/Krea2/krea2_identity_edit_v1_2.safetensors
-  MODE B  ai-toolkit LoRAs only, e.g. Krea2/INPAINTKREA-V1.safetensors
+LoRAs: see the LORAS section above. They are NOT interchangeable between
+MODE A and MODE B.
 
 If your paths differ, just pick your own files in the node's Models panel at the
 top — nothing is hard-coded at runtime.
