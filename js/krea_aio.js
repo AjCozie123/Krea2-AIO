@@ -7,6 +7,9 @@
 const { app } = window.comfyAPI.app;
 const { api } = window.comfyAPI.api;
 
+const NODE_W = 760;
+const NODE_H = 690;   // fits the tallest pipeline (613px of content) with headroom
+
 const PIPES = [
   { idx: 1, n: "CLASSIC", sub: "2 refs", label: "1 - CLASSIC EDIT (two references)" },
   { idx: 2, n: "IDENTITY", sub: "edit", label: "2 - IDENTITY / OSTRIS EDIT" },
@@ -131,33 +134,37 @@ function buildSavePath(root, idx, modeB, outpaint, faceDetail, upscale) {
 }
 
 const CSS = `
+.kaio .foot{display:grid;grid-template-columns:1fr 1fr;gap:0 14px;margin-top:6px}
 .kaio{--bg:#191919;--panel:#212121;--line:#333;--txt:#dcdcdc;--dim:#8a8a8a;--acc:#4a90d9;
  --acc2:#2d5c8a;--ok:#5a9c5a;--ok2:#3a6b3a;--warn:#e0a33e;
  font-family:system-ui,-apple-system,"Segoe UI",sans-serif;font-size:12px;color:var(--txt);
- padding:10px;box-sizing:border-box;height:100%;overflow-y:auto;overflow-x:hidden;
+ padding:8px;box-sizing:border-box;height:100%;overflow-y:auto;overflow-x:hidden;
  display:flex;flex-direction:column}
 .kaio > .kaio-inner{display:flex;flex-direction:column;flex:1 1 auto;min-height:0}
-.kaio .sec.grow{flex:1 1 auto;min-height:96px;display:flex;flex-direction:column}
-.kaio .sec.grow textarea{flex:1 1 auto;min-height:74px}
+.kaio .cols{display:grid;grid-template-columns:1fr 1fr;gap:0 14px;align-items:start;
+ flex:1 1 auto;min-height:0}
+.kaio .col{min-width:0;display:flex;flex-direction:column}
+.kaio .sec.grow{flex:0 0 auto;display:flex;flex-direction:column}
+.kaio .sec.grow textarea{min-height:70px}
 .kaio::-webkit-scrollbar{width:8px}.kaio::-webkit-scrollbar-thumb{background:#3a3a3a;border-radius:4px}
 .kaio .hd{display:flex;align-items:center;gap:8px;margin-bottom:8px}
 .kaio .hd h1{font-size:12px;font-weight:600;letter-spacing:.08em;margin:0;flex:1;
  text-transform:uppercase;color:#fff}
 .kaio .tabs{display:grid;grid-template-columns:repeat(4,1fr);gap:5px;margin-bottom:5px}
-.kaio .tab{padding:8px 3px;border-radius:7px;background:var(--panel);border:1px solid var(--line);
+.kaio .tab{padding:6px 3px;border-radius:7px;background:var(--panel);border:1px solid var(--line);
  cursor:pointer;text-align:center;line-height:1.2;user-select:none;transition:.12s}
 .kaio .tab:hover{background:#2a2a2a;border-color:#454545}
 .kaio .tab.on{background:var(--acc2);border-color:var(--acc);color:#fff;box-shadow:0 0 0 1px var(--acc) inset}
 .kaio .tab b{display:block;font-size:14px}.kaio .tab i{display:block;font-size:9.5px;opacity:.8;font-style:normal}
-.kaio .upbar{width:100%;padding:7px;border-radius:7px;background:var(--panel);border:1px solid var(--line);
- color:var(--dim);cursor:pointer;font-size:11px;font-family:inherit;margin-bottom:8px;transition:.12s}
+.kaio .upbar{width:100%;padding:5px;border-radius:7px;background:var(--panel);border:1px solid var(--line);
+ color:var(--dim);cursor:pointer;font-size:11px;font-family:inherit;margin-bottom:6px;transition:.12s}
 .kaio .upbar:hover{background:#2a2a2a}
 .kaio .upbar.on{background:var(--acc2);border-color:var(--acc);color:#fff}
-.kaio .sec{margin-bottom:9px}
-.kaio label.cap{font-size:9.5px;text-transform:uppercase;letter-spacing:.07em;color:var(--dim);
- display:block;margin-bottom:3px}
+.kaio .sec{margin-bottom:6px}
+.kaio label.cap{font-size:9px;text-transform:uppercase;letter-spacing:.06em;color:var(--dim);
+ display:block;margin-bottom:2px}
 .kaio .seg{display:flex;gap:5px}
-.kaio .seg button{flex:1;padding:7px 6px;border-radius:6px;background:var(--panel);
+.kaio .seg button{flex:1;padding:5px 6px;border-radius:6px;background:var(--panel);
  border:1px solid var(--line);color:var(--dim);cursor:pointer;font-size:10.5px;font-family:inherit;line-height:1.3}
 .kaio .seg button:hover{background:#2a2a2a}
 .kaio .seg button.on{background:var(--ok2);border-color:var(--ok);color:#fff}
@@ -165,13 +172,13 @@ const CSS = `
 .kaio .seg button i{font-style:normal;opacity:.75;font-size:9.5px}
 .kaio input[type=text],.kaio input[type=number],.kaio select,.kaio textarea{
  background:#141414;border:1px solid var(--line);border-radius:5px;color:var(--txt);
- padding:6px 7px;font-size:12px;font-family:inherit;box-sizing:border-box;width:100%}
+ padding:4px 6px;font-size:11.5px;font-family:inherit;box-sizing:border-box;width:100%}
 .kaio input:focus,.kaio select:focus,.kaio textarea:focus{outline:none;border-color:var(--acc)}
 .kaio textarea{resize:vertical;min-height:74px;line-height:1.4}
-.kaio .grid{display:grid;grid-template-columns:repeat(3,1fr);gap:6px}
+.kaio .grid{display:grid;grid-template-columns:repeat(3,1fr);gap:5px}
 .kaio .fld{display:flex;flex-direction:column;min-width:0}
 .kaio .hide{display:none!important}
-.kaio details.card{background:#1d2530;border:1px solid #2c3d52;border-radius:7px;margin-bottom:9px;overflow:hidden}
+.kaio details.card{background:#1d2530;border:1px solid #2c3d52;border-radius:7px;margin-bottom:0;overflow:hidden}
 .kaio details.card>summary{cursor:pointer;padding:7px 10px;font-size:11px;color:#9dc4ea;
  list-style:none;display:flex;align-items:center;gap:7px;user-select:none}
 .kaio details.card>summary::-webkit-details-marker{display:none}
@@ -185,7 +192,7 @@ const CSS = `
 .kaio dt{font-size:10.5px;font-weight:600;color:#bcd8f2;margin-top:7px}
 .kaio dd{margin:2px 0 0;font-size:10.5px;line-height:1.5;color:#9aa8b6}
 .kaio details.plain{background:var(--panel);border:1px solid var(--line);border-radius:7px;
- margin-bottom:9px;overflow:hidden}
+ margin-bottom:0;overflow:hidden}
 .kaio details.plain>summary{cursor:pointer;padding:7px 10px;font-size:10px;color:var(--dim);
  list-style:none;text-transform:uppercase;letter-spacing:.06em;user-select:none}
 .kaio details.plain>summary::-webkit-details-marker{display:none}
@@ -195,7 +202,7 @@ const CSS = `
 .kaio details.models>summary:hover{background:#283028}
 .kaio details.plain .body{padding:4px 10px 9px}
 .kaio .slot{display:flex;gap:8px;background:var(--panel);border:1px solid var(--line);
- border-radius:7px;padding:7px;margin-bottom:6px}
+ border-radius:7px;padding:5px;margin-bottom:5px}
 .kaio .thumb{width:62px;height:62px;border-radius:5px;background:#111;border:1px solid var(--line);
  object-fit:cover;flex:none}
 .kaio .slotbody{flex:1;min-width:0;display:flex;flex-direction:column;gap:4px}
@@ -229,8 +236,8 @@ const CSS = `
 .kaio .mrow select{font-size:10.5px;padding:4px 5px}
 .kaio .chk{display:flex;align-items:center;gap:7px;font-size:11.5px;cursor:pointer}
 .kaio .chk input{width:auto;accent-color:var(--acc)}
-.kaio .status{font-size:10px;color:var(--dim);border-top:1px solid var(--line);padding-top:7px;
- margin-top:9px;line-height:1.55}
+.kaio .status{font-size:10px;color:var(--dim);border-top:1px solid var(--line);padding-top:5px;
+ margin-top:6px;line-height:1.45}
 .kaio .status .warn{color:var(--warn);margin-top:3px}
 .kaio .savepath{font-family:ui-monospace,Consolas,monospace;font-size:9.5px;color:#8fbf8f;
  margin-top:4px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
@@ -348,15 +355,23 @@ class AIO {
 
   // Natural height is the floor, not the law: if the node has been dragged taller we
   // keep that and let the prompt box absorb the slack.
+  // The node is a FIXED size and not resizable — see computeSize(). LiteGraph derives
+  // node height from widget height, so anything that reads the node's own size back
+  // into computeSize() compounds every frame and the node runs away down the canvas.
+  // A constant cannot do that. Content scrolls inside instead.
+  //
+  // This only pins the size back to the constant; it never reads the current size into
+  // the calculation, so it cannot become a feedback loop.
   applyHeight() {
-    // Never touch the size mid-drag; the user is in charge until they let go.
-    if (app.canvas && app.canvas.resizing_node === this.node) return;
-    const natural = this.estimateHeight();
-    this.node._kaioNatural = natural;
-    const wanted = Math.max(natural, this.node._kaioUserHeight || 0);
-    if (Math.abs(wanted - (this.node._kaioHeight || 0)) <= 4) return;
-    this.node._kaioHeight = wanted;
-    this.node.size[1] = wanted + 56;
+    const n = this.node;
+    // Learn the height LiteGraph settles on once (NODE_H plus its slot/title overhead)
+    // and pin to that. Never call n.computeSize() here — it recalculates width from the
+    // widgets and collapses the node to ~210px.
+    if (!this._pinnedH && Math.abs(n.size[1] - NODE_H) < 60) this._pinnedH = n.size[1];
+    const targetH = this._pinnedH || NODE_H;
+    if (n.size[0] === NODE_W && Math.abs(n.size[1] - targetH) <= 2) return;
+    n.size[0] = NODE_W;
+    n.size[1] = targetH;
     app.graph.setDirtyCanvas(true, true);
   }
 
@@ -393,13 +408,20 @@ class AIO {
     this.upBtn.onclick = () => { this.setW("upscale", !this.upscale()); this.sync(); };
     r.appendChild(this.upBtn);
 
+    // Two columns so the node reads as a square panel instead of a tall ribbon.
+    const body = el("div", "cols");
+    r.appendChild(body);
+    const L = el("div", "col");
+    const R = el("div", "col");
+    body.appendChild(L); body.appendChild(R);
+
     // Models first — this is where you point it at your checkpoints, so it should be
     // the most obvious thing after picking a pipeline.
     this.mBox = el("details", "plain models");
     this.mBox.open = true;
     this.mBox.appendChild(el("summary", null, "Models"));
     this.mBody = el("div", "body"); this.mBox.appendChild(this.mBody);
-    r.appendChild(this.mBox);
+    L.appendChild(this.mBox);
     this.modelRows = {};
     for (const [key, lbl, hint] of [
       ["unet_name", "Diffusion", "UNETLoader — the Krea 2 checkpoint"],
@@ -443,7 +465,8 @@ class AIO {
     this.noteSum = el("summary");
     this.noteBody = el("div", "body");
     this.note.appendChild(this.noteSum); this.note.appendChild(this.noteBody);
-    r.appendChild(this.note);
+    this.foot = el("div", "foot");   // appended near the end so it sits at the bottom
+    this.foot.appendChild(this.note);
 
     // MODE A/B
     this.modeSec = el("div", "sec");
@@ -456,7 +479,7 @@ class AIO {
     this.mA.onclick = () => { this.setW("edit_mode", "A - Native Krea2Edit (identity)"); this.sync(); };
     this.mB.onclick = () => { this.setW("edit_mode", "B - Ostris Edit (ai-toolkit)"); this.sync(); };
     ms.appendChild(this.mA); ms.appendChild(this.mB);
-    this.modeSec.appendChild(ms); r.appendChild(this.modeSec);
+    this.modeSec.appendChild(ms); L.appendChild(this.modeSec);
 
     // FILL A/B
     this.fillSec = el("div", "sec");
@@ -469,7 +492,7 @@ class AIO {
     this.fA.onclick = () => { this.setW("fill_mode", "A - INPAINT (you paint the mask)"); this.sync(); };
     this.fB.onclick = () => { this.setW("fill_mode", "B - OUTPAINT (auto green border)"); this.sync(); };
     fs.appendChild(this.fA); fs.appendChild(this.fB);
-    this.fillSec.appendChild(fs); r.appendChild(this.fillSec);
+    this.fillSec.appendChild(fs); L.appendChild(this.fillSec);
 
     // outpaint padding — only meaningful for pipeline 3 OUTPAINT
     this.padSec = el("div", "sec");
@@ -492,7 +515,7 @@ class AIO {
       pg.appendChild(f);
     }
     this.padSec.appendChild(pg);
-    r.appendChild(this.padSec);
+    R.appendChild(this.padSec);
 
     // input sockets — images live on real LoadImage nodes outside this one, which is
     // what keeps ComfyUI's MaskEditor working normally
@@ -507,7 +530,7 @@ class AIO {
     this.refWrap.appendChild(this.useRef);
     this.refWrap.appendChild(el("span", null, "Use second reference image"));
     this.imgSec.appendChild(this.refWrap);
-    r.appendChild(this.imgSec);
+    L.appendChild(this.imgSec);
 
     // prompt
     this.pSec = el("div", "sec grow");
@@ -531,7 +554,7 @@ class AIO {
     mk("megapixels", "Megapixels", 0.1, 0.1, 16);
     mk("grounding_px", "Grounding px", 64, 0, 4096);
     mk("ref_boost", "Ref boost", 0.01, 0, 1000);
-    this.numSec.appendChild(g); r.appendChild(this.numSec);
+    this.numSec.appendChild(g); R.appendChild(this.numSec);
 
     // combos
     this.comboSec = el("div", "sec");
@@ -544,14 +567,14 @@ class AIO {
       f.appendChild(s); this.combo[name] = { f, s }; cg.appendChild(f);
     };
     mkc("sampler", "Sampler"); mkc("scheduler", "Scheduler"); mkc("aspect_ratio", "Aspect");
-    this.comboSec.appendChild(cg); r.appendChild(this.comboSec);
+    this.comboSec.appendChild(cg); R.appendChild(this.comboSec);
 
     // restore
     this.rSec = el("div", "sec");
     this.rSec.appendChild(el("label", "cap", "Restore mode"));
     this.restore = el("select");
     this.restore.onchange = () => this.setW("restore_mode", this.restore.value);
-    this.rSec.appendChild(this.restore); r.appendChild(this.rSec);
+    this.rSec.appendChild(this.restore); R.appendChild(this.rSec);
 
     // loras
     this.lSec = el("div", "sec");
@@ -568,7 +591,7 @@ class AIO {
     this.pickList = el("div", "picklist");
     this.picker.appendChild(this.pickInput); this.picker.appendChild(this.pickList);
     this.lSec.appendChild(this.picker);
-    r.appendChild(this.lSec);
+    R.appendChild(this.lSec);
 
     // toggles
     this.faceSec = el("div", "sec");
@@ -576,7 +599,7 @@ class AIO {
     this.face = el("input"); this.face.type = "checkbox";
     this.face.onchange = () => { this.setW("face_detail", this.face.checked); this.sync(); };
     fl.appendChild(this.face); fl.appendChild(el("span", null, "Face detail pass"));
-    this.faceSec.appendChild(fl); r.appendChild(this.faceSec);
+    this.faceSec.appendChild(fl); R.appendChild(this.faceSec);
 
     this.rbSec = el("div", "sec");
     const rbl = el("label", "chk");
@@ -584,7 +607,7 @@ class AIO {
     this.rb.onchange = () => this.setW("remove_background", this.rb.checked);
     rbl.appendChild(this.rb);
     rbl.appendChild(el("span", null, "Remove background (RMBG-2.0)"));
-    this.rbSec.appendChild(rbl); r.appendChild(this.rbSec);
+    this.rbSec.appendChild(rbl); R.appendChild(this.rbSec);
 
 
 
@@ -599,7 +622,7 @@ class AIO {
     this.saveSec.appendChild(sr);
     this.savePreview = el("div", "savepath");
     this.saveSec.appendChild(this.savePreview);
-    r.appendChild(this.saveSec);
+    R.appendChild(this.saveSec);
 
     // required packs + LoRAs, as one-click direct downloads
     this.depBox = el("details", "plain");
@@ -639,8 +662,9 @@ class AIO {
       "ComfyUI/custom_nodes/ and restart. The links above cover everything else it needs."));
 
     this.depBox.appendChild(depBody);
-    r.appendChild(this.depBox);
+    this.foot.appendChild(this.depBox);
 
+    r.appendChild(this.foot);
     this.status = el("div", "status");
     r.appendChild(this.status);
   }
@@ -1019,12 +1043,12 @@ app.registerExtension({
       // Derive the height from CONTENT, never from self.size. LiteGraph computes the
       // node's size from its widgets, so reading self.size[1] back here creates a
       // feedback loop and the node grows without bound on every redraw.
-      widget.computeSize = function (width) {
-        const h = Math.max(self._kaioNatural || 620, self._kaioUserHeight || 0);
-        return [Math.max(10, (width || 520) - 26), h];
+      widget.computeSize = function () {
+        return [NODE_W - 26, NODE_H - 64];
       };
-      this.size[0] = Math.max(this.size[0] || 0, 480);
-      this.size[1] = 700;
+      this.resizable = false;   // no corner handle -> the growth loop cannot start
+      this.size[0] = NODE_W;
+      this.size[1] = NODE_H;
 
       setTimeout(() => {
         try { self._kaio = new AIO(self, c); }
@@ -1039,28 +1063,9 @@ app.registerExtension({
     nodeType.prototype.onConfigure = function (info) {
       const out = onConfigure ? onConfigure.apply(this, arguments) : undefined;
       const self = this;
-      // A saved size the user chose is a floor we should honour on reload.
-      if (Array.isArray(info?.size)) this._kaioUserHeight = Math.max(0, info.size[1] - 56);
+      // Size is fixed by the node; never restore one from the file.
+      this.size[0] = NODE_W; this.size[1] = NODE_H;
       setTimeout(() => { try { self._kaio?.sync(); } catch (e) { } }, 48);
-      return out;
-    };
-
-    // Record a manual height ONLY while the user is actually dragging this node's
-    // resize corner.
-    //
-    // onResize also fires for sizes we set ourselves. Feeding those back into
-    // computeSize() is an unbounded growth loop — LiteGraph derives node height from
-    // widget height, so height -> widget -> height compounds every frame and the node
-    // runs away down the canvas. canvas.resizing_node is only set during a real drag,
-    // which breaks the cycle.
-    const onResize = nodeType.prototype.onResize;
-    nodeType.prototype.onResize = function (size) {
-      const out = onResize ? onResize.apply(this, arguments) : undefined;
-      if (!app.canvas || app.canvas.resizing_node !== this) return out;
-      const natural = this._kaioNatural || 0;
-      const asked = ((size && size[1]) || this.size[1]) - 56;
-      // snapping back to (or below) the natural height hands control back to content
-      this._kaioUserHeight = asked > natural + 24 ? asked : 0;
       return out;
     };
 
