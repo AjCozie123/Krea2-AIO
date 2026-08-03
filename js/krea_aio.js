@@ -349,6 +349,8 @@ class AIO {
   // Natural height is the floor, not the law: if the node has been dragged taller we
   // keep that and let the prompt box absorb the slack.
   applyHeight() {
+    // Never touch the size mid-drag; the user is in charge until they let go.
+    if (app.canvas && app.canvas.resizing_node === this.node) return;
     const natural = this.estimateHeight();
     this.node._kaioNatural = natural;
     const wanted = Math.max(natural, this.node._kaioUserHeight || 0);
@@ -1043,15 +1045,22 @@ app.registerExtension({
       return out;
     };
 
-    // Dragging the node records a floor, so applyHeight() stops fighting the user.
-    // Below the natural height we clear it and let the content decide again.
+    // Record a manual height ONLY while the user is actually dragging this node's
+    // resize corner.
+    //
+    // onResize also fires for sizes we set ourselves. Feeding those back into
+    // computeSize() is an unbounded growth loop — LiteGraph derives node height from
+    // widget height, so height -> widget -> height compounds every frame and the node
+    // runs away down the canvas. canvas.resizing_node is only set during a real drag,
+    // which breaks the cycle.
     const onResize = nodeType.prototype.onResize;
     nodeType.prototype.onResize = function (size) {
       const out = onResize ? onResize.apply(this, arguments) : undefined;
+      if (!app.canvas || app.canvas.resizing_node !== this) return out;
       const natural = this._kaioNatural || 0;
       const asked = ((size && size[1]) || this.size[1]) - 56;
-      this._kaioUserHeight = asked > natural + 8 ? asked : 0;
-      this._kaioHeight = Math.max(natural, this._kaioUserHeight);
+      // snapping back to (or below) the natural height hands control back to content
+      this._kaioUserHeight = asked > natural + 24 ? asked : 0;
       return out;
     };
 
