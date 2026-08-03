@@ -134,7 +134,11 @@ const CSS = `
 .kaio{--bg:#191919;--panel:#212121;--line:#333;--txt:#dcdcdc;--dim:#8a8a8a;--acc:#4a90d9;
  --acc2:#2d5c8a;--ok:#5a9c5a;--ok2:#3a6b3a;--warn:#e0a33e;
  font-family:system-ui,-apple-system,"Segoe UI",sans-serif;font-size:12px;color:var(--txt);
- padding:10px;box-sizing:border-box;height:100%;overflow-y:auto;overflow-x:hidden}
+ padding:10px;box-sizing:border-box;height:100%;overflow-y:auto;overflow-x:hidden;
+ display:flex;flex-direction:column}
+.kaio > .kaio-inner{display:flex;flex-direction:column;flex:1 1 auto;min-height:0}
+.kaio .sec.grow{flex:1 1 auto;min-height:96px;display:flex;flex-direction:column}
+.kaio .sec.grow textarea{flex:1 1 auto;min-height:74px}
 .kaio::-webkit-scrollbar{width:8px}.kaio::-webkit-scrollbar-thumb{background:#3a3a3a;border-radius:4px}
 .kaio .hd{display:flex;align-items:center;gap:8px;margin-bottom:8px}
 .kaio .hd h1{font-size:12px;font-weight:600;letter-spacing:.08em;margin:0;flex:1;
@@ -289,7 +293,7 @@ class AIO {
     // All content lives in an auto-height inner wrapper. The root is the scroll box
     // (its height is driven by the node), so measuring the root tells us nothing —
     // the inner wrapper's height IS the content height.
-    this.inner = el("div");
+    this.inner = el("div", "kaio-inner");
     root.appendChild(this.inner);
 
     this.build();
@@ -342,11 +346,15 @@ class AIO {
     return Math.min(Math.max(Math.round(h), 260), 1100);
   }
 
+  // Natural height is the floor, not the law: if the node has been dragged taller we
+  // keep that and let the prompt box absorb the slack.
   applyHeight() {
-    const h = this.estimateHeight();
-    if (Math.abs(h - (this.node._kaioHeight || 0)) <= 4) return;
-    this.node._kaioHeight = h;
-    this.node.size[1] = h + 56;
+    const natural = this.estimateHeight();
+    this.node._kaioNatural = natural;
+    const wanted = Math.max(natural, this.node._kaioUserHeight || 0);
+    if (Math.abs(wanted - (this.node._kaioHeight || 0)) <= 4) return;
+    this.node._kaioHeight = wanted;
+    this.node.size[1] = wanted + 56;
     app.graph.setDirtyCanvas(true, true);
   }
 
@@ -500,7 +508,7 @@ class AIO {
     r.appendChild(this.imgSec);
 
     // prompt
-    this.pSec = el("div", "sec");
+    this.pSec = el("div", "sec grow");
     this.pSec.appendChild(el("label", "cap", "Prompt / instruction"));
     this.prompt = el("textarea");
     this.prompt.oninput = () => this.setW("prompt", this.prompt.value);
@@ -1010,7 +1018,7 @@ app.registerExtension({
       // node's size from its widgets, so reading self.size[1] back here creates a
       // feedback loop and the node grows without bound on every redraw.
       widget.computeSize = function (width) {
-        const h = self._kaioHeight || 620;
+        const h = Math.max(self._kaioNatural || 620, self._kaioUserHeight || 0);
         return [Math.max(10, (width || 520) - 26), h];
       };
       this.size[0] = Math.max(this.size[0] || 0, 480);
@@ -1029,7 +1037,21 @@ app.registerExtension({
     nodeType.prototype.onConfigure = function (info) {
       const out = onConfigure ? onConfigure.apply(this, arguments) : undefined;
       const self = this;
+      // A saved size the user chose is a floor we should honour on reload.
+      if (Array.isArray(info?.size)) this._kaioUserHeight = Math.max(0, info.size[1] - 56);
       setTimeout(() => { try { self._kaio?.sync(); } catch (e) { } }, 48);
+      return out;
+    };
+
+    // Dragging the node records a floor, so applyHeight() stops fighting the user.
+    // Below the natural height we clear it and let the content decide again.
+    const onResize = nodeType.prototype.onResize;
+    nodeType.prototype.onResize = function (size) {
+      const out = onResize ? onResize.apply(this, arguments) : undefined;
+      const natural = this._kaioNatural || 0;
+      const asked = ((size && size[1]) || this.size[1]) - 56;
+      this._kaioUserHeight = asked > natural + 8 ? asked : 0;
+      this._kaioHeight = Math.max(natural, this._kaioUserHeight);
       return out;
     };
 

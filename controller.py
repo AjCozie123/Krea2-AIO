@@ -37,11 +37,33 @@ RESTORE_MODES = [
     "auto local edit only",
 ]
 
-ASPECTS = [
-    "1:1 (Square)", "3:4 (Portrait Standard)", "4:3 (Landscape Standard)",
-    "9:16 (Portrait Tall)", "16:9 (Landscape Wide)", "2:3 (Portrait Photo)",
-    "3:2 (Landscape Photo)",
-]
+def _aspect_options():
+    """Take the aspect list from the real ResolutionSelector node.
+
+    These strings are dict KEYS in its ASPECT_RATIOS table, so a label that merely
+    looks plausible raises KeyError deep inside sampling instead of failing
+    validation. Never hand-write them.
+    """
+    fallback = [
+        "1:1 (Square)", "2:3 (Portrait Photo)", "3:2 (Photo)",
+        "3:4 (Portrait Standard)", "4:3 (Standard)",
+        "9:16 (Portrait Widescreen)", "16:9 (Widescreen)", "21:9 (Ultrawide)",
+    ]
+    try:
+        cls = engine.get_class("ResolutionSelector")
+        for i in cls.define_schema().inputs:
+            if getattr(i, "id", None) != "aspect_ratio":
+                continue
+            opts = [str(getattr(o, "value", o)) for o in (i.options or [])]
+            if opts:
+                return opts
+    except Exception as e:
+        log.warning("[KreaAIO] could not read ResolutionSelector aspects (%s); "
+                    "using the built-in list", e)
+    return fallback
+
+
+ASPECTS = _aspect_options()
 
 
 def _files(kind):

@@ -54,6 +54,38 @@ class PipelineInputError(RuntimeError):
     pass
 
 
+
+# Labels this node shipped before they were sourced from ResolutionSelector. Older
+# saved workflows still contain them, and they are dict KEYS in that node, so an
+# unmapped one raises KeyError mid-sample. Remap instead of making the user re-pick.
+LEGACY_ASPECTS = {
+    "16:9 (Landscape Wide)": "16:9 (Widescreen)",
+    "4:3 (Landscape Standard)": "4:3 (Standard)",
+    "9:16 (Portrait Tall)": "9:16 (Portrait Widescreen)",
+    "3:2 (Landscape Photo)": "3:2 (Photo)",
+}
+
+
+def resolve_aspect(value):
+    value = value or "3:4 (Portrait Standard)"
+    value = LEGACY_ASPECTS.get(value, value)
+    try:
+        cls = engine.get_class("ResolutionSelector")
+        for i in cls.define_schema().inputs:
+            if getattr(i, "id", None) == "aspect_ratio":
+                valid = [str(getattr(o, "value", o)) for o in (i.options or [])]
+                if valid and value not in valid:
+                    raise PipelineInputError(
+                        f"aspect_ratio {value!r} is not one of ResolutionSelector's "
+                        f"options: {', '.join(valid)}"
+                    )
+    except PipelineInputError:
+        raise
+    except Exception:
+        pass
+    return value
+
+
 def krea_base(ctx):
     model = models.unet(ctx.get("unet_name") or KREA_UNET)
     clip = models.clip(ctx.get("clip_name") or KREA_CLIP, KREA_CLIP_TYPE)
@@ -114,7 +146,7 @@ def text_to_image(ctx):
     negative = engine.call1("ConditioningZeroOut", conditioning=positive)
 
     width, height = engine.call("ResolutionSelector",
-                               aspect_ratio=ctx.get("aspect_ratio") or "3:4 (Portrait Standard)",
+                               aspect_ratio=resolve_aspect(ctx.get("aspect_ratio")),
                                megapixels=float(ctx.megapixels), multiple=8)[:2]
     latent = engine.call1("EmptyLatentImage", width=width, height=height, batch_size=1)
 
@@ -153,7 +185,7 @@ def classic_edit(ctx):
         ref_latent = engine.call1("VAEEncode", pixels=ref_img, vae=vae)
 
     width, height = engine.call("ResolutionSelector",
-                               aspect_ratio=ctx.get("aspect_ratio") or "3:4 (Portrait Standard)",
+                               aspect_ratio=resolve_aspect(ctx.get("aspect_ratio")),
                                megapixels=float(ctx.megapixels), multiple=8)[:2]
     target = engine.call1("EmptyHunyuanLatentVideo", width=width, height=height,
                           length=1, batch_size=1)
