@@ -21,9 +21,10 @@ const SHOW = {
   // megapixels are its resolution controls — they must be visible here.
   1: ["conn", "prompt", "seed", "steps", "cfg", "sampler", "scheduler",
       "aspect_ratio", "megapixels", "grounding_px", "ref_boost", "loras",
-      "face_detail", "remove_background"],
+      "face_detail", "remove_background", "use_reference"],
   2: ["conn", "prompt", "seed", "steps", "cfg", "sampler", "scheduler",
-      "grounding_px", "ref_boost", "restore_mode", "loras", "edit_mode"],
+      "grounding_px", "ref_boost", "restore_mode", "loras", "edit_mode",
+      "use_reference"],
   3: ["conn", "prompt", "seed", "steps", "cfg", "sampler", "scheduler", "loras", "fill_mode"],
   4: ["prompt", "seed", "steps", "cfg", "sampler", "scheduler", "aspect_ratio", "megapixels",
       "loras", "face_detail"],
@@ -329,6 +330,7 @@ class AIO {
     }
     h += 14 + 78 + 9;                          // prompt
     h += 14 + 32 + 20 + 9;                     // output folder
+    if (shown(this.refWrap)) h += 22;
     const nVis = Object.values(this.num).filter((x) => shown(x.f)).length;
     if (nVis) h += Math.ceil(nVis / 3) * 52 + 9;
     const cVis = Object.values(this.combo).filter((x) => shown(x.f)).length;
@@ -493,6 +495,13 @@ class AIO {
     this.imgSec.appendChild(el("label", "cap", "Inputs — wire LoadImage nodes here"));
     this.connList = el("div");
     this.imgSec.appendChild(this.connList);
+    this.refWrap = el("label", "chk");
+    this.refWrap.style.marginTop = "5px";
+    this.useRef = el("input"); this.useRef.type = "checkbox";
+    this.useRef.onchange = () => { this.setW("use_reference", this.useRef.checked); this.sync(); };
+    this.refWrap.appendChild(this.useRef);
+    this.refWrap.appendChild(el("span", null, "Use second reference image"));
+    this.imgSec.appendChild(this.refWrap);
     r.appendChild(this.imgSec);
 
     // prompt
@@ -666,15 +675,18 @@ class AIO {
       // mask is required only for INPAINT; outpaint builds its own
       const needed = req === "inpaint" ? (p === 3 && !outp) : req;
       if (name === "mask" && p === 3 && outp) continue;
-      const ok = this.connected(name);
+      let ok = this.connected(name);
+      const ignored = (name === "reference") && ok && this.gv("use_reference") === false;
       const row = el("div", "lrow");
       if (!ok) row.classList.add("off");
       const dot = el("span", null, ok ? "●" : "○");
       dot.style.cssText = `flex:none;font-size:11px;color:${ok ? "#5a9c5a" : (needed ? "#e0a33e" : "#666")}`;
       const label = el("span", "lname", name);
-      const hint = el("span", null, ok ? "connected" : (needed ? "REQUIRED" : "optional"));
+      const hint = el("span", null,
+        ignored ? "connected · IGNORED" : (ok ? "connected" : (needed ? "REQUIRED" : "optional")));
       hint.style.cssText = "flex:none;font-size:9.5px;opacity:.7";
       if (!ok && needed) hint.style.color = "#e0a33e";
+      if (ignored) { hint.style.color = "#e0a33e"; row.classList.add("off"); }
       row.appendChild(dot); row.appendChild(label); row.appendChild(hint);
       this.connList.appendChild(row);
     }
@@ -917,6 +929,8 @@ class AIO {
     this.fB.classList.toggle("on", outp);
 
     this.renderConnections();
+    this.useRef.checked = this.gv("use_reference") !== false;
+    this.refWrap.classList.toggle("hide", !shown.has("use_reference"));
     this.face.checked = !!this.gv("face_detail");
     this.rb.checked = !!this.gv("remove_background");
 

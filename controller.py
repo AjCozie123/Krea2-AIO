@@ -126,6 +126,9 @@ class KreaAIO(io.ComfyNode):
                 io.Image.Input("reference", optional=True,
                                tooltip="Second reference (subject / donor). Training order "
                                        "is scene first, subject second."),
+                io.Boolean.Input("use_reference", default=True,
+                                 tooltip="Ignore the reference socket without unwiring it. "
+                                         "Off = single-reference edit."),
                 io.Boolean.Input("remove_background", default=False,
                                  tooltip="Pipeline 1 only: RMBG-2.0 on source and reference. "
                                          "Leave off for scene-preserving edits like clothing."),
@@ -198,7 +201,7 @@ class KreaAIO(io.ComfyNode):
 
     @classmethod
     def execute(cls, pipeline, upscale, edit_mode, fill_mode, face_detail,
-                remove_background, prompt,
+                use_reference, remove_background, prompt,
                 seed, steps, cfg, sampler, scheduler, aspect_ratio, megapixels,
                 grounding_px, ref_boost, restore_mode, save_root, loras_json,
                 unet_name, clip_name, vae_name,
@@ -221,7 +224,9 @@ class KreaAIO(io.ComfyNode):
             aspect_ratio=aspect_ratio, megapixels=megapixels,
             grounding_px=grounding_px, ref_boost=ref_boost,
             restore_mode=restore_mode, loras=loras,
-            image=image, mask=mask, reference=reference,
+            image=image, mask=mask,
+            # honour the toggle rather than making the user unwire the LoadImage
+            reference=(reference if use_reference else None),
             remove_background=remove_background,
             upscale_megapixels=megapixels,
             mode_b=edit_mode.startswith("B"),
