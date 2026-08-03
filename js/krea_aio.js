@@ -38,7 +38,7 @@ const UPSCALE_EXTRA = ["megapixels"];
 // outpaint generates its own mask, and pipelines 1/2/4 ignore it entirely.
 const SOCKETS = {
   1: [["image", true], ["reference", false]],
-  2: [["image", true], ["reference", false]],
+  2: [["image", true], ["mask", false], ["reference", false]],
   3: [["image", true], ["mask", "inpaint"]],
   4: [],
 };
@@ -67,7 +67,7 @@ const NOTES = {
   2: ["IDENTITY / OSTRIS EDIT - pick MODE, then match the LoRA", [
     ["MODE A - Native Krea2Edit", "Best likeness, and the mode that preserves the untouched area exactly. Krea2EditGroundedEncode + Krea2EditModelPatch, then a native-resolution restore. LoRA must be krea2_identity_edit_v1_2."],
     ["MODE B - Ostris Edit", "TextEncodeKrea2OstrisEdit + FluxKontextMultiReferenceLatentMethod('index_timestep_zero'). That method is REQUIRED - the encoder alone has its reference latents ignored, silently. LoRAs: ai-toolkit only (INPAINTKREA-V1, Anime to Real, zoom_krea2edit)."],
-    ["MODE B is not a general editor", "Tested: a maskless clothing instruction under MODE B with INPAINTKREA-V1 returned the source essentially unchanged. It ran clean and errored nothing. Match MODE B to the task its ai-toolkit LoRA was trained for."],
+    ["INPAINTKREA-V1 kills a maskless edit", "Measured: MODE B + INPAINTKREA-V1 on a maskless clothing instruction changed 0.0% of the frame; the same run with NO LoRA changed 51.9%. That LoRA only replaces green regions, so with no green present it correctly does nothing - and suppresses the edit. Use it in pipeline 3, not here."],
     ["LoRA must match the encoder", "A MODE A LoRA under MODE B (or the reverse) degrades quietly - no error, just a worse image. Mismatches are flagged amber in the LoRA list."],
     ["Clothing changes - use this", "Verified: MODE A, maskless, restore_mode 'smart'. Measured 11.3% of frame changed. Do NOT use a full-body mask in pipeline 3; those fail and leave green limbs."],
     ["restore_mode", "'smart' tries the manual mask, then local auto-detected edits, then the full frame. Everything outside the edit comes back at native resolution."],
@@ -348,7 +348,7 @@ class AIO {
     h += 26;                                   // header
     h += 52 + 5;                               // pipeline tabs
     h += 33 + 8;                               // upscale bar
-    const fluxRows = (this.fluxWrap && !this.fluxWrap.classList.contains("hide")) ? 4 * 30 + 18 : 0;
+    const fluxRows = (this.fluxWrap && !this.fluxWrap.classList.contains("hide")) ? 5 * 30 + 18 : 0;
     h += (this.mBox.open ? 30 + 3 * 30 + fluxRows : 32) + 9;   // models (top)
     h += 30 + 6;                               // notes button
     if (shown(this.modeSec)) h += 14 + 44 + 9;
@@ -484,6 +484,14 @@ class AIO {
     this.upSteps.oninput = () => this.setW("upscale_steps", Number(this.upSteps.value || 2));
     usRow.appendChild(this.upSteps);
     this.fluxWrap.appendChild(usRow);
+    const umRow = el("div", "mrow");
+    umRow.appendChild(el("span", null, "Megapix"));
+    this.upMP = el("input"); this.upMP.type = "number";
+    this.upMP.min = 0.5; this.upMP.max = 16; this.upMP.step = 0.5;
+    this.upMP.title = "ABSOLUTE target. The reference workflow uses 4.0; lower it on 8 GB.";
+    this.upMP.oninput = () => this.setW("upscale_megapixels", Number(this.upMP.value || 4));
+    umRow.appendChild(this.upMP);
+    this.fluxWrap.appendChild(umRow);
     this.mBody.appendChild(this.fluxWrap);
 
     // Reference panels open as an OVERLAY, never inline: inside a fixed-height node an
@@ -736,6 +744,10 @@ class AIO {
       this.connList.appendChild(el("div", "muted",
         "Paint the mask on the LoadImage node (right-click → Open in MaskEditor). " +
         "It is the alpha channel — do not paint green yourself."));
+    } else if (p === 2) {
+      this.connList.appendChild(el("div", "muted",
+        "mask is optional here: it becomes edit_mask on the native-res restore, so only " +
+        "what you painted is composited back. Leave it unwired for a normal edit."));
     }
   }
 
@@ -979,6 +991,7 @@ class AIO {
     // Flux loaders appear with the upscale; outpaint padding with pipeline 3 OUTPAINT.
     this.fluxWrap.classList.toggle("hide", !up);
     this.upSteps.value = this.gv("upscale_steps") ?? 2;
+    this.upMP.value = this.gv("upscale_megapixels") ?? 4;
     const showPad = (p === 3) && outp;
     this.padSec.classList.toggle("hide", !showPad);
     for (const k of Object.keys(this.pad)) this.pad[k].i.value = this.gv(k) ?? 0;

@@ -151,9 +151,10 @@ class KreaAIO(io.ComfyNode):
                 io.Boolean.Input("use_reference", default=True,
                                  tooltip="Ignore the reference socket without unwiring it. "
                                          "Off = single-reference edit."),
-                io.Boolean.Input("remove_background", default=False,
-                                 tooltip="Pipeline 1 only: RMBG-2.0 on source and reference. "
-                                         "Leave off for scene-preserving edits like clothing."),
+                io.Boolean.Input("remove_background", default=True,
+                                 tooltip="Pipeline 1 only: RMBG-2.0 on source and reference, "
+                                         "as the reference workflow does. Turn OFF for "
+                                         "scene-preserving edits such as a clothing change."),
 
                 io.String.Input("prompt", multiline=True, default=""),
 
@@ -199,15 +200,20 @@ class KreaAIO(io.ComfyNode):
                                tooltip="Upscale only: Flux 2 VAE."),
                 io.Int.Input("upscale_steps", default=2, min=1, max=50,
                              tooltip="Upscale only."),
+                io.Float.Input("upscale_megapixels", default=4.0, min=0.5, max=16.0, step=0.5,
+                               tooltip="Upscale only: ABSOLUTE megapixel target, as the "
+                                       "reference workflow uses (4.0). Lower it on 8 GB."),
 
                 io.Int.Input("outpaint_bottom", default=256, min=0, max=2048, step=8),
                 io.Int.Input("outpaint_top", default=0, min=0, max=2048, step=8),
                 io.Int.Input("outpaint_left", default=0, min=0, max=2048, step=8),
                 io.Int.Input("outpaint_right", default=0, min=0, max=2048, step=8),
-                io.Int.Input("outpaint_feather", default=8, min=0, max=128, step=1,
-                             tooltip="Softness of the pad mask edge. High values leave "
-                                     "partially-green pixels in the transition band, which "
-                                     "show up as a green seam after the restore."),
+                io.Int.Input("outpaint_feather", default=0, min=0, max=128, step=1,
+                             tooltip="Softness of the pad mask edge. The reference workflow "
+                                     "uses 24, but that leaves partially-green pixels in the "
+                                     "transition band which the restore blends back as a "
+                                     "green seam — measured 3559 green pixels at 24 vs 0 at "
+                                     "0. Left at 0 deliberately."),
 
             ],
             outputs=[
@@ -228,6 +234,7 @@ class KreaAIO(io.ComfyNode):
                 grounding_px, ref_boost, restore_mode, save_root, loras_json,
                 unet_name, clip_name, vae_name,
                 flux_unet_name, flux_clip_name, flux_vae_name, upscale_steps,
+                upscale_megapixels,
                 outpaint_bottom, outpaint_top, outpaint_left, outpaint_right,
                 outpaint_feather,
                 image=None, mask=None, reference=None) -> io.NodeOutput:
@@ -250,13 +257,13 @@ class KreaAIO(io.ComfyNode):
             # honour the toggle rather than making the user unwire the LoadImage
             reference=(reference if use_reference else None),
             remove_background=remove_background,
-            upscale_megapixels=megapixels,
             mode_b=edit_mode.startswith("B"),
             outpaint=fill_mode.startswith("B"),
             face_detail=face_detail,
             unet_name=unet_name, clip_name=clip_name, vae_name=vae_name,
             flux_unet_name=flux_unet_name, flux_clip_name=flux_clip_name,
             flux_vae_name=flux_vae_name, upscale_steps=upscale_steps,
+            upscale_megapixels=upscale_megapixels,
             pad_bottom=outpaint_bottom, pad_top=outpaint_top,
             pad_left=outpaint_left, pad_right=outpaint_right,
             pad_feather=outpaint_feather,
