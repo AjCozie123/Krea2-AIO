@@ -582,8 +582,10 @@ class AIO {
     // How to get this node onto another machine. The LAN URL only works for people
     // on the same network; for anyone else, send them the zip.
     depBody.appendChild(el("div", "muted", "INSTALL THIS NODE ELSEWHERE"));
-    const host = (location.hostname && location.hostname !== "localhost")
-      ? location.hostname : "YOUR-LAN-IP";
+    // A loopback host is useless to anyone else, so show a placeholder instead of
+    // handing out a URL that only resolves on this machine.
+    const LOOPBACK = ["localhost", "127.0.0.1", "::1", ""];
+    const host = LOOPBACK.includes(location.hostname) ? "YOUR-LAN-IP" : location.hostname;
     const cmd = `git clone http://${host}:8199/Krea2_AIO_AJ.git KreaUltraController`;
     const cmdRow = el("div", "cmdrow");
     const code = el("code", "cmd", cmd);
