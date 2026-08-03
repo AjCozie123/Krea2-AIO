@@ -17,8 +17,11 @@ const PIPES = [
 // Which controls actually drive something per pipeline. Hiding the rest keeps dials
 // that do nothing off the screen.
 const SHOW = {
+  // Pipeline 1 samples into a ResolutionSelector-sized latent, so aspect_ratio and
+  // megapixels are its resolution controls — they must be visible here.
   1: ["conn", "prompt", "seed", "steps", "cfg", "sampler", "scheduler",
-      "megapixels", "grounding_px", "ref_boost", "loras", "face_detail", "remove_background"],
+      "aspect_ratio", "megapixels", "grounding_px", "ref_boost", "loras",
+      "face_detail", "remove_background"],
   2: ["conn", "prompt", "seed", "steps", "cfg", "sampler", "scheduler",
       "grounding_px", "ref_boost", "restore_mode", "loras", "edit_mode"],
   3: ["conn", "prompt", "seed", "steps", "cfg", "sampler", "scheduler", "loras", "fill_mode"],
@@ -110,6 +113,22 @@ const LORAS = [
    "https://huggingface.co/conradlocke/krea2-identity-edit/resolve/main/krea2_identity_edit_v1_2.safetensors"],
 ];
 
+
+// Mirrors build_save_path() in controller.py so the node can show where the result
+// will land before you run it. The backend value is authoritative; this is a preview.
+const SAVE_FOLDERS = { 1: ["Classic", "CE"], 2: ["Identity", "ID"],
+                       3: ["Inpaint", "IN"], 4: ["TextToImage", "T2I"] };
+
+function buildSavePath(root, idx, modeB, outpaint, faceDetail, upscale) {
+  root = (root || "Krea2AJ").trim().replace(/^[\/]+|[\/]+$/g, "") || "Krea2AJ";
+  let [folder, prefix] = SAVE_FOLDERS[idx] || ["Misc", "OUT"];
+  if (idx === 2) [folder, prefix] = modeB ? ["Identity/OstrisB", "OSB"] : ["Identity/ModeA", "IDA"];
+  else if (idx === 3) [folder, prefix] = outpaint ? ["Outpaint", "OUT"] : ["Inpaint", "IN"];
+  if (faceDetail) prefix += "-fd";
+  if (upscale) { folder += "/Upscaled"; prefix += "-4K"; }
+  return `${root}/${folder}/${prefix}`;
+}
+
 const CSS = `
 .kaio{--bg:#191919;--panel:#212121;--line:#333;--txt:#dcdcdc;--dim:#8a8a8a;--acc:#4a90d9;
  --acc2:#2d5c8a;--ok:#5a9c5a;--ok2:#3a6b3a;--warn:#e0a33e;
@@ -184,9 +203,10 @@ const CSS = `
  border-radius:5px;padding:4px 7px;margin-bottom:4px}
 .kaio .lrow.off{opacity:.42}
 .kaio .lrow input[type=checkbox]{width:auto;flex:none;margin:0;accent-color:var(--acc)}
-.kaio .lname{flex:1;font-size:10.5px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.kaio .lname{flex:1 1 auto;min-width:0;font-size:10.5px;overflow:hidden;
+ text-overflow:ellipsis;white-space:nowrap}
 .kaio .lname.bad{color:var(--warn)}
-.kaio .lstr{width:58px;flex:none;padding:3px 5px;font-size:10.5px}
+.kaio .lrow input.lstr{width:58px;flex:none;padding:3px 5px;font-size:10.5px}
 .kaio .lx{flex:none;width:20px;height:20px;border-radius:4px;background:#2a2a2a;border:1px solid var(--line);
  color:var(--dim);cursor:pointer;font-size:12px;line-height:1;padding:0}
 .kaio .lx:hover{background:#5a2a2a;color:#fff;border-color:#8a3a3a}
@@ -207,6 +227,10 @@ const CSS = `
 .kaio .status{font-size:10px;color:var(--dim);border-top:1px solid var(--line);padding-top:7px;
  margin-top:9px;line-height:1.55}
 .kaio .status .warn{color:var(--warn);margin-top:3px}
+.kaio .savepath{font-family:ui-monospace,Consolas,monospace;font-size:9.5px;color:#8fbf8f;
+ margin-top:4px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.kaio .savepath.unwired{color:var(--warn)}
+.kaio .savepath.unwired::before{content:"! not wired - "}
 .kaio .cmdrow{display:flex;gap:6px;align-items:center;margin:3px 0}
 .kaio code.cmd{flex:1;background:#141414;border:1px solid var(--line);border-radius:4px;
  padding:5px 7px;font-family:ui-monospace,Consolas,monospace;font-size:9.5px;color:#c8d8c8;
@@ -304,6 +328,7 @@ class AIO {
       h += 9;
     }
     h += 14 + 78 + 9;                          // prompt
+    h += 14 + 32 + 20 + 9;                     // output folder
     const nVis = Object.values(this.num).filter((x) => shown(x.f)).length;
     if (nVis) h += Math.ceil(nVis / 3) * 52 + 9;
     const cVis = Object.values(this.combo).filter((x) => shown(x.f)).length;
@@ -548,6 +573,19 @@ class AIO {
     this.rbSec.appendChild(rbl); r.appendChild(this.rbSec);
 
 
+
+    // output folder — the node derives the subfolder from the active pipeline
+    this.saveSec = el("div", "sec");
+    this.saveSec.appendChild(el("label", "cap", "Output folder"));
+    const sr = el("div", "cmdrow");
+    this.saveRoot = el("input"); this.saveRoot.type = "text";
+    this.saveRoot.placeholder = "Krea2AJ";
+    this.saveRoot.oninput = () => { this.setW("save_root", this.saveRoot.value); this.refreshSavePath(); };
+    sr.appendChild(this.saveRoot);
+    this.saveSec.appendChild(sr);
+    this.savePreview = el("div", "savepath");
+    this.saveSec.appendChild(this.savePreview);
+    r.appendChild(this.saveSec);
 
     // required packs + LoRAs, as one-click direct downloads
     this.depBox = el("details", "plain");
@@ -890,6 +928,8 @@ class AIO {
     for (const k of Object.keys(this.pad)) this.pad[k].i.value = this.gv(k) ?? 0;
     if (up && !this.mBox.open) this.mBox.open = true;
 
+    this.saveRoot.value = this.gv("save_root") ?? "Krea2AJ";
+    this.refreshSavePath();
     this.renderLoras();
     this.updateStatus();
     this.remeasure();
@@ -897,6 +937,21 @@ class AIO {
 
   remeasure() {
     this.applyHeight();
+  }
+
+  refreshSavePath() {
+    const p = this.pipe();
+    const path = buildSavePath(
+      this.gv("save_root"), p,
+      String(this.gv("edit_mode") || "").startsWith("B"),
+      String(this.gv("fill_mode") || "").startsWith("B"),
+      !!this.gv("face_detail"), this.upscale());
+    this.savePreview.textContent = "output/" + path + "_00001_.png";
+    const wired = (this.node.outputs || []).some(
+      (o) => o.name === "save_path" && (o.links || []).length);
+    this.savePreview.classList.toggle("unwired", !wired);
+    this.savePreview.title = wired ? "save_path is driving your SaveImage node"
+      : "Connect the save_path output to SaveImage.filename_prefix for this to take effect";
   }
 
   updateStatus() {

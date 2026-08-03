@@ -65,6 +65,34 @@ def _images():
             return []
 
 
+# Per-pipeline output folders, so switching pipeline re-files the results without
+# anyone editing SaveImage. Wire save_path -> SaveImage.filename_prefix.
+SAVE_FOLDERS = {
+    1: ("Classic", "CE"),
+    2: ("Identity", "ID"),
+    3: ("Inpaint", "IN"),
+    4: ("TextToImage", "T2I"),
+}
+
+
+def build_save_path(root, idx, mode_b, outpaint, face_detail, upscale):
+    root = (root or "Krea2AJ").strip().strip("/\\") or "Krea2AJ"
+    folder, prefix = SAVE_FOLDERS.get(idx, ("Misc", "OUT"))
+
+    # the sub-modes deserve their own folders too
+    if idx == 2:
+        folder, prefix = ("Identity/OstrisB", "OSB") if mode_b else ("Identity/ModeA", "IDA")
+    elif idx == 3:
+        folder, prefix = ("Outpaint", "OUT") if outpaint else ("Inpaint", "IN")
+
+    if face_detail:
+        prefix += "-fd"
+    if upscale:
+        folder += "/Upscaled"
+        prefix += "-4K"
+    return f"{root}/{folder}/{prefix}"
+
+
 class KreaAIO(io.ComfyNode):
     @classmethod
     def define_schema(cls):
@@ -120,6 +148,10 @@ class KreaAIO(io.ComfyNode):
                 io.Float.Input("ref_boost", default=1.0, min=0.0, max=1000.0, step=0.01),
                 io.Combo.Input("restore_mode", options=RESTORE_MODES, default=RESTORE_MODES[0]),
 
+                io.String.Input("save_root", default="Krea2AJ",
+                                tooltip="Top folder under ComfyUI/output. Each pipeline "
+                                        "files itself into its own subfolder automatically."),
+
                 io.String.Input("loras_json", default="[]",
                                 tooltip="LoRA stack, managed by the node UI."),
 
@@ -158,6 +190,9 @@ class KreaAIO(io.ComfyNode):
                 # The original, at native resolution, so an Image Comparer can do
                 # before/after without a second LoadImage.
                 io.Image.Output(display_name="source"),
+                # Wire this into SaveImage.filename_prefix and every pipeline files
+                # itself into its own folder with no typing.
+                io.String.Output(display_name="save_path"),
             ],
         )
 
@@ -165,7 +200,7 @@ class KreaAIO(io.ComfyNode):
     def execute(cls, pipeline, upscale, edit_mode, fill_mode, face_detail,
                 remove_background, prompt,
                 seed, steps, cfg, sampler, scheduler, aspect_ratio, megapixels,
-                grounding_px, ref_boost, restore_mode, loras_json,
+                grounding_px, ref_boost, restore_mode, save_root, loras_json,
                 unet_name, clip_name, vae_name,
                 flux_unet_name, flux_clip_name, flux_vae_name, upscale_steps,
                 outpaint_bottom, outpaint_top, outpaint_left, outpaint_right,
@@ -223,5 +258,8 @@ class KreaAIO(io.ComfyNode):
 
         # Preview only. Saving is the job of a SaveImage node wired to the image
         # output, which is where the user picks the folder and prefix.
+        save_path = build_save_path(save_root, idx, ctx.mode_b, ctx.outpaint,
+                                    face_detail, upscale)
+
         ui = engine.preview_images(image)
-        return io.NodeOutput(image, source, ui=ui)
+        return io.NodeOutput(image, source, save_path, ui=ui)
