@@ -283,10 +283,11 @@ class KreaAIO(io.ComfyNode):
             log.error("[KreaAIO] pipeline %s failed:\n%s", idx, traceback.format_exc())
             raise RuntimeError(f"KREA2 AIO pipeline {idx} failed: {e}") from e
 
-        # Preview only. Saving is the job of a SaveImage node wired to the image
-        # output, which is where the user picks the folder and prefix.
         save_path = build_save_path(save_root, idx, ctx.mode_b, ctx.outpaint,
                                     face_detail, upscale)
 
-        ui = engine.preview_images(image)
-        return io.NodeOutput(image, source, save_path, ui=ui)
+        # Deliberately no ui images. Attaching a preview makes ComfyUI lay an image out
+        # inside this node and refit the node around it, which squashes the embedded UI
+        # to a narrow strip mid-run. Results are viewed through the SaveImage / Image
+        # Comparer nodes wired to the outputs.
+        return io.NodeOutput(image, source, save_path)

@@ -8,7 +8,7 @@ const { app } = window.comfyAPI.app;
 const { api } = window.comfyAPI.api;
 
 const NODE_W = 760;
-const NODE_H = 690;   // fits the tallest pipeline (613px of content) with headroom
+const NODE_H = 800;   // audited: worst case 708px content (P2 + upscale + MODE B) fits with headroom
 
 const PIPES = [
   { idx: 1, n: "CLASSIC", sub: "2 refs", label: "1 - CLASSIC EDIT (two references)" },
@@ -135,15 +135,32 @@ function buildSavePath(root, idx, modeB, outpaint, faceDetail, upscale) {
 
 const CSS = `
 .kaio .foot{display:grid;grid-template-columns:1fr 1fr;gap:0 14px;margin-top:6px}
-.kaio{--bg:#191919;--panel:#212121;--line:#333;--txt:#dcdcdc;--dim:#8a8a8a;--acc:#4a90d9;
+.kaio .refbtn{width:100%;text-align:left;padding:6px 9px;border-radius:7px;cursor:pointer;
+ font-family:inherit;font-size:10.5px;background:#1d2530;border:1px solid #2c3d52;color:#9dc4ea;
+ display:flex;align-items:center;gap:7px}
+.kaio .refbtn:hover{background:#212b38}
+.kaio .refbtn.plainbtn{background:var(--panel);border-color:var(--line);color:var(--dim);
+ text-transform:uppercase;letter-spacing:.06em;font-size:9.5px}
+.kaio .refbtn.plainbtn:hover{background:#2a2a2a;color:var(--txt)}
+.kaio .refbtn i{font-style:italic;font-weight:700;display:inline-flex;align-items:center;
+ justify-content:center;width:15px;height:15px;border-radius:50%;background:#2c3d52;flex:none}
+.kaio .ovl{position:absolute;inset:0;background:rgba(22,22,22,.985);z-index:30;
+ display:flex;flex-direction:column;border-radius:6px}
+.kaio .ovl.hide{display:none!important}
+.kaio .ovlhd{display:flex;align-items:center;gap:8px;padding:8px 10px;border-bottom:1px solid var(--line)}
+.kaio .ovlhd b{flex:1;font-size:11px;color:#cfe3f7;font-weight:600}
+.kaio .ovlhd button{padding:3px 10px;border-radius:5px;background:#2a2a2a;border:1px solid var(--line);
+ color:var(--txt);cursor:pointer;font-size:11px;font-family:inherit}
+.kaio .ovlhd button:hover{background:#3a3a3a}
+.kaio .ovlbody{flex:1;overflow-y:auto;padding:6px 10px 10px}
+.kaio{position:relative;--bg:#191919;--panel:#212121;--line:#333;--txt:#dcdcdc;--dim:#8a8a8a;--acc:#4a90d9;
  --acc2:#2d5c8a;--ok:#5a9c5a;--ok2:#3a6b3a;--warn:#e0a33e;
  font-family:system-ui,-apple-system,"Segoe UI",sans-serif;font-size:12px;color:var(--txt);
  padding:8px;box-sizing:border-box;height:100%;overflow-y:auto;overflow-x:hidden;
- display:flex;flex-direction:column}
-.kaio > .kaio-inner{display:flex;flex-direction:column;flex:1 1 auto;min-height:0}
-.kaio .cols{display:grid;grid-template-columns:1fr 1fr;gap:0 14px;align-items:start;
- flex:1 1 auto;min-height:0}
-.kaio .col{min-width:0;display:flex;flex-direction:column}
+}
+.kaio > .kaio-inner{display:block}
+.kaio .cols{display:grid;grid-template-columns:1fr 1fr;gap:0 14px;align-items:start}
+.kaio .col{min-width:0}
 .kaio .sec.grow{flex:0 0 auto;display:flex;flex-direction:column}
 .kaio .sec.grow textarea{min-height:70px}
 .kaio::-webkit-scrollbar{width:8px}.kaio::-webkit-scrollbar-thumb{background:#3a3a3a;border-radius:4px}
@@ -303,13 +320,21 @@ class AIO {
     this.inner = el("div", "kaio-inner");
     root.appendChild(this.inner);
 
+    this.ovl = el("div", "ovl hide");
+    const oh = el("div", "ovlhd");
+    this.ovlTitle = el("b");
+    const close = el("button", null, "Close");
+    close.onclick = () => this.ovl.classList.add("hide");
+    oh.appendChild(this.ovlTitle); oh.appendChild(close);
+    this.ovlBody = el("div", "ovlbody");
+    this.ovl.appendChild(oh); this.ovl.appendChild(this.ovlBody);
+    root.appendChild(this.ovl);
+
     this.build();
     this.sync();
 
     // Re-fit when a <details> section is toggled, since that changes the height a lot.
-    for (const d of [this.note, this.mBox, this.depBox]) {
-      d.addEventListener("toggle", () => this.applyHeight());
-    }
+    this.mBox.addEventListener("toggle", () => this.applyHeight());
   }
 
   // Deterministic height from what is actually shown.
@@ -325,7 +350,7 @@ class AIO {
     h += 33 + 8;                               // upscale bar
     const fluxRows = (this.fluxWrap && !this.fluxWrap.classList.contains("hide")) ? 4 * 30 + 18 : 0;
     h += (this.mBox.open ? 30 + 3 * 30 + fluxRows : 32) + 9;   // models (top)
-    h += (this.note.open ? 30 + this.noteBody.querySelectorAll("dt").length * 46 : 32) + 9;
+    h += 30 + 6;                               // notes button
     if (shown(this.modeSec)) h += 14 + 44 + 9;
     if (shown(this.fillSec)) h += 14 + 44 + 9;
     if (shown(this.padSec)) h += 14 + Math.ceil(5 / 3) * 52 + 9;
@@ -348,7 +373,7 @@ class AIO {
     }
     if (shown(this.faceSec)) h += 22 + 9;
     if (shown(this.rbSec)) h += 22 + 9;
-    h += (this.depBox.open ? 30 + (DEPENDENCIES.length + LORAS.length) * 22 + 90 : 32) + 9;
+    h += 0;                                    // links button shares the footer row
     h += 8 + 16 * (2 + this.status.querySelectorAll(".warn").length);
     return Math.min(Math.max(Math.round(h), 260), 1100);
   }
@@ -461,10 +486,14 @@ class AIO {
     this.fluxWrap.appendChild(usRow);
     this.mBody.appendChild(this.fluxWrap);
 
-    this.note = el("details", "card");
-    this.noteSum = el("summary");
-    this.noteBody = el("div", "body");
-    this.note.appendChild(this.noteSum); this.note.appendChild(this.noteBody);
+    // Reference panels open as an OVERLAY, never inline: inside a fixed-height node an
+    // inline expander pushes the controls out of view, which reads as things vanishing.
+    this.note = el("button", "refbtn");
+    this.note.appendChild(el("i", null, "i"));
+    this.noteSum = el("span");
+    this.note.appendChild(this.noteSum);
+    this.noteBody = el("div");
+    this.note.onclick = () => this.openOverlay(this.noteSum.textContent, this.noteBody);
     this.foot = el("div", "foot");   // appended near the end so it sits at the bottom
     this.foot.appendChild(this.note);
 
@@ -625,9 +654,10 @@ class AIO {
     R.appendChild(this.saveSec);
 
     // required packs + LoRAs, as one-click direct downloads
-    this.depBox = el("details", "plain");
-    this.depBox.appendChild(el("summary", null, "Required nodes & LoRAs — download links"));
-    const depBody = el("div", "body");
+    this.depBox = el("button", "refbtn plainbtn");
+    this.depBox.appendChild(el("span", null, "Required nodes & LoRAs — download links"));
+    const depBody = el("div");
+    this.depBox.onclick = () => this.openOverlay("Required nodes & LoRAs", depBody);
     for (const [pack, used, url] of DEPENDENCIES) {
       const row = el("div", "deprow");
       if (url) {
@@ -661,7 +691,6 @@ class AIO {
       "Send the whole KreaUltraController folder (or Krea2_AIO_AJ.zip) — drop it in " +
       "ComfyUI/custom_nodes/ and restart. The links above cover everything else it needs."));
 
-    this.depBox.appendChild(depBody);
     this.foot.appendChild(this.depBox);
 
     r.appendChild(this.foot);
@@ -966,6 +995,13 @@ class AIO {
     this.applyHeight();
   }
 
+  openOverlay(title, contentEl) {
+    this.ovlTitle.textContent = title;
+    this.ovlBody.innerHTML = "";
+    this.ovlBody.appendChild(contentEl);
+    this.ovl.classList.remove("hide");
+  }
+
   refreshSavePath() {
     const p = this.pipe();
     const path = buildSavePath(
@@ -1029,6 +1065,16 @@ app.registerExtension({
   async beforeRegisterNodeDef(nodeType, nodeData) {
     if (nodeData.name !== "KreaAIO") return;
 
+    // LiteGraph's computeSize() short-circuits on the class's static size, so this
+    // makes EVERY caller get the fixed size — including ComfyUI's own re-layout paths.
+    nodeType.size = [NODE_W, NODE_H];
+
+    // During sampling ComfyUI attaches a live preview to the executing node and calls
+    // setSizeForImage() to refit the node around it, which squashes this UI to ~200px
+    // wide. This node has a DOM body, not an image body, so that refit is never
+    // wanted. Results are viewed through the SaveImage / Image Comparer nodes.
+    nodeType.prototype.setSizeForImage = function () { };
+
     const onNodeCreated = nodeType.prototype.onNodeCreated;
     nodeType.prototype.onNodeCreated = function () {
       if (onNodeCreated) onNodeCreated.apply(this, arguments);
@@ -1049,6 +1095,14 @@ app.registerExtension({
       this.resizable = false;   // no corner handle -> the growth loop cannot start
       this.size[0] = NODE_W;
       this.size[1] = NODE_H;
+
+      // Swallow any preview images assigned during execution: keeping imgs empty stops
+      // the image-layout path entirely, DOM widget stays the whole body.
+      Object.defineProperty(this, "imgs", {
+        get() { return this._kaioImgs; },
+        set(v) { this._kaioImgs = undefined; },
+        configurable: true,
+      });
 
       setTimeout(() => {
         try { self._kaio = new AIO(self, c); }
