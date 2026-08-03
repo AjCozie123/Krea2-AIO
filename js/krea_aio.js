@@ -233,12 +233,7 @@ const CSS = `
 .kaio .savepath.unwired{color:var(--warn)}
 .kaio .savepath.unwired::before{content:"! not wired - "}
 .kaio .cmdrow{display:flex;gap:6px;align-items:center;margin:3px 0}
-.kaio code.cmd{flex:1;background:#141414;border:1px solid var(--line);border-radius:4px;
- padding:5px 7px;font-family:ui-monospace,Consolas,monospace;font-size:9.5px;color:#c8d8c8;
- overflow-x:auto;white-space:nowrap}
-.kaio .copybtn{flex:none;padding:5px 9px;border-radius:4px;background:#2a2a2a;
- border:1px solid var(--line);color:var(--dim);cursor:pointer;font-size:9.5px;font-family:inherit}
-.kaio .copybtn:hover{background:#333;color:var(--txt)}
+.kaio .sharenote{font-size:10px;color:var(--dim);line-height:1.5;margin-top:2px}
 .kaio .deprow{display:flex;align-items:baseline;gap:8px;padding:2px 0}
 .kaio .deplink{color:#7fb3e8;text-decoration:none;font-size:10.5px;flex:none}
 .kaio .deplink:hover{text-decoration:underline;color:#a9cdf5}
@@ -342,7 +337,7 @@ class AIO {
     }
     if (shown(this.faceSec)) h += 22 + 9;
     if (shown(this.rbSec)) h += 22 + 9;
-    h += (this.depBox.open ? 30 + (DEPENDENCIES.length + LORAS.length) * 22 + 130 : 32) + 9;
+    h += (this.depBox.open ? 30 + (DEPENDENCIES.length + LORAS.length) * 22 + 90 : 32) + 9;
     h += 8 + 16 * (2 + this.status.querySelectorAll(".warn").length);
     return Math.min(Math.max(Math.round(h), 260), 1100);
   }
@@ -626,29 +621,13 @@ class AIO {
     }
     depBody.appendChild(el("div", "muted", "LoRAs go in ComfyUI/models/loras/Krea2/."));
 
-    // How to get this node onto another machine. The LAN URL only works for people
-    // on the same network; for anyone else, send them the zip.
-    depBody.appendChild(el("div", "muted", "INSTALL THIS NODE ELSEWHERE"));
-    // A loopback host is useless to anyone else, so show a placeholder instead of
-    // handing out a URL that only resolves on this machine.
-    const LOOPBACK = ["localhost", "127.0.0.1", "::1", ""];
-    const host = LOOPBACK.includes(location.hostname) ? "YOUR-LAN-IP" : location.hostname;
-    const cmd = `git clone http://${host}:8199/Krea2_AIO_AJ.git KreaUltraController`;
-    const cmdRow = el("div", "cmdrow");
-    const code = el("code", "cmd", cmd);
-    const copy = el("button", "copybtn", "copy");
-    copy.onclick = async () => {
-      try {
-        await navigator.clipboard.writeText(cmd);
-        copy.textContent = "copied";
-        setTimeout(() => { copy.textContent = "copy"; }, 1200);
-      } catch (e) { copy.textContent = "failed"; }
-    };
-    cmdRow.appendChild(code); cmdRow.appendChild(copy);
-    depBody.appendChild(cmdRow);
-    depBody.appendChild(el("div", "muted",
-      "Run it inside ComfyUI/custom_nodes/, then restart. Same network only — " +
-      "for remote friends send them the zip instead."));
+    // Sharing this node: a LAN clone URL is useless to anyone not on this network,
+    // so point at the zip, which works for everybody.
+    depBody.appendChild(el("div", "muted", "SHARING THIS NODE"));
+    depBody.appendChild(el("div", "sharenote",
+      "Send the whole KreaUltraController folder (or Krea2_AIO_AJ.zip) — drop it in " +
+      "ComfyUI/custom_nodes/ and restart. The links above cover everything else it needs."));
+
     this.depBox.appendChild(depBody);
     r.appendChild(this.depBox);
 
