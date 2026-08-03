@@ -228,10 +228,17 @@ def identity_edit(ctx):
     model, clip, vae = krea_base(ctx)
     model, _ = models.apply_loras(model, None, ctx.get("loras"))
 
-    # 6 outputs; restore_map is index 1 for THIS prepare node
+    # 6 outputs: prepared_image, restore_map, width, height, batch_size, prepare_info
     prep = engine.call("KreaImageAspectPreservePrepare", image=source)
-    prepared, restore_map = prep[0], prep[1]
-    latent = engine.call1("VAEEncode", pixels=prepared, vae=vae)
+    prepared, restore_map, width, height = prep[0], prep[1], prep[2], prep[3]
+
+    # The source goes in through the REFERENCE path, not the latent. The sampler and
+    # the patch's target_latent both take a CLEAN Wan21-format empty latent at the
+    # bucket size — feeding them the VAE-encoded source instead misaligns the
+    # reference geometry against the output grid and wrecks edit adherence.
+    source_latent = engine.call1("VAEEncode", pixels=prepared, vae=vae)
+    target = engine.call1("EmptyHunyuanLatentVideo", width=width, height=height,
+                          length=1, batch_size=1)
 
     ref = ctx.get("reference")
 
@@ -257,9 +264,9 @@ def identity_edit(ctx):
                                 prompt=ctx.prompt, grounding_px=int(ctx.grounding_px))
         negative = engine.call1("Krea2EditGroundedEncode", clip=clip, image=prepared,
                                 prompt="", grounding_px=int(ctx.grounding_px))
-        patch_kw = dict(model=model, source_latent=latent, vae=vae, source_image=prepared,
-                        target_latent=latent, ref_boost=float(ctx.ref_boost),
-                        ref_boost_a=1.0, fit_mode="fit")
+        patch_kw = dict(model=model, source_latent=source_latent, vae=vae,
+                        source_image=prepared, target_latent=target,
+                        ref_boost=float(ctx.ref_boost), ref_boost_a=1.0, fit_mode="fit")
         if ref is not None:
             r = engine.call1("ImageScaleToTotalPixels", image=ref, upscale_method="lanczos",
                              megapixels=1.4, resolution_steps=64)
@@ -272,7 +279,7 @@ def identity_edit(ctx):
                            sampler_name=ctx.get("sampler") or "euler",
                            scheduler=ctx.get("scheduler") or "simple",
                            positive=positive, negative=negative,
-                           latent_image=latent, denoise=1.0)
+                           latent_image=target, denoise=1.0)
     generated = engine.call1("VAEDecode", samples=sampled, vae=vae)
 
     # Maskless is the normal case here (clothing changes measured at 11.3% of frame).
