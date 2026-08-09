@@ -73,6 +73,33 @@ def _files(kind):
         return []
 
 
+def _base(name):
+    return str(name).replace("\\", "/").split("/")[-1].lower()
+
+
+def _pick_default(options, preferred):
+    """Choose a default that actually EXISTS in this install.
+
+    The hardcoded preferred paths (pipelines.KREA_* / FLUX_*) use the author's own
+    model-folder layout (subfolders + backslashes). On any other machine those exact
+    strings are not in the file list, so ComfyUI fails prompt validation with
+    'Value not in list' before the node even runs. This resolves to:
+      1. the exact preferred path if present,
+      2. otherwise any file with the SAME filename in a different folder,
+      3. otherwise the first available file (always valid),
+    so a fresh install never hard-fails and flat model folders auto-match.
+    """
+    if not options:
+        return "none"
+    if preferred in options:
+        return preferred
+    pb = _base(preferred)
+    for o in options:
+        if _base(o) == pb:
+            return o
+    return options[0]
+
+
 def _images():
     try:
         return sorted(folder_paths.filter_files_content_types(
@@ -119,6 +146,9 @@ class KreaAIO(io.ComfyNode):
     @classmethod
     def define_schema(cls):
         imgs = _images() or ["example.png"]
+        _unet_opts = _files("diffusion_models") or ["none"]
+        _clip_opts = _files("text_encoders") or ["none"]
+        _vae_opts = _files("vae") or ["none"]
         return io.Schema(
             node_id="KreaAIO",
             display_name="Krea2 AIO AJ",
@@ -181,22 +211,22 @@ class KreaAIO(io.ComfyNode):
                 io.String.Input("loras_json", default="[]",
                                 tooltip="LoRA stack, managed by the node UI."),
 
-                io.Combo.Input("unet_name", options=_files("diffusion_models") or ["none"],
-                               default=pipelines.KREA_UNET),
-                io.Combo.Input("clip_name", options=_files("text_encoders") or ["none"],
-                               default=pipelines.KREA_CLIP),
-                io.Combo.Input("vae_name", options=_files("vae") or ["none"],
-                               default=pipelines.KREA_VAE),
+                io.Combo.Input("unet_name", options=_unet_opts,
+                               default=_pick_default(_unet_opts, pipelines.KREA_UNET)),
+                io.Combo.Input("clip_name", options=_clip_opts,
+                               default=_pick_default(_clip_opts, pipelines.KREA_CLIP)),
+                io.Combo.Input("vae_name", options=_vae_opts,
+                               default=_pick_default(_vae_opts, pipelines.KREA_VAE)),
 
                 # Pipeline 5 runs a different model family, so it needs its own loaders.
-                io.Combo.Input("flux_unet_name", options=_files("diffusion_models") or ["none"],
-                               default=pipelines.FLUX_UNET,
+                io.Combo.Input("flux_unet_name", options=_unet_opts,
+                               default=_pick_default(_unet_opts, pipelines.FLUX_UNET),
                                tooltip="Upscale only: Flux 2 Klein diffusion model."),
-                io.Combo.Input("flux_clip_name", options=_files("text_encoders") or ["none"],
-                               default=pipelines.FLUX_CLIP,
+                io.Combo.Input("flux_clip_name", options=_clip_opts,
+                               default=_pick_default(_clip_opts, pipelines.FLUX_CLIP),
                                tooltip="Upscale only: Flux 2 text encoder (type flux2)."),
-                io.Combo.Input("flux_vae_name", options=_files("vae") or ["none"],
-                               default=pipelines.FLUX_VAE,
+                io.Combo.Input("flux_vae_name", options=_vae_opts,
+                               default=_pick_default(_vae_opts, pipelines.FLUX_VAE),
                                tooltip="Upscale only: Flux 2 VAE."),
                 io.Int.Input("upscale_steps", default=2, min=1, max=50,
                              tooltip="Upscale only."),

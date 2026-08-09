@@ -1,19 +1,19 @@
 {
  "id": "54e824b6-0c90-4e26-a92b-49bd2497a758",
  "revision": 0,
- "last_node_id": 5,
+ "last_node_id": 6,
  "last_link_id": 7,
  "nodes": [
   {
    "id": 1,
    "type": "LoadImage",
    "pos": [
-    -470,
-    40
+    -360,
+    0
    ],
    "size": [
-    282.798828125,
-    314
+    300,
+    360
    ],
    "flags": {},
    "order": 0,
@@ -42,7 +42,7 @@
     "Node name for S&R": "LoadImage"
    },
    "widgets_values": [
-    "example.png",
+    "",
     "image"
    ]
   },
@@ -50,12 +50,12 @@
    "id": 2,
    "type": "LoadImage",
    "pos": [
-    -470,
-    470
+    -360,
+    400
    ],
    "size": [
-    282.798828125,
-    314
+    300,
+    360
    ],
    "flags": {},
    "order": 1,
@@ -82,100 +82,8 @@
     "Node name for S&R": "LoadImage"
    },
    "widgets_values": [
-    "example.png",
+    "",
     "image"
-   ]
-  },
-  {
-   "id": 4,
-   "type": "SaveImage",
-   "pos": [
-    1470,
-    40
-   ],
-   "size": [
-    240,
-    60
-   ],
-   "flags": {},
-   "order": 4,
-   "mode": 0,
-   "inputs": [
-    {
-     "name": "images",
-     "type": "IMAGE",
-     "link": 4
-    },
-    {
-     "name": "filename_prefix",
-     "type": "STRING",
-     "widget": {
-      "name": "filename_prefix"
-     },
-     "link": 5
-    }
-   ],
-   "outputs": [
-    {
-     "name": "images",
-     "type": "IMAGE",
-     "links": null
-    }
-   ],
-   "properties": {
-    "cnr_id": "comfy-core",
-    "ver": "0.29.2",
-    "Node name for S&R": "SaveImage"
-   },
-   "widgets_values": [
-    "ComfyUI"
-   ]
-  },
-  {
-   "id": 5,
-   "type": "Image Comparer (rgthree)",
-   "pos": [
-    880,
-    40
-   ],
-   "size": [
-    560,
-    620
-   ],
-   "flags": {},
-   "order": 3,
-   "mode": 0,
-   "inputs": [
-    {
-     "dir": 3,
-     "name": "image_a",
-     "type": "IMAGE",
-     "link": 6
-    },
-    {
-     "dir": 3,
-     "name": "image_b",
-     "type": "IMAGE",
-     "link": 7
-    }
-   ],
-   "outputs": [
-    {
-     "dir": 4,
-     "name": "images",
-     "shape": 3,
-     "type": "IMAGE",
-     "links": null
-    }
-   ],
-   "title": "Before / after",
-   "properties": {
-    "cnr_id": "rgthree-comfy",
-    "ver": "1.0.2605082257",
-    "comparer_mode": "Slide"
-   },
-   "widgets_values": [
-    []
    ]
   },
   {
@@ -183,7 +91,7 @@
    "type": "KreaAIO",
    "pos": [
     0,
-    40
+    0
    ],
    "size": [
     820,
@@ -236,6 +144,7 @@
      ]
     }
    ],
+   "title": "Krea2 AIO AJ  \u2014  pick a workflow with the tabs",
    "properties": {
     "Node name for S&R": "KreaAIO"
    },
@@ -261,12 +170,12 @@
     "smart: manual mask, local auto, or full frame",
     "Krea2AJ",
     "[]",
-    "Krea2\\pornmasterKrea2_v2TurboInt8.safetensors",
-    "Qwen\\qwen3vl_4b_fp8_scaled.safetensors",
-    "wan\\wan_2.1_vae.safetensors",
-    "Flux 2 9B\\flux-2-klein-9b-fp8.safetensors",
-    "Qwen\\qwen_3_8b_fp8mixed.safetensors",
-    "Flux 2 9b\\full_encoder_small_decoder.safetensors",
+    "pornmasterKrea2_v2TurboInt8.safetensors",
+    "qwen3vl_4b_fp8_scaled.safetensors",
+    "wan_2.1_vae.safetensors",
+    "flux-2-klein-9b-fp8.safetensors",
+    "qwen_3_8b_fp8mixed.safetensors",
+    "full_encoder_small_decoder.safetensors",
     2,
     4,
     256,
@@ -277,6 +186,121 @@
     1,
     "{}"
    ]
+  },
+  {
+   "id": 4,
+   "type": "SaveImage",
+   "pos": [
+    1560,
+    0
+   ],
+   "size": [
+    260,
+    60
+   ],
+   "flags": {},
+   "order": 5,
+   "mode": 0,
+   "inputs": [
+    {
+     "name": "images",
+     "type": "IMAGE",
+     "link": 4
+    },
+    {
+     "name": "filename_prefix",
+     "type": "STRING",
+     "widget": {
+      "name": "filename_prefix"
+     },
+     "link": 5
+    }
+   ],
+   "outputs": [
+    {
+     "name": "images",
+     "type": "IMAGE",
+     "links": null
+    }
+   ],
+   "title": "Save  (small)",
+   "properties": {
+    "cnr_id": "comfy-core",
+    "ver": "0.29.2",
+    "Node name for S&R": "SaveImage"
+   },
+   "widgets_values": [
+    "ComfyUI"
+   ]
+  },
+  {
+   "id": 5,
+   "type": "Image Comparer (rgthree)",
+   "pos": [
+    900,
+    0
+   ],
+   "size": [
+    600,
+    680
+   ],
+   "flags": {},
+   "order": 4,
+   "mode": 0,
+   "inputs": [
+    {
+     "dir": 3,
+     "name": "image_a",
+     "type": "IMAGE",
+     "link": 6
+    },
+    {
+     "dir": 3,
+     "name": "image_b",
+     "type": "IMAGE",
+     "link": 7
+    }
+   ],
+   "outputs": [
+    {
+     "dir": 4,
+     "name": "images",
+     "shape": 3,
+     "type": "IMAGE",
+     "links": null
+    }
+   ],
+   "title": "Before / after",
+   "properties": {
+    "cnr_id": "rgthree-comfy",
+    "ver": "1.0.2605082257",
+    "comparer_mode": "Slide"
+   },
+   "widgets_values": [
+    []
+   ]
+  },
+  {
+   "id": 6,
+   "type": "Krea2LivePreview",
+   "pos": [
+    900,
+    720
+   ],
+   "size": [
+    600,
+    600
+   ],
+   "flags": {},
+   "order": 3,
+   "mode": 0,
+   "inputs": [],
+   "outputs": [],
+   "title": "Krea2 Live Preview AJ  (watch it generate)",
+   "properties": {
+    "Node name for S&R": "Krea2LivePreview"
+   },
+   "widgets_values": []
   }
  ],
  "links": [
@@ -337,14 +361,51 @@
    "IMAGE"
   ]
  ],
- "groups": [],
+ "groups": [
+  {
+   "title": "Inputs",
+   "bounding": [
+    -380,
+    -70,
+    340,
+    850
+   ],
+   "color": "#3f789e",
+   "font_size": 24,
+   "flags": {}
+  },
+  {
+   "title": "Krea2 AIO  (all 4 workflows in the tabs)",
+   "bounding": [
+    -20,
+    -70,
+    860,
+    990
+   ],
+   "color": "#3f5159",
+   "font_size": 24,
+   "flags": {}
+  },
+  {
+   "title": "Outputs",
+   "bounding": [
+    880,
+    -70,
+    940,
+    1410
+   ],
+   "color": "#59463f",
+   "font_size": 24,
+   "flags": {}
+  }
+ ],
  "config": {},
  "extra": {
   "ds": {
-   "scale": 0.6,
+   "scale": 0.42,
    "offset": [
-    560,
-    80
+    520,
+    180
    ]
   }
  },
