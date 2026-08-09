@@ -210,7 +210,7 @@ def classic_edit(ctx):
     sampled = engine.call1("KSampler", model=sampling, seed=int(ctx.seed),
                            steps=int(ctx.steps), cfg=float(ctx.cfg),
                            sampler_name=ctx.get("sampler") or "euler",
-                           scheduler=ctx.get("scheduler") or "beta",
+                           scheduler=ctx.get("scheduler") or "simple",
                            positive=positive, negative=negative,
                            latent_image=target, denoise=float(ctx.get("denoise", 1.0)))
     image = engine.call1("VAEDecode", samples=sampled, vae=vae)

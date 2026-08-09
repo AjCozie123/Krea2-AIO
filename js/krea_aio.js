@@ -45,7 +45,7 @@ const SOCKETS = {
 };
 
 const PRESETS = {
-  1: { steps: 10, cfg: 1.0, megapixels: 2.0, grounding_px: 512, ref_boost: 4.0 },
+  1: { steps: 8, cfg: 1.0, megapixels: 2.0, grounding_px: 512, ref_boost: 4.0 },
   2: { steps: 8, cfg: 1.0, megapixels: 1.0, grounding_px: 768, ref_boost: 1.0 },
   3: { steps: 8, cfg: 1.0, megapixels: 1.0, grounding_px: 768, ref_boost: 1.0 },
   4: { steps: 8, cfg: 1.0, megapixels: 1.0, grounding_px: 768, ref_boost: 1.0 },
@@ -79,7 +79,7 @@ const _PBASE = {
   face_detail: false, use_reference: true, remove_background: false,
 };
 const PIPE_DEFAULTS = {
-  1: { ..._PBASE, ...PRESETS[1], scheduler: "beta" },
+  1: { ..._PBASE, ...PRESETS[1] },
   2: { ..._PBASE, ...PRESETS[2] },
   3: { ..._PBASE, ...PRESETS[3] },
   4: { ..._PBASE, ...PRESETS[4] },
