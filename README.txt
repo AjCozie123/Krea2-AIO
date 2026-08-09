@@ -53,6 +53,10 @@ or resets another tab's settings. A fresh install starts with empty prompts. The
 contextual guide at the top of the node changes to match the selected workflow and
 includes brief prompting tips for editing, inpaint and outpaint.
 
+LoRA stacks are per slot. Pipeline 2 keeps SEPARATE stacks for MODE A and MODE B,
+so the krea2 identity-edit LoRA is kept ON by default in Classic (1) and Identity
+MODE A (2A) - where it belongs - and is NOT carried into MODE B (ai-toolkit only).
+
 
 REQUIRED CUSTOM NODE PACKS  (one-click zips, all verified)
 ---------------------------------------------------------

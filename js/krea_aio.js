@@ -60,8 +60,9 @@ const PER_PIPE = [
   "prompt", "seed", "seed_control", "steps", "cfg", "denoise", "sampler", "scheduler",
   "aspect_ratio", "megapixels", "grounding_px", "ref_boost", "restore_mode",
   "edit_mode", "fill_mode", "face_detail", "use_reference", "remove_background",
-  "loras_json",
 ];
+// NOTE: loras are NOT in PER_PIPE — they use their own per-slot store (see LORA_DEFAULTS
+// and loraKey()), because pipeline 2 keeps a SEPARATE stack for MODE A vs MODE B.
 
 const SEED_MODES = ["fixed", "increment", "decrement", "randomize"];
 
@@ -75,13 +76,27 @@ const _PBASE = {
   restore_mode: "smart: manual mask, local auto, or full frame",
   edit_mode: "A - Native Krea2Edit (identity)",
   fill_mode: "A - INPAINT (you paint the mask)",
-  face_detail: false, use_reference: true, remove_background: false, loras_json: "[]",
+  face_detail: false, use_reference: true, remove_background: false,
 };
 const PIPE_DEFAULTS = {
   1: { ..._PBASE, ...PRESETS[1], scheduler: "beta" },
   2: { ..._PBASE, ...PRESETS[2] },
   3: { ..._PBASE, ...PRESETS[3] },
   4: { ..._PBASE, ...PRESETS[4] },
+};
+
+// LoRA stacks are stored per "slot", not simply per pipeline: pipeline 2 keeps SEPARATE
+// stacks for MODE A and MODE B, because the identity LoRA belongs to MODE A only and
+// silently degrades MODE B. Switching pipeline OR mode swaps the active stack.
+// The krea2 identity-edit LoRA is kept ON by default in Classic (1) and Identity MODE A
+// (2A); MODE B and the other pipelines start empty.
+const IDENTITY_LORA = [{ on: true, lora: "Krea2\\krea2_identity_edit_v1_2.safetensors", strength: 1.0 }];
+const LORA_DEFAULTS = {
+  "1": JSON.stringify(IDENTITY_LORA),
+  "2A": JSON.stringify(IDENTITY_LORA),
+  "2B": "[]",
+  "3": "[]",
+  "4": "[]",
 };
 
 const MODE_A_LORA = "krea2_identity_edit_v1_2";
@@ -375,7 +390,8 @@ class AIO {
     root.appendChild(this.ovl);
 
     this.build();
-    this.migrateOrInit();   // make sure every pipeline has its own saved slot
+    this.migrateOrInit();        // make sure every pipeline has its own saved slot
+    this.loadLorasForCurrent();  // reflect the active slot's LoRA stack
     this.sync();
 
     // Re-fit when a <details> section is toggled, since that changes the height a lot.
@@ -470,6 +486,23 @@ class AIO {
   // Field name -> widget name. Only the seed control differs from its field name.
   wName(field) { return field === "seed_control" ? "control_after_generate" : field; }
 
+  // Which LoRA slot is active. Pipeline 2 splits into MODE A / MODE B; the rest use the
+  // pipeline number. This is what keeps the identity LoRA in 2A but not 2B.
+  loraKey() {
+    const p = this.pipe();
+    if (p === 2) return String(this.gv("edit_mode") || "").startsWith("B") ? "2B" : "2A";
+    return String(p);
+  }
+
+  // Load the current slot's LoRA stack into the live widget (on pipeline/mode switch).
+  loadLorasForCurrent() {
+    const s = this.state();
+    const map = s._loras || {};
+    const key = this.loraKey();
+    const json = map[key] !== undefined ? map[key] : (LORA_DEFAULTS[key] ?? "[]");
+    this.setW("loras_json", json);
+  }
+
   // Write a per-pipeline field: update the live widget AND the active pipeline's slot.
   setP(field, value) {
     this.setW(this.wName(field), value);
@@ -518,6 +551,23 @@ class AIO {
         }
       }
     }
+    // Per-slot LoRA stacks (with the identity LoRA kept in 1 and 2A by default).
+    if (!s._loras) {
+      s._loras = {};
+      // Carry over an earlier version that stored a lora stack per pipeline slot.
+      for (const idx of [1, 3, 4]) {
+        if (s[idx] && s[idx].loras_json !== undefined) s._loras[String(idx)] = s[idx].loras_json;
+      }
+      if (s[2] && s[2].loras_json !== undefined) s._loras["2A"] = s[2].loras_json;
+    }
+    for (const k of Object.keys(LORA_DEFAULTS)) {
+      if (s._loras[k] === undefined) s._loras[k] = LORA_DEFAULTS[k];
+    }
+    // Upgrade path: a pre-per-pipeline workflow with a single stack keeps it on the active slot.
+    if (fresh) {
+      const cur = this.gv("loras_json");
+      if (cur && cur !== "[]") s._loras[this.loraKey()] = cur;
+    }
     this.saveState(s);
   }
 
@@ -561,6 +611,7 @@ class AIO {
         this.captureActive();
         this.setW("pipeline", p.label);
         this.loadPipe(p.idx);
+        this.loadLorasForCurrent();
         this.sync();
       };
       this.tabs.appendChild(t); this.tabEl[p.idx] = t;
@@ -645,8 +696,10 @@ class AIO {
     this.mA.appendChild(el("i", null, "Native Krea2Edit"));
     this.mB = el("button"); this.mB.appendChild(el("b", null, "MODE B"));
     this.mB.appendChild(el("i", null, "Ostris · ai-toolkit"));
-    this.mA.onclick = () => { this.setP("edit_mode", "A - Native Krea2Edit (identity)"); this.sync(); };
-    this.mB.onclick = () => { this.setP("edit_mode", "B - Ostris Edit (ai-toolkit)"); this.sync(); };
+    // Switching mode in pipeline 2 swaps to that mode's own LoRA stack (2A keeps the
+    // identity LoRA; 2B does not).
+    this.mA.onclick = () => { this.setP("edit_mode", "A - Native Krea2Edit (identity)"); this.loadLorasForCurrent(); this.sync(); };
+    this.mB.onclick = () => { this.setP("edit_mode", "B - Ostris Edit (ai-toolkit)"); this.loadLorasForCurrent(); this.sync(); };
     ms.appendChild(this.mA); ms.appendChild(this.mB);
     this.modeSec.appendChild(ms); L.appendChild(this.modeSec);
 
@@ -1014,7 +1067,14 @@ class AIO {
       return Array.isArray(v) ? v : [];
     } catch (e) { return []; }
   }
-  saveLoras(list) { this.setP("loras_json", JSON.stringify(list)); }
+  saveLoras(list) {
+    const json = JSON.stringify(list);
+    this.setW("loras_json", json);           // active stack the backend reads
+    const s = this.state();
+    if (!s._loras) s._loras = {};
+    s._loras[this.loraKey()] = json;         // persist to the current slot
+    this.saveState(s);
+  }
 
   togglePicker() {
     this.picker.classList.toggle("hide");
@@ -1309,7 +1369,7 @@ app.registerExtension({
       const self = this;
       // Size is fixed by the node; never restore one from the file.
       this.size[0] = NODE_W; this.size[1] = NODE_H;
-      setTimeout(() => { try { self._kaio?.migrateOrInit(); self._kaio?.sync(); } catch (e) { } }, 48);
+      setTimeout(() => { try { self._kaio?.migrateOrInit(); self._kaio?.loadLorasForCurrent(); self._kaio?.sync(); } catch (e) { } }, 48);
       return out;
     };
 
