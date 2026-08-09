@@ -147,9 +147,8 @@ const NOTES = {
   ]],
 };
 
-// Custom-node packs this node calls into, with verified one-click zip links.
-// github.com/<repo>/archive/HEAD.zip resolves to the default branch whatever it is
-// named, so these survive a master -> main rename. All verified HTTP 200.
+// Custom-node packs this node calls into. Links point to the repo PAGE so users can
+// git clone them into ComfyUI/custom_nodes (LoRAs below are direct file downloads).
 // [label, used by, repo url]  — null url = ships with ComfyUI core.
 const DEPENDENCIES = [
   ["comfyui-krea2edit", "P1 + P2 MODE A", "https://github.com/lbouaraba/comfyui-krea2edit"],
@@ -891,10 +890,11 @@ class AIO {
     for (const [pack, used, url] of DEPENDENCIES) {
       const row = el("div", "deprow");
       if (url) {
+        // Link to the repo PAGE (not a zip) so users can git clone it.
         const a = el("a", "deplink", pack);
-        a.href = url + "/archive/HEAD.zip";
+        a.href = url;
         a.target = "_blank"; a.rel = "noopener";
-        a.title = "Download " + url + " as a zip";
+        a.title = "Open " + url + " — git clone it into ComfyUI/custom_nodes";
         row.appendChild(a);
       } else {
         row.appendChild(el("span", "deplink builtin", pack));
@@ -902,7 +902,9 @@ class AIO {
       row.appendChild(el("span", "depuse", used));
       depBody.appendChild(row);
     }
-    depBody.appendChild(el("div", "muted", "Unzip into ComfyUI/custom_nodes/ and restart."));
+    depBody.appendChild(el("div", "muted",
+      "Open each link and git clone it into ComfyUI/custom_nodes/, then restart ComfyUI. " +
+      "e.g.  git clone <link>.git"));
     for (const [name, used, url] of LORAS) {
       const row = el("div", "deprow");
       const a = el("a", "deplink", name);
