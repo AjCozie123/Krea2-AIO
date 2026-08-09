@@ -7,8 +7,9 @@
 const { app } = window.comfyAPI.app;
 const { api } = window.comfyAPI.api;
 
-const NODE_W = 760;
-const NODE_H = 800;   // audited: worst case 708px content (P2 + upscale + MODE B) fits with headroom
+const NODE_W = 820;
+const NODE_H = 900;   // larger surface so grouped sampler / resolution / reference rows fit
+                      // without squashing; content scrolls inside if a pipeline needs more.
 
 const PIPES = [
   { idx: 1, n: "CLASSIC", sub: "2 refs", label: "1 - CLASSIC EDIT (two references)" },
@@ -22,14 +23,14 @@ const PIPES = [
 const SHOW = {
   // Pipeline 1 samples into a ResolutionSelector-sized latent, so aspect_ratio and
   // megapixels are its resolution controls — they must be visible here.
-  1: ["conn", "prompt", "seed", "steps", "cfg", "sampler", "scheduler",
+  1: ["conn", "prompt", "seed", "steps", "cfg", "denoise", "sampler", "scheduler",
       "aspect_ratio", "megapixels", "grounding_px", "ref_boost", "loras",
       "face_detail", "remove_background", "use_reference"],
-  2: ["conn", "prompt", "seed", "steps", "cfg", "sampler", "scheduler",
+  2: ["conn", "prompt", "seed", "steps", "cfg", "denoise", "sampler", "scheduler",
       "grounding_px", "ref_boost", "restore_mode", "loras", "edit_mode",
       "use_reference"],
-  3: ["conn", "prompt", "seed", "steps", "cfg", "sampler", "scheduler", "loras", "fill_mode"],
-  4: ["prompt", "seed", "steps", "cfg", "sampler", "scheduler", "aspect_ratio", "megapixels",
+  3: ["conn", "prompt", "seed", "steps", "cfg", "denoise", "sampler", "scheduler", "loras", "fill_mode"],
+  4: ["prompt", "seed", "steps", "cfg", "denoise", "sampler", "scheduler", "aspect_ratio", "megapixels",
       "loras", "face_detail"],
 };
 const UPSCALE_EXTRA = ["megapixels"];
@@ -50,12 +51,46 @@ const PRESETS = {
   4: { steps: 8, cfg: 1.0, megapixels: 1.0, grounding_px: 768, ref_boost: 1.0 },
 };
 
+// Every field that belongs to ONE pipeline. Each pipeline keeps its own copy in
+// state_json, so switching tabs never shares a prompt or clobbers another tab's
+// settings. `seed_control` maps to the seed's control_after_generate companion widget;
+// everything else is a same-named widget. Models and the output folder are deliberately
+// NOT here — they are global, shared across pipelines.
+const PER_PIPE = [
+  "prompt", "seed", "seed_control", "steps", "cfg", "denoise", "sampler", "scheduler",
+  "aspect_ratio", "megapixels", "grounding_px", "ref_boost", "restore_mode",
+  "edit_mode", "fill_mode", "face_detail", "use_reference", "remove_background",
+  "loras_json",
+];
+
+const SEED_MODES = ["fixed", "increment", "decrement", "randomize"];
+
+// Per-pipeline starting point on a FRESH node (empty prompts, sensible dials). PRESETS
+// supplies the tuned numeric dials; the rest is a shared base.
+const _PBASE = {
+  prompt: "", seed: 0, seed_control: "randomize", steps: 8, cfg: 1.0, denoise: 1.0,
+  sampler: "euler", scheduler: "simple",
+  aspect_ratio: "3:4 (Portrait Standard)", megapixels: 1.0,
+  grounding_px: 768, ref_boost: 1.0,
+  restore_mode: "smart: manual mask, local auto, or full frame",
+  edit_mode: "A - Native Krea2Edit (identity)",
+  fill_mode: "A - INPAINT (you paint the mask)",
+  face_detail: false, use_reference: true, remove_background: false, loras_json: "[]",
+};
+const PIPE_DEFAULTS = {
+  1: { ..._PBASE, ...PRESETS[1], scheduler: "beta" },
+  2: { ..._PBASE, ...PRESETS[2] },
+  3: { ..._PBASE, ...PRESETS[3] },
+  4: { ..._PBASE, ...PRESETS[4] },
+};
+
 const MODE_A_LORA = "krea2_identity_edit_v1_2";
 const MODE_B_LORAS = ["INPAINTKREA-V1", "Anime to Real", "zoom_krea2edit"];
 
 // Crucial, measured notes. Several of these failure modes are silent.
 const NOTES = {
   1: ["CLASSIC EDIT - two reference images", [
+    ["How to prompt", "Describe the RESULT you want, not a command. Name the subject and the scene together, e.g. \"the woman from the reference wearing a red gown, standing in a sunlit garden\". Positive description only — say what should be there, not what to remove. Keep it to one or two sentences."],
     ["It regenerates the WHOLE frame", "Verified: this pipeline samples into a fresh ResolutionSelector-sized latent and has no aspect-preserve restore, so the background changes too. If you need the original background kept pixel-for-pixel, use pipeline 2 instead."],
     ["Reference order matters", "Vision blocks are fed in training order: image = scene/source, reference = subject/donor. Swapping them changes the result."],
     ["Reference method is REQUIRED", "Krea 2 has NO default reference method. This pipeline applies Krea2EditModelPatch. Without one the reference latents are silently IGNORED - measured 0.11 correlation to source vs 0.997 with. Nothing errors; the image just looks unrelated."],
@@ -65,6 +100,7 @@ const NOTES = {
     ["Remove background", "RMBG-2.0 on both inputs. Off by default - leave it off for scene-preserving edits like a clothing change."],
   ]],
   2: ["IDENTITY / OSTRIS EDIT - pick MODE, then match the LoRA", [
+    ["How to prompt", "Write an EDIT INSTRUCTION describing only what changes, e.g. \"change the shirt to a black leather jacket\" or \"make the hair blonde\". Keep everything you do not mention untouched — do not re-describe the whole person. Short and specific beats long. For a clothing/body change use MODE A, maskless."],
     ["MODE A - Native Krea2Edit", "Best likeness, and the mode that preserves the untouched area exactly. Krea2EditGroundedEncode + Krea2EditModelPatch, then a native-resolution restore. LoRA must be krea2_identity_edit_v1_2."],
     ["MODE B - Ostris Edit", "TextEncodeKrea2OstrisEdit + FluxKontextMultiReferenceLatentMethod('index_timestep_zero'). That method is REQUIRED - the encoder alone has its reference latents ignored, silently. LoRAs: ai-toolkit only (INPAINTKREA-V1, Anime to Real, zoom_krea2edit)."],
     ["INPAINTKREA-V1 kills a maskless edit", "Measured: MODE B + INPAINTKREA-V1 on a maskless clothing instruction changed 0.0% of the frame; the same run with NO LoRA changed 51.9%. That LoRA only replaces green regions, so with no green present it correctly does nothing - and suppresses the edit. Use it in pipeline 3, not here."],
@@ -73,6 +109,8 @@ const NOTES = {
     ["restore_mode", "'smart' tries the manual mask, then local auto-detected edits, then the full frame. Everything outside the edit comes back at native resolution."],
   ]],
   3: ["GREEN-MASK INPAINT / OUTPAINT", [
+    ["How to prompt - INPAINT", "Describe only what should APPEAR in the painted region, e.g. \"a leather jacket\" or \"a bunch of red roses\". Do not describe the rest of the image; only the mask is regenerated. Keep it short and concrete."],
+    ["How to prompt - OUTPAINT", "Describe what should EXTEND beyond the current frame in the padded direction, e.g. \"more of the sandy beach and blue sky\". If you just want a natural continuation, a short scene description is enough."],
     ["How to paint the mask", "Right-click the SOURCE LoadImage node -> Open in MaskEditor, paint the region, save. Then wire that node's MASK output to this node's mask socket. That is the whole procedure."],
     ["You never paint green yourself", "The MASK is the image's ALPHA channel, not green pixels. ComfyUI's MaskEditor only ever saves an alpha mask - DefaultGreenMaskColor just recolours the swatch it shows you. KreaAspectPreservePrepare paints the actual green region from your alpha mask."],
     ["What the node does with it", "Your mask is grown by 8px, blurred (radius 6 / sigma 4) and fed back as a mask, so the green region has a soft edge. Then prepare paints it green, the Ostris encoder runs with index_timestep_zero, and KreaAspectPreserveRestore puts everything outside the mask back at native resolution."],
@@ -81,6 +119,7 @@ const NOTES = {
     ["Removals", "Removals need a Raw checkpoint at cfg ~3 and ~20 steps - the turbo settings here will not remove cleanly."],
   ]],
   4: ["TEXT TO IMAGE", [
+    ["How to prompt", "Full scene description: subject, setting, lighting and style, e.g. \"a golden retriever puppy on a wooden porch at sunset, warm soft light, photorealistic\". More detail = more control. No image needs to be wired."],
     ["Resolution", "Set by aspect ratio + megapixels, not by an input image. Keep near 1 MP on 8 GB VRAM."],
     ["megapixels is ABSOLUTE", "It is a total-pixel target, not a multiplier."],
     ["No image input", "This is the only pipeline that needs nothing wired to image / mask / reference."],
@@ -193,7 +232,12 @@ const CSS = `
 .kaio input:focus,.kaio select:focus,.kaio textarea:focus{outline:none;border-color:var(--acc)}
 .kaio textarea{resize:vertical;min-height:74px;line-height:1.4}
 .kaio .grid{display:grid;grid-template-columns:repeat(3,1fr);gap:5px}
+.kaio .grid2{display:grid;grid-template-columns:1fr 1fr;gap:5px}
 .kaio .fld{display:flex;flex-direction:column;min-width:0}
+.kaio .grouplab{font-size:9px;text-transform:uppercase;letter-spacing:.07em;color:#7fb0dd;
+ display:block;margin:4px 0 4px;font-weight:700}
+.kaio details.card.guide{margin-bottom:7px}
+.kaio details.card.guide>summary{font-size:11px;color:#bcd8f2;font-weight:600}
 .kaio .hide{display:none!important}
 .kaio details.card{background:#1d2530;border:1px solid #2c3d52;border-radius:7px;margin-bottom:0;overflow:hidden}
 .kaio details.card>summary{cursor:pointer;padding:7px 10px;font-size:11px;color:#9dc4ea;
@@ -324,13 +368,14 @@ class AIO {
     const oh = el("div", "ovlhd");
     this.ovlTitle = el("b");
     const close = el("button", null, "Close");
-    close.onclick = () => this.ovl.classList.add("hide");
+    close.onclick = () => { this.ovl.classList.add("hide"); this._guideOpen = false; };
     oh.appendChild(this.ovlTitle); oh.appendChild(close);
     this.ovlBody = el("div", "ovlbody");
     this.ovl.appendChild(oh); this.ovl.appendChild(this.ovlBody);
     root.appendChild(this.ovl);
 
     this.build();
+    this.migrateOrInit();   // make sure every pipeline has its own saved slot
     this.sync();
 
     // Re-fit when a <details> section is toggled, since that changes the height a lot.
@@ -412,11 +457,97 @@ class AIO {
   pipe() { return parseInt(String(this.gv("pipeline") || "4").trim()[0], 10) || 4; }
   upscale() { return !!this.gv("upscale"); }
 
+  // ---- per-pipeline state ------------------------------------------------
+  // state_json holds { "1":{…}, "2":{…}, "3":{…}, "4":{…} }. The real widgets always
+  // mirror the ACTIVE pipeline (that is what the backend reads); this store is what
+  // makes every other pipeline remember its own prompt, dials and LoRA stack.
+  state() {
+    try { const v = JSON.parse(this.gv("state_json") || "{}"); return (v && typeof v === "object") ? v : {}; }
+    catch (e) { return {}; }
+  }
+  saveState(s) { this.setW("state_json", JSON.stringify(s)); }
+
+  // Field name -> widget name. Only the seed control differs from its field name.
+  wName(field) { return field === "seed_control" ? "control_after_generate" : field; }
+
+  // Write a per-pipeline field: update the live widget AND the active pipeline's slot.
+  setP(field, value) {
+    this.setW(this.wName(field), value);
+    const s = this.state(), p = this.pipe();
+    if (!s[p]) s[p] = { ...PIPE_DEFAULTS[p] };
+    s[p][field] = value;
+    this.saveState(s);
+  }
+
+  // Copy a pipeline's stored values into the live widgets (used when switching TO it).
+  loadPipe(idx) {
+    const s = this.state();
+    const slot = s[idx] || PIPE_DEFAULTS[idx];
+    for (const f of PER_PIPE) {
+      if (slot[f] !== undefined) this.setW(this.wName(f), slot[f]);
+    }
+  }
+
+  // Snapshot the live widgets back into the active pipeline's slot (used before we
+  // switch away, and to capture a randomized seed after a run).
+  captureActive() {
+    const s = this.state(), p = this.pipe();
+    if (!s[p]) s[p] = { ...PIPE_DEFAULTS[p] };
+    for (const f of PER_PIPE) {
+      const w = this.w(this.wName(f));
+      if (w && w.value !== undefined) s[p][f] = w.value;
+    }
+    this.saveState(s);
+  }
+
+  // Ensure every pipeline has a slot. On a brand-new node the store is empty, so seed
+  // the active pipeline from whatever the widgets currently hold (this migrates an
+  // upgraded old workflow without wiping it) and give the rest their defaults.
+  migrateOrInit() {
+    let s = this.state();
+    const fresh = !s || !Object.keys(s).length;
+    const active = this.pipe();
+    for (const idx of [1, 2, 3, 4]) {
+      if (!s[idx]) {
+        s[idx] = { ...PIPE_DEFAULTS[idx] };
+        if (fresh && idx === active) {
+          for (const f of PER_PIPE) {
+            const w = this.w(this.wName(f));
+            if (w && w.value !== undefined) s[idx][f] = w.value;
+          }
+        }
+      }
+    }
+    this.saveState(s);
+  }
+
   build() {
     const r = this.inner;
     const hd = el("div", "hd");
     hd.appendChild(el("h1", null, "Krea2 AIO AJ"));
     r.appendChild(hd);
+
+    // Contextual guide, ABOVE the workflow row. An "i" button opens the help as a
+    // rectangular bubble (overlay); clicking the same "i" again minimises it. Keeps the
+    // panel clean — the help is out of the way until asked for, and follows the
+    // selected workflow (contents set in sync()).
+    this.guideBtn = el("button", "refbtn guidebtn");
+    this.guideBtn.appendChild(el("i", null, "i"));
+    this.guideTitle = el("span");
+    this.guideBtn.appendChild(this.guideTitle);
+    this.guideBody = el("div");
+    this._guideOpen = false;
+    this.guideBtn.onclick = () => {
+      // toggle: if the guide bubble is showing, minimise it; otherwise open it
+      if (this._guideOpen && !this.ovl.classList.contains("hide")) {
+        this.ovl.classList.add("hide");
+        this._guideOpen = false;
+      } else {
+        this.openOverlay(this.guideTitle.textContent, this.guideBody);
+        this._guideOpen = true;
+      }
+    };
+    r.appendChild(this.guideBtn);
 
     this.tabs = el("div", "tabs"); this.tabEl = {};
     for (const p of PIPES) {
@@ -424,7 +555,14 @@ class AIO {
       t.appendChild(el("b", null, String(p.idx)));
       t.appendChild(el("i", null, p.n));
       t.title = p.label;
-      t.onclick = () => { this.setW("pipeline", p.label); this.preset(p.idx); this.sync(); };
+      // Save the pipeline we are leaving, switch, then load the target's own settings.
+      // No preset() call here — switching must never reset a pipeline the user tuned.
+      t.onclick = () => {
+        this.captureActive();
+        this.setW("pipeline", p.label);
+        this.loadPipe(p.idx);
+        this.sync();
+      };
       this.tabs.appendChild(t); this.tabEl[p.idx] = t;
     }
     r.appendChild(this.tabs);
@@ -494,16 +632,10 @@ class AIO {
     this.fluxWrap.appendChild(umRow);
     this.mBody.appendChild(this.fluxWrap);
 
-    // Reference panels open as an OVERLAY, never inline: inside a fixed-height node an
-    // inline expander pushes the controls out of view, which reads as things vanishing.
-    this.note = el("button", "refbtn");
-    this.note.appendChild(el("i", null, "i"));
-    this.noteSum = el("span");
-    this.note.appendChild(this.noteSum);
-    this.noteBody = el("div");
-    this.note.onclick = () => this.openOverlay(this.noteSum.textContent, this.noteBody);
+    // The per-workflow guide now lives at the top of the panel (built above). The footer
+    // holds only the download-links button, which opens as an OVERLAY — inside a
+    // fixed-height node an inline expander would push controls out of view.
     this.foot = el("div", "foot");   // appended near the end so it sits at the bottom
-    this.foot.appendChild(this.note);
 
     // MODE A/B
     this.modeSec = el("div", "sec");
@@ -513,8 +645,8 @@ class AIO {
     this.mA.appendChild(el("i", null, "Native Krea2Edit"));
     this.mB = el("button"); this.mB.appendChild(el("b", null, "MODE B"));
     this.mB.appendChild(el("i", null, "Ostris · ai-toolkit"));
-    this.mA.onclick = () => { this.setW("edit_mode", "A - Native Krea2Edit (identity)"); this.sync(); };
-    this.mB.onclick = () => { this.setW("edit_mode", "B - Ostris Edit (ai-toolkit)"); this.sync(); };
+    this.mA.onclick = () => { this.setP("edit_mode", "A - Native Krea2Edit (identity)"); this.sync(); };
+    this.mB.onclick = () => { this.setP("edit_mode", "B - Ostris Edit (ai-toolkit)"); this.sync(); };
     ms.appendChild(this.mA); ms.appendChild(this.mB);
     this.modeSec.appendChild(ms); L.appendChild(this.modeSec);
 
@@ -526,8 +658,8 @@ class AIO {
     this.fA.appendChild(el("i", null, "you paint the mask"));
     this.fB = el("button"); this.fB.appendChild(el("b", null, "OUTPAINT"));
     this.fB.appendChild(el("i", null, "auto green border"));
-    this.fA.onclick = () => { this.setW("fill_mode", "A - INPAINT (you paint the mask)"); this.sync(); };
-    this.fB.onclick = () => { this.setW("fill_mode", "B - OUTPAINT (auto green border)"); this.sync(); };
+    this.fA.onclick = () => { this.setP("fill_mode", "A - INPAINT (you paint the mask)"); this.sync(); };
+    this.fB.onclick = () => { this.setP("fill_mode", "B - OUTPAINT (auto green border)"); this.sync(); };
     fs.appendChild(this.fA); fs.appendChild(this.fB);
     this.fillSec.appendChild(fs); L.appendChild(this.fillSec);
 
@@ -563,54 +695,87 @@ class AIO {
     this.refWrap = el("label", "chk");
     this.refWrap.style.marginTop = "5px";
     this.useRef = el("input"); this.useRef.type = "checkbox";
-    this.useRef.onchange = () => { this.setW("use_reference", this.useRef.checked); this.sync(); };
+    this.useRef.onchange = () => { this.setP("use_reference", this.useRef.checked); this.sync(); };
     this.refWrap.appendChild(this.useRef);
     this.refWrap.appendChild(el("span", null, "Use second reference image"));
     this.imgSec.appendChild(this.refWrap);
     L.appendChild(this.imgSec);
 
-    // prompt
+    // prompt (per-pipeline — each workflow keeps its own instruction)
     this.pSec = el("div", "sec grow");
     this.pSec.appendChild(el("label", "cap", "Prompt / instruction"));
     this.prompt = el("textarea");
-    this.prompt.oninput = () => this.setW("prompt", this.prompt.value);
+    this.prompt.oninput = () => this.setP("prompt", this.prompt.value);
     this.pSec.appendChild(this.prompt); r.appendChild(this.pSec);
 
-    // numbers
-    this.numSec = el("div", "sec");
-    const g = el("div", "grid"); this.num = {};
-    const mk = (name, label, step, min, max) => {
+    // Shared field builders. Every value is written per-pipeline through setP, so it is
+    // remembered for that workflow and never leaks into another tab.
+    this.num = {}; this.combo = {};
+    const mk = (grid, name, label, step, min, max) => {
       const f = el("div", "fld");
       f.appendChild(el("label", "cap", label));
       const i = el("input"); i.type = "number";
       if (step != null) i.step = step; if (min != null) i.min = min; if (max != null) i.max = max;
-      i.oninput = () => this.setW(name, i.value === "" ? 0 : Number(i.value));
-      f.appendChild(i); this.num[name] = { f, i }; g.appendChild(f);
+      i.oninput = () => this.setP(name, i.value === "" ? 0 : Number(i.value));
+      f.appendChild(i); this.num[name] = { f, i }; grid.appendChild(f);
     };
-    mk("seed", "Seed", 1, 0); mk("steps", "Steps", 1, 1, 200); mk("cfg", "CFG", 0.1, 0, 30);
-    mk("megapixels", "Megapixels", 0.1, 0.1, 16);
-    mk("grounding_px", "Grounding px", 64, 0, 4096);
-    mk("ref_boost", "Ref boost", 0.01, 0, 1000);
-    this.numSec.appendChild(g); R.appendChild(this.numSec);
-
-    // combos
-    this.comboSec = el("div", "sec");
-    const cg = el("div", "grid"); this.combo = {};
-    const mkc = (name, label) => {
+    const mkc = (grid, name, label) => {
       const f = el("div", "fld");
       f.appendChild(el("label", "cap", label));
       const s = el("select");
-      s.onchange = () => this.setW(name, s.value);
-      f.appendChild(s); this.combo[name] = { f, s }; cg.appendChild(f);
+      s.onchange = () => this.setP(name, s.value);
+      f.appendChild(s); this.combo[name] = { f, s }; grid.appendChild(f);
     };
-    mkc("sampler", "Sampler"); mkc("scheduler", "Scheduler"); mkc("aspect_ratio", "Aspect");
-    this.comboSec.appendChild(cg); R.appendChild(this.comboSec);
 
-    // restore
+    // ---- SAMPLER settings, grouped and in the order that matters ----
+    this.sampSec = el("div", "sec");
+    this.sampSec.appendChild(el("label", "grouplab", "Sampler settings"));
+    const seedRow = el("div", "grid2");
+    mk(seedRow, "seed", "Seed", 1, 0);
+    // Seed control: lock a result (fixed) or re-roll it (randomize) between runs.
+    const smf = el("div", "fld");
+    smf.appendChild(el("label", "cap", "After generate"));
+    this.seedMode = el("select");
+    this.seedMode.title = "fixed = keep this seed to retest a similar image; " +
+                          "randomize = new seed each run.";
+    for (const m of SEED_MODES) { const o = el("option", null, m); o.value = m; this.seedMode.appendChild(o); }
+    this.seedMode.onchange = () => this.setP("seed_control", this.seedMode.value);
+    smf.appendChild(this.seedMode); seedRow.appendChild(smf);
+    this.sampSec.appendChild(seedRow);
+    const scRow = el("div", "grid");
+    mk(scRow, "steps", "Steps", 1, 1, 200);
+    mk(scRow, "cfg", "CFG", 0.1, 0, 30);
+    mk(scRow, "denoise", "Denoise", 0.01, 0, 1);
+    this.sampSec.appendChild(scRow);
+    const ssRow = el("div", "grid2");
+    mkc(ssRow, "sampler", "Sampler");
+    mkc(ssRow, "scheduler", "Scheduler");
+    this.sampSec.appendChild(ssRow);
+    R.appendChild(this.sampSec);
+
+    // ---- RESOLUTION ----
+    this.resSec = el("div", "sec");
+    this.resSec.appendChild(el("label", "grouplab", "Resolution"));
+    const resRow = el("div", "grid2");
+    mkc(resRow, "aspect_ratio", "Aspect");
+    mk(resRow, "megapixels", "Megapixels", 0.1, 0.1, 16);
+    this.resSec.appendChild(resRow);
+    R.appendChild(this.resSec);
+
+    // ---- REFERENCE dials (pipeline 1 and pipeline 2 MODE A) ----
+    this.refSec = el("div", "sec");
+    this.refSec.appendChild(el("label", "grouplab", "Reference"));
+    const refRow = el("div", "grid2");
+    mk(refRow, "grounding_px", "Grounding px", 64, 0, 4096);
+    mk(refRow, "ref_boost", "Ref boost", 0.01, 0, 1000);
+    this.refSec.appendChild(refRow);
+    R.appendChild(this.refSec);
+
+    // restore (per-pipeline)
     this.rSec = el("div", "sec");
     this.rSec.appendChild(el("label", "cap", "Restore mode"));
     this.restore = el("select");
-    this.restore.onchange = () => this.setW("restore_mode", this.restore.value);
+    this.restore.onchange = () => this.setP("restore_mode", this.restore.value);
     this.rSec.appendChild(this.restore); R.appendChild(this.rSec);
 
     // loras
@@ -634,29 +799,33 @@ class AIO {
     this.faceSec = el("div", "sec");
     const fl = el("label", "chk");
     this.face = el("input"); this.face.type = "checkbox";
-    this.face.onchange = () => { this.setW("face_detail", this.face.checked); this.sync(); };
+    this.face.onchange = () => { this.setP("face_detail", this.face.checked); this.sync(); };
     fl.appendChild(this.face); fl.appendChild(el("span", null, "Face detail pass"));
     this.faceSec.appendChild(fl); R.appendChild(this.faceSec);
 
     this.rbSec = el("div", "sec");
     const rbl = el("label", "chk");
     this.rb = el("input"); this.rb.type = "checkbox";
-    this.rb.onchange = () => this.setW("remove_background", this.rb.checked);
+    this.rb.onchange = () => this.setP("remove_background", this.rb.checked);
     rbl.appendChild(this.rb);
     rbl.appendChild(el("span", null, "Remove background (RMBG-2.0)"));
     this.rbSec.appendChild(rbl); R.appendChild(this.rbSec);
 
 
 
-    // output folder — the node derives the subfolder from the active pipeline
+    // output folder — YOU decide the location; just type it here. The node adds a
+    // per-workflow subfolder so runs stay organised. save_root is global (shared).
     this.saveSec = el("div", "sec");
-    this.saveSec.appendChild(el("label", "cap", "Output folder"));
+    this.saveSec.appendChild(el("label", "cap", "Output folder — type where your images save"));
     const sr = el("div", "cmdrow");
     this.saveRoot = el("input"); this.saveRoot.type = "text";
-    this.saveRoot.placeholder = "Krea2AJ";
+    this.saveRoot.placeholder = "e.g.  Krea2AJ   or   MyProject/Portraits";
+    this.saveRoot.title = "Type any folder path under ComfyUI/output. Sub-paths with / work too.";
     this.saveRoot.oninput = () => { this.setW("save_root", this.saveRoot.value); this.refreshSavePath(); };
     sr.appendChild(this.saveRoot);
     this.saveSec.appendChild(sr);
+    this.saveSec.appendChild(el("div", "muted",
+      "Just an example of where this would save — not a required format:"));
     this.savePreview = el("div", "savepath");
     this.saveSec.appendChild(this.savePreview);
     R.appendChild(this.saveSec);
@@ -845,7 +1014,7 @@ class AIO {
       return Array.isArray(v) ? v : [];
     } catch (e) { return []; }
   }
-  saveLoras(list) { this.setW("loras_json", JSON.stringify(list)); }
+  saveLoras(list) { this.setP("loras_json", JSON.stringify(list)); }
 
   togglePicker() {
     this.picker.classList.toggle("hide");
@@ -908,13 +1077,6 @@ class AIO {
   }
 
   // ---- sync --------------------------------------------------------------
-  preset(idx) {
-    for (const [k, v] of Object.entries(PRESETS[idx] || {})) {
-      this.setW(k, v);
-      if (this.num[k]) this.num[k].i.value = v;
-    }
-  }
-
   fillCombo(sel, wname) {
     const w = this.w(wname);
     if (!w) return;
@@ -941,16 +1103,22 @@ class AIO {
     for (const q of PIPES) this.tabEl[q.idx].classList.toggle("on", q.idx === p);
     this.upBtn.classList.toggle("on", up);
 
-    // notes
+    // contextual guide at the TOP of the panel — its contents follow the selected
+    // workflow (the upscale layer, key 5, shows its own short guidance).
     const key = up ? 5 : p;
     const [title, rows] = NOTES[key] || NOTES[4];
-    this.noteSum.textContent = title;
-    this.noteBody.innerHTML = "";
+    this.guideTitle.textContent = "How to use — " + title;
+    this.guideBody.innerHTML = "";
     const dl = el("dl");
     for (const [a, b] of rows) { dl.appendChild(el("dt", null, a)); dl.appendChild(el("dd", null, b)); }
-    this.noteBody.appendChild(dl);
+    this.guideBody.appendChild(dl);
+    // If the guide bubble is currently open, refresh it in place for the new workflow.
+    if (this._guideOpen && !this.ovl.classList.contains("hide")) {
+      this.openOverlay(this.guideTitle.textContent, this.guideBody);
+    }
 
     this.prompt.value = this.gv("prompt") ?? "";
+    if (this.seedMode) this.seedMode.value = this.gv("control_after_generate") ?? "randomize";
     for (const k of Object.keys(this.num)) {
       this.num[k].i.value = this.gv(k) ?? 0;
       this.num[k].f.classList.toggle("hide", !shown.has(k));
@@ -978,6 +1146,14 @@ class AIO {
       this.num.grounding_px.f.classList.toggle("hide", isB);
       this.num.ref_boost.f.classList.toggle("hide", isB);
     }
+
+    // Hide a whole labelled group when none of its fields apply, so there are no empty
+    // captioned boxes. Sampler always applies.
+    const resVis = shown.has("aspect_ratio") || shown.has("megapixels");
+    const refVis = (shown.has("grounding_px") || shown.has("ref_boost")) && !(p === 2 && isB);
+    this.resSec.classList.toggle("hide", !resVis);
+    this.refSec.classList.toggle("hide", !refVis);
+
     const outp = String(this.gv("fill_mode") || "").startsWith("B");
     this.fA.classList.toggle("on", !outp);
     this.fB.classList.toggle("on", outp);
@@ -1022,12 +1198,13 @@ class AIO {
       String(this.gv("edit_mode") || "").startsWith("B"),
       String(this.gv("fill_mode") || "").startsWith("B"),
       !!this.gv("face_detail"), this.upscale());
-    this.savePreview.textContent = "output/" + path + "_00001_.png";
+    this.savePreview.textContent = "e.g.  output/" + path + "_00001_.png";
     const wired = (this.node.outputs || []).some(
       (o) => o.name === "save_path" && (o.links || []).length);
     this.savePreview.classList.toggle("unwired", !wired);
-    this.savePreview.title = wired ? "save_path is driving your SaveImage node"
-      : "Connect the save_path output to SaveImage.filename_prefix for this to take effect";
+    this.savePreview.title = wired
+      ? "Example only. save_path is driving your SaveImage node — your typed folder decides the location."
+      : "Example only. Connect the save_path output to SaveImage.filename_prefix to use it, or just type any folder above.";
   }
 
   updateStatus() {
@@ -1132,7 +1309,7 @@ app.registerExtension({
       const self = this;
       // Size is fixed by the node; never restore one from the file.
       this.size[0] = NODE_W; this.size[1] = NODE_H;
-      setTimeout(() => { try { self._kaio?.sync(); } catch (e) { } }, 48);
+      setTimeout(() => { try { self._kaio?.migrateOrInit(); self._kaio?.sync(); } catch (e) { } }, 48);
       return out;
     };
 

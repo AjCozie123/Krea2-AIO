@@ -1,0 +1,352 @@
+{
+ "id": "54e824b6-0c90-4e26-a92b-49bd2497a758",
+ "revision": 0,
+ "last_node_id": 5,
+ "last_link_id": 7,
+ "nodes": [
+  {
+   "id": 1,
+   "type": "LoadImage",
+   "pos": [
+    -470,
+    40
+   ],
+   "size": [
+    282.798828125,
+    314
+   ],
+   "flags": {},
+   "order": 0,
+   "mode": 0,
+   "inputs": [],
+   "outputs": [
+    {
+     "name": "IMAGE",
+     "type": "IMAGE",
+     "links": [
+      1
+     ]
+    },
+    {
+     "name": "MASK",
+     "type": "MASK",
+     "links": [
+      2
+     ]
+    }
+   ],
+   "title": "SOURCE  (paint the mask here)",
+   "properties": {
+    "cnr_id": "comfy-core",
+    "ver": "0.29.2",
+    "Node name for S&R": "LoadImage"
+   },
+   "widgets_values": [
+    "example.png",
+    "image"
+   ]
+  },
+  {
+   "id": 2,
+   "type": "LoadImage",
+   "pos": [
+    -470,
+    470
+   ],
+   "size": [
+    282.798828125,
+    314
+   ],
+   "flags": {},
+   "order": 1,
+   "mode": 0,
+   "inputs": [],
+   "outputs": [
+    {
+     "name": "IMAGE",
+     "type": "IMAGE",
+     "links": [
+      3
+     ]
+    },
+    {
+     "name": "MASK",
+     "type": "MASK",
+     "links": null
+    }
+   ],
+   "title": "REFERENCE  (subject / donor)",
+   "properties": {
+    "cnr_id": "comfy-core",
+    "ver": "0.29.2",
+    "Node name for S&R": "LoadImage"
+   },
+   "widgets_values": [
+    "example.png",
+    "image"
+   ]
+  },
+  {
+   "id": 4,
+   "type": "SaveImage",
+   "pos": [
+    1470,
+    40
+   ],
+   "size": [
+    240,
+    60
+   ],
+   "flags": {},
+   "order": 4,
+   "mode": 0,
+   "inputs": [
+    {
+     "name": "images",
+     "type": "IMAGE",
+     "link": 4
+    },
+    {
+     "name": "filename_prefix",
+     "type": "STRING",
+     "widget": {
+      "name": "filename_prefix"
+     },
+     "link": 5
+    }
+   ],
+   "outputs": [
+    {
+     "name": "images",
+     "type": "IMAGE",
+     "links": null
+    }
+   ],
+   "properties": {
+    "cnr_id": "comfy-core",
+    "ver": "0.29.2",
+    "Node name for S&R": "SaveImage"
+   },
+   "widgets_values": [
+    "ComfyUI"
+   ]
+  },
+  {
+   "id": 5,
+   "type": "Image Comparer (rgthree)",
+   "pos": [
+    880,
+    40
+   ],
+   "size": [
+    560,
+    620
+   ],
+   "flags": {},
+   "order": 3,
+   "mode": 0,
+   "inputs": [
+    {
+     "dir": 3,
+     "name": "image_a",
+     "type": "IMAGE",
+     "link": 6
+    },
+    {
+     "dir": 3,
+     "name": "image_b",
+     "type": "IMAGE",
+     "link": 7
+    }
+   ],
+   "outputs": [
+    {
+     "dir": 4,
+     "name": "images",
+     "shape": 3,
+     "type": "IMAGE",
+     "links": null
+    }
+   ],
+   "title": "Before / after",
+   "properties": {
+    "cnr_id": "rgthree-comfy",
+    "ver": "1.0.2605082257",
+    "comparer_mode": "Slide"
+   },
+   "widgets_values": [
+    []
+   ]
+  },
+  {
+   "id": 3,
+   "type": "KreaAIO",
+   "pos": [
+    0,
+    40
+   ],
+   "size": [
+    820,
+    900
+   ],
+   "flags": {},
+   "order": 2,
+   "mode": 0,
+   "inputs": [
+    {
+     "name": "image",
+     "shape": 7,
+     "type": "IMAGE",
+     "link": 1
+    },
+    {
+     "name": "mask",
+     "shape": 7,
+     "type": "MASK",
+     "link": 2
+    },
+    {
+     "name": "reference",
+     "shape": 7,
+     "type": "IMAGE",
+     "link": 3
+    }
+   ],
+   "outputs": [
+    {
+     "name": "image",
+     "type": "IMAGE",
+     "links": [
+      4,
+      7
+     ]
+    },
+    {
+     "name": "source",
+     "type": "IMAGE",
+     "links": [
+      6
+     ]
+    },
+    {
+     "name": "save_path",
+     "type": "STRING",
+     "links": [
+      5
+     ]
+    }
+   ],
+   "properties": {
+    "Node name for S&R": "KreaAIO"
+   },
+   "widgets_values": [
+    "4 - TEXT TO IMAGE",
+    false,
+    "A - Native Krea2Edit (identity)",
+    "A - INPAINT (you paint the mask)",
+    false,
+    true,
+    false,
+    "",
+    0,
+    "randomize",
+    8,
+    1,
+    "euler",
+    "simple",
+    "3:4 (Portrait Standard)",
+    1,
+    768,
+    1,
+    "smart: manual mask, local auto, or full frame",
+    "Krea2AJ",
+    "[]",
+    "Krea2\\pornmasterKrea2_v2TurboInt8.safetensors",
+    "Qwen\\qwen3vl_4b_fp8_scaled.safetensors",
+    "wan\\wan_2.1_vae.safetensors",
+    "Flux 2 9B\\flux-2-klein-9b-fp8.safetensors",
+    "Qwen\\qwen_3_8b_fp8mixed.safetensors",
+    "Flux 2 9b\\full_encoder_small_decoder.safetensors",
+    2,
+    4,
+    256,
+    0,
+    0,
+    0,
+    0,
+    1,
+    "{}"
+   ]
+  }
+ ],
+ "links": [
+  [
+   1,
+   1,
+   0,
+   3,
+   0,
+   "IMAGE"
+  ],
+  [
+   2,
+   1,
+   1,
+   3,
+   1,
+   "MASK"
+  ],
+  [
+   3,
+   2,
+   0,
+   3,
+   2,
+   "IMAGE"
+  ],
+  [
+   4,
+   3,
+   0,
+   4,
+   0,
+   "IMAGE"
+  ],
+  [
+   5,
+   3,
+   2,
+   4,
+   1,
+   "STRING"
+  ],
+  [
+   6,
+   3,
+   1,
+   5,
+   0,
+   "IMAGE"
+  ],
+  [
+   7,
+   3,
+   0,
+   5,
+   1,
+   "IMAGE"
+  ]
+ ],
+ "groups": [],
+ "config": {},
+ "extra": {
+  "ds": {
+   "scale": 0.6,
+   "offset": [
+    560,
+    80
+   ]
+  }
+ },
+ "version": 0.4
+}

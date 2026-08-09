@@ -154,7 +154,7 @@ def text_to_image(ctx):
                            cfg=float(ctx.cfg), sampler_name=ctx.get("sampler") or "euler",
                            scheduler=ctx.get("scheduler") or "simple",
                            positive=positive, negative=negative,
-                           latent_image=latent, denoise=1.0)
+                           latent_image=latent, denoise=float(ctx.get("denoise", 1.0)))
     image = engine.call1("VAEDecode", samples=sampled, vae=vae)
     if ctx.get("face_detail"):
         image = face_detail(ctx, image, model, clip, vae, negative)
@@ -212,7 +212,7 @@ def classic_edit(ctx):
                            sampler_name=ctx.get("sampler") or "euler",
                            scheduler=ctx.get("scheduler") or "beta",
                            positive=positive, negative=negative,
-                           latent_image=target, denoise=1.0)
+                           latent_image=target, denoise=float(ctx.get("denoise", 1.0)))
     image = engine.call1("VAEDecode", samples=sampled, vae=vae)
     if ctx.get("face_detail"):
         image = face_detail(ctx, image, patched, clip, vae, negative)
@@ -279,7 +279,7 @@ def identity_edit(ctx):
                            sampler_name=ctx.get("sampler") or "euler",
                            scheduler=ctx.get("scheduler") or "simple",
                            positive=positive, negative=negative,
-                           latent_image=target, denoise=1.0)
+                           latent_image=target, denoise=float(ctx.get("denoise", 1.0)))
     generated = engine.call1("VAEDecode", samples=sampled, vae=vae)
 
     # Maskless is the normal case here (clothing changes measured at 11.3% of frame).
@@ -369,7 +369,7 @@ def green_mask_fill(ctx):
                            cfg=float(ctx.cfg), sampler_name=ctx.get("sampler") or "euler",
                            scheduler=ctx.get("scheduler") or "simple",
                            positive=positive, negative=negative,
-                           latent_image=target, denoise=1.0)
+                           latent_image=target, denoise=float(ctx.get("denoise", 1.0)))
     generated = engine.call1("VAEDecode", samples=sampled, vae=vae)
 
     final = engine.call1("KreaAspectPreserveRestore", expanded_original=canvas,

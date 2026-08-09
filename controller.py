@@ -215,6 +215,16 @@ class KreaAIO(io.ComfyNode):
                                      "green seam — measured 3559 green pixels at 24 vs 0 at "
                                      "0. Left at 0 deliberately."),
 
+                # Appended AT THE END so existing saved workflows keep their widget
+                # positions. denoise feeds every pipeline's KSampler; 1.0 = current
+                # behaviour. state_json is the per-pipeline UI store, managed by the JS.
+                io.Float.Input("denoise", default=1.0, min=0.0, max=1.0, step=0.01,
+                               tooltip="KSampler denoise. 1.0 = full generation (default). "
+                                       "Lower it for a lighter, more faithful pass."),
+                io.String.Input("state_json", default="{}",
+                                tooltip="Per-pipeline settings, prompts and LoRA stacks, "
+                                        "managed by the node UI. Do not edit by hand."),
+
             ],
             outputs=[
                 io.Image.Output(display_name="image"),
@@ -237,6 +247,7 @@ class KreaAIO(io.ComfyNode):
                 upscale_megapixels,
                 outpaint_bottom, outpaint_top, outpaint_left, outpaint_right,
                 outpaint_feather,
+                denoise=1.0, state_json="{}",
                 image=None, mask=None, reference=None) -> io.NodeOutput:
 
         try:
@@ -248,7 +259,7 @@ class KreaAIO(io.ComfyNode):
             loras = []
 
         ctx = pipelines.Ctx(
-            prompt=prompt, seed=seed, steps=steps, cfg=cfg,
+            prompt=prompt, seed=seed, steps=steps, cfg=cfg, denoise=denoise,
             sampler=sampler, scheduler=scheduler,
             aspect_ratio=aspect_ratio, megapixels=megapixels,
             grounding_px=grounding_px, ref_boost=ref_boost,
