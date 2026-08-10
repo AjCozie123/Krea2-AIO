@@ -7,8 +7,8 @@
 const { app } = window.comfyAPI.app;
 const { api } = window.comfyAPI.api;
 
-const NODE_W = 1280;  // horizontal rectangle — 3 columns so everything fits without scrolling
-const NODE_H = 940;   // tall enough that a pipeline's controls are all visible; node is resizable
+const NODE_W = 1300;  // horizontal rectangle — 3 columns so everything fits without scrolling
+const NODE_H = 920;   // fixed (not user-resizable); sized so all controls show without scroll
 
 const PIPES = [
   { idx: 1, n: "CLASSIC", sub: "2 refs", label: "1 - CLASSIC EDIT (two references)" },
@@ -372,7 +372,7 @@ const CSS = `
 .kaio .trigrow input{font-size:10.5px}
 .kaio .trigrow .thint{font-size:8.5px;color:#5f6b7c;margin-top:3px}
 /* embedded live-preview box — fixed size, always present */
-.kaio .kaio-preview{position:relative;width:100%;height:160px;background:#07090d;
+.kaio .kaio-preview{position:relative;width:100%;height:520px;background:#07090d;
  border:1px solid var(--line);border-radius:10px;overflow:hidden;display:flex;
  align-items:center;justify-content:center}
 .kaio .kaio-preview-img{max-width:100%;max-height:100%;object-fit:contain;display:none}
@@ -504,17 +504,14 @@ class AIO {
   // This only pins the size back to the constant; it never reads the current size into
   // the calculation, so it cannot become a feedback loop.
   applyHeight() {
-    // The node is resizable now — the widget fills it via computeSize — so we no longer
-    // pin the size. Just make sure it never opens smaller than the default the first
-    // time; after that the user's dragged size is respected.
+    // Fixed size: pin the node back to the constant. Never read the current size into
+    // this calculation (that would create a growth loop) — it is a plain constant.
     const n = this.node;
     if (!n) return;
-    if (!this._sized) {
-      this._sized = true;
-      if ((n.size[0] || 0) < NODE_W) n.size[0] = NODE_W;
-      if ((n.size[1] || 0) < NODE_H) n.size[1] = NODE_H;
-      app.graph.setDirtyCanvas(true, true);
-    }
+    if (n.size[0] === NODE_W && Math.abs(n.size[1] - NODE_H) <= 2) return;
+    n.size[0] = NODE_W;
+    n.size[1] = NODE_H;
+    app.graph.setDirtyCanvas(true, true);
   }
 
   w(n) { return this.node.widgets?.find((x) => x.name === n); }
@@ -693,7 +690,9 @@ class AIO {
     const pv = el("div", "kaio-preview");
     this.prevImg = el("img", "kaio-preview-img");
     this.prevImg.onerror = () => { this.prevImg.style.display = "none"; };
-    this.prevHint = el("div", "kaio-preview-hint", "Your image appears here as it generates");
+    this.prevHint = el("div", "kaio-preview-hint",
+      "Live sampler preview shows here while this workflow generates. " +
+      "Blank? Enable Settings → Preview method → Auto (TAESD).");
     this.prevBar = el("div", "kaio-preview-bar");
     this.prevPct = el("div", "kaio-preview-pct");
     pv.appendChild(this.prevImg); pv.appendChild(this.prevHint);
@@ -928,7 +927,7 @@ class AIO {
     this.trigWords.oninput = () => this.setP("trigger_words", this.trigWords.value);
     tw.appendChild(this.trigWords);
     this.lSec.appendChild(tw);
-    R.appendChild(this.lSec);
+    L.appendChild(this.lSec);   // LoRAs on the left, below models & reference inputs
 
     // toggles
     this.faceSec = el("div", "sec");
@@ -946,7 +945,7 @@ class AIO {
     fda.title = "yolov12l-face.pt — required model for the face detail pass";
     fdnote.appendChild(fda);
     this.faceSec.appendChild(fdnote);
-    L.appendChild(this.faceSec);
+    M.appendChild(this.faceSec);
 
     this.rbSec = el("div", "sec");
     const rbl = el("label", "chk");
@@ -954,7 +953,7 @@ class AIO {
     this.rb.onchange = () => this.setP("remove_background", this.rb.checked);
     rbl.appendChild(this.rb);
     rbl.appendChild(el("span", null, "Remove background (RMBG-2.0)"));
-    this.rbSec.appendChild(rbl); L.appendChild(this.rbSec);
+    this.rbSec.appendChild(rbl); M.appendChild(this.rbSec);
 
 
 
@@ -1267,12 +1266,14 @@ class AIO {
   // `progress` events. We paint them into the fixed box; nothing here changes the node
   // size, so a running generation never disturbs the layout.
   setupLivePreview() {
-    let url = null;
+    this._prevFrames = {};   // last frame per pipeline, so switching shows THAT workflow's
     this._prevCb = (e) => {
       const blob = e.detail;
       if (!(blob instanceof Blob)) return;
-      if (url) URL.revokeObjectURL(url);
-      url = URL.createObjectURL(blob);
+      const p = this.pipe();
+      if (this._prevFrames[p]) URL.revokeObjectURL(this._prevFrames[p]);
+      const url = URL.createObjectURL(blob);
+      this._prevFrames[p] = url;
       this.prevImg.src = url;
       this.prevImg.style.display = "";
       this.prevHint.style.display = "none";
@@ -1295,6 +1296,15 @@ class AIO {
       if (this._prevCb) api.removeEventListener("b_preview", this._prevCb);
       if (this._progCb) api.removeEventListener("progress", this._progCb);
     } catch (e) { /* ignore */ }
+  }
+
+  // Show the preview stored for the CURRENT workflow (each pipeline keeps its own last
+  // frame), or the hint if that workflow hasn't generated yet.
+  showStoredPreview() {
+    if (!this.prevImg) return;
+    const u = this._prevFrames && this._prevFrames[this.pipe()];
+    if (u) { this.prevImg.src = u; this.prevImg.style.display = ""; this.prevHint.style.display = "none"; }
+    else { this.prevImg.removeAttribute("src"); this.prevImg.style.display = "none"; this.prevHint.style.display = ""; }
   }
 
   // ---- sync --------------------------------------------------------------
@@ -1400,6 +1410,7 @@ class AIO {
     this.refreshSavePath();
     this.renderLoras();
     this.updateStatus();
+    this.showStoredPreview();   // this workflow's own last preview
     this.remeasure();
   }
 
@@ -1497,6 +1508,29 @@ class AIO {
   }
 }
 
+// Map each model dropdown's value to a file that actually exists on THIS machine, by
+// filename. Fixes the false "Missing Models" nag when the saved value uses a different
+// folder layout (e.g. basename vs "Krea2\\file"). Flux loaders fall back to the first
+// available model when there's no match, so they never nag while the upscaler is unused.
+const MODEL_WIDGETS = ["unet_name", "clip_name", "vae_name",
+                       "flux_unet_name", "flux_clip_name", "flux_vae_name"];
+function resolveModelWidgets(node) {
+  const base = (s) => String(s || "").split(/[\\/]/).pop().toLowerCase();
+  for (const key of MODEL_WIDGETS) {
+    const w = (node.widgets || []).find((x) => x.name === key);
+    if (!w) continue;
+    const opts = w.options && w.options.values;
+    const list = typeof opts === "function" ? opts(w) : (opts || []);
+    if (!Array.isArray(list) || !list.length) continue;
+    if (list.includes(w.value)) continue;                 // already valid
+    const m = list.find((o) => base(o) === base(w.value)); // same filename, other folder
+    if (m) { w.value = m; if (w.callback) { try { w.callback(m); } catch (e) { } } continue; }
+    if (key.startsWith("flux_")) {                         // unused-upscaler: keep it valid
+      w.value = list[0]; if (w.callback) { try { w.callback(list[0]); } catch (e) { } }
+    }
+  }
+}
+
 function hideWidget(w) {
   if (!w) return;
   w.hidden = true;
@@ -1535,16 +1569,16 @@ app.registerExtension({
         getValue: () => "", setValue: () => { },
       });
       const self = this;
-      // Resizable now: the DOM widget FILLS the node and follows the corner handle.
-      // Returning self.size (minus the title/slot overhead) is a stable fixed point —
-      // LiteGraph adds that overhead back, so node.computeSize() returns the SAME size,
-      // no runaway. Content is laid out to fit at the large default, so no scrolling.
+      // Fixed size (NOT user-resizable). A constant computeSize can never feed back into
+      // the node size, so there is no growth loop. The node is sized large enough that
+      // every pipeline's controls fit without scrolling.
       widget.computeSize = function () {
-        return [Math.max(320, self.size[0] - 26), Math.max(220, self.size[1] - 64)];
+        return [NODE_W - 26, NODE_H - 64];
       };
-      this.resizable = true;    // drag the corner to resize freely
+      this.resizable = false;   // user cannot resize; the dev-set size is authoritative
       this.size[0] = NODE_W;
       this.size[1] = NODE_H;
+      resolveModelWidgets(this);   // map model values to real files so no false "missing"
 
       // Swallow any preview images assigned during execution: keeping imgs empty stops
       // the image-layout path entirely, DOM widget stays the whole body.
@@ -1567,8 +1601,10 @@ app.registerExtension({
     nodeType.prototype.onConfigure = function (info) {
       const out = onConfigure ? onConfigure.apply(this, arguments) : undefined;
       const self = this;
-      // Keep the user's saved size if the workflow has one; otherwise use the big default.
-      if (!this.size || !this.size[0] || this.size[0] < 320) { this.size[0] = NODE_W; this.size[1] = NODE_H; }
+      // Fixed size; never restore one from the file. Resolve model values BEFORE the
+      // frontend's missing-models scan runs so it doesn't falsely flag them.
+      this.size[0] = NODE_W; this.size[1] = NODE_H;
+      resolveModelWidgets(this);
       setTimeout(() => { try { self._kaio?.migrateOrInit(); self._kaio?.loadLorasForCurrent(); self._kaio?.sync(); } catch (e) { } }, 48);
       return out;
     };

@@ -35,7 +35,7 @@
      ]
     }
    ],
-   "title": "SOURCE  (paint the mask here)",
+   "title": "Reference A",
    "properties": {
     "cnr_id": "comfy-core",
     "ver": "0.29.2",
@@ -51,7 +51,7 @@
    "type": "LoadImage",
    "pos": [
     -360,
-    400
+    420
    ],
    "size": [
     300,
@@ -75,7 +75,7 @@
      "links": null
     }
    ],
-   "title": "REFERENCE  (subject / donor)",
+   "title": "Reference B",
    "properties": {
     "cnr_id": "comfy-core",
     "ver": "0.29.2",
@@ -94,8 +94,8 @@
     0
    ],
    "size": [
-    1280,
-    940
+    1300,
+    920
    ],
    "flags": {},
    "order": 2,
@@ -144,7 +144,7 @@
      ]
     }
    ],
-   "title": "Krea2 AIO AJ  \u2014  pick a workflow with the tabs",
+   "title": "Krea2 AIO AJ",
    "properties": {
     "Node name for S&R": "KreaAIO"
    },
@@ -193,11 +193,11 @@
    "id": 4,
    "type": "SaveImage",
    "pos": [
-    1560,
-    0
+    1340,
+    680
    ],
    "size": [
-    260,
+    300,
     60
    ],
    "flags": {},
@@ -239,12 +239,12 @@
    "id": 5,
    "type": "Image Comparer (rgthree)",
    "pos": [
-    900,
+    1340,
     0
    ],
    "size": [
-    600,
-    680
+    560,
+    640
    ],
    "flags": {},
    "order": 4,
@@ -346,21 +346,21 @@
    "title": "Inputs",
    "bounding": [
     -380,
-    -70,
+    -60,
     340,
-    850
+    880
    ],
    "color": "#3f789e",
    "font_size": 24,
    "flags": {}
   },
   {
-   "title": "Krea2 AIO  (all 4 workflows in the tabs)",
+   "title": "Krea2 AIO \u2014 all 4 workflows",
    "bounding": [
     -20,
-    -70,
-    860,
-    990
+    -60,
+    1340,
+    1000
    ],
    "color": "#3f5159",
    "font_size": 24,
@@ -369,10 +369,10 @@
   {
    "title": "Outputs",
    "bounding": [
-    880,
-    -70,
-    940,
-    1410
+    1320,
+    -60,
+    600,
+    820
    ],
    "color": "#59463f",
    "font_size": 24,
@@ -382,10 +382,10 @@
  "config": {},
  "extra": {
   "ds": {
-   "scale": 0.42,
+   "scale": 0.45,
    "offset": [
     520,
-    180
+    120
    ]
   }
  },
