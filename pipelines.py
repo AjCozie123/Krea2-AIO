@@ -206,7 +206,8 @@ def classic_edit(ctx):
     if ref_img is not None:
         patch_kw["source_image_b"] = ref_img
         patch_kw["source_latent_b"] = ref_latent
-    patched = engine.call1("Krea2EditModelPatch", **patch_kw)
+    patched = engine.call1("Krea2EditModelPatch",
+                           **engine.only_supported("Krea2EditModelPatch", patch_kw))
 
     enc_kw = dict(clip=clip, image=src, prompt=ctx.prompt, grounding_px=int(ctx.grounding_px))
     if ref_img is not None:
@@ -285,7 +286,8 @@ def identity_edit(ctx):
                              megapixels=1.4, resolution_steps=64)
             patch_kw["source_image_b"] = r
             patch_kw["source_latent_b"] = engine.call1("VAEEncode", pixels=r, vae=vae)
-        sampling = engine.call1("Krea2EditModelPatch", **patch_kw)
+        sampling = engine.call1("Krea2EditModelPatch",
+                                **engine.only_supported("Krea2EditModelPatch", patch_kw))
 
     sampled = engine.call1("KSampler", model=sampling, seed=int(ctx.seed),
                            steps=int(ctx.steps), cfg=float(ctx.cfg),

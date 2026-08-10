@@ -127,3 +127,18 @@ def supports(node_type, input_name):
         return input_name in (spec.get("required") or {}) or input_name in (spec.get("optional") or {})
     except Exception:
         return False
+
+
+def only_supported(node_type, kwargs):
+    """Drop any kwargs the INSTALLED node version doesn't accept.
+
+    A user may have an OLDER copy of a dependency pack installed (which takes precedence
+    over the bundled one), missing newer optional inputs like Krea2EditModelPatch's
+    'target_latent'. Passing those raises 'unexpected keyword argument'. Filtering keeps
+    the node working across versions; the dropped inputs are optional refinements. If the
+    node type can't be inspected, pass everything through unchanged.
+    """
+    try:
+        return {k: v for k, v in kwargs.items() if supports(node_type, k)}
+    except Exception:
+        return kwargs

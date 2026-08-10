@@ -34,9 +34,25 @@ _MODULES = {
 }
 
 
+def _input_names(cls):
+    """The set of input names a node class declares (required + optional)."""
+    try:
+        it = cls.INPUT_TYPES() if hasattr(cls, "INPUT_TYPES") else {}
+        return set(it.get("required", {}) or {}) | set(it.get("optional", {}) or {})
+    except Exception:
+        return set()
+
+
 def register(class_mappings, display_mappings=None):
-    """Merge bundled node classes into ComfyUI's registry without clobbering real packs."""
-    added = []
+    """Merge bundled node classes into ComfyUI's registry.
+
+    If a node type is already registered by a separately-installed pack, we normally leave
+    it alone. BUT if the installed copy is OLDER than ours (missing inputs the bundled one
+    declares — e.g. an old comfyui-krea2edit without 'target_latent'), we REPLACE it with
+    the bundled version so the AIO node works without the user having to update that pack.
+    A same-or-newer installed copy is kept, so we never downgrade anyone.
+    """
+    added, replaced = [], []
     for modname, pack in _MODULES.items():
         try:
             mod = importlib.import_module("." + modname, __name__)
@@ -48,11 +64,20 @@ def register(class_mappings, display_mappings=None):
         ndm = getattr(mod, "NODE_DISPLAY_NAME_MAPPINGS", {}) or {}
         for key, cls in ncm.items():
             if key in class_mappings:
-                continue  # a separately-installed pack already provides it — leave it alone
+                # Replace only if the installed one is missing inputs our bundled one has.
+                if _input_names(cls) - _input_names(class_mappings[key]):
+                    class_mappings[key] = cls
+                    if display_mappings is not None and key in ndm:
+                        display_mappings[key] = ndm[key]
+                    replaced.append(key)
+                continue
             class_mappings[key] = cls
             if display_mappings is not None and key in ndm:
                 display_mappings.setdefault(key, ndm[key])
             added.append(key)
     if added:
         log.info("[KreaAIO] bundled dependency nodes registered: %s", ", ".join(sorted(added)))
+    if replaced:
+        log.info("[KreaAIO] replaced older installed node(s) with the bundled newer version: %s",
+                 ", ".join(sorted(replaced)))
     return added
