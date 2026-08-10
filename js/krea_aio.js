@@ -926,7 +926,17 @@ class AIO {
     this.face = el("input"); this.face.type = "checkbox";
     this.face.onchange = () => { this.setP("face_detail", this.face.checked); this.sync(); };
     fl.appendChild(this.face); fl.appendChild(el("span", null, "Face detail pass"));
-    this.faceSec.appendChild(fl); R.appendChild(this.faceSec);
+    this.faceSec.appendChild(fl);
+    // Face detail needs a YOLO face model file — small clickable link to grab it.
+    const fdnote = el("div", "muted");
+    fdnote.appendChild(document.createTextNode("requires yolov12l-face.pt in models/ultralytics/bbox/ — "));
+    const fda = el("a", "deplink", "download .pt");
+    fda.href = "https://github.com/akanametov/yolo-face/releases/download/1.0.0/yolov12l-face.pt";
+    fda.target = "_blank"; fda.rel = "noopener";
+    fda.title = "yolov12l-face.pt — required model for the face detail pass";
+    fdnote.appendChild(fda);
+    this.faceSec.appendChild(fdnote);
+    R.appendChild(this.faceSec);
 
     this.rbSec = el("div", "sec");
     const rbl = el("label", "chk");
@@ -938,19 +948,26 @@ class AIO {
 
 
 
-    // output folder — YOU decide the location; just type it here. The node adds a
-    // per-workflow subfolder so runs stay organised. save_root is global (shared).
+    // save name / path — YOU decide it. Used verbatim as SaveImage's filename_prefix
+    // (folder + filename), unless auto-organize is on. save_root is global (shared).
     this.saveSec = el("div", "sec");
-    this.saveSec.appendChild(el("label", "cap", "Output folder — type where your images save"));
+    this.saveSec.appendChild(el("label", "cap", "Save name / path — you decide it"));
     const sr = el("div", "cmdrow");
     this.saveRoot = el("input"); this.saveRoot.type = "text";
-    this.saveRoot.placeholder = "e.g.  Krea2AJ   or   MyProject/Portraits";
-    this.saveRoot.title = "Type any folder path under ComfyUI/output. Sub-paths with / work too.";
+    this.saveRoot.placeholder = "e.g.  MyProject/portrait   (folder + filename)";
+    this.saveRoot.title = "Used exactly as you type it, under ComfyUI/output. Include folders "
+      + "with / and a filename — e.g. MyProject/portrait -> output/MyProject/portrait_00001_.png";
     this.saveRoot.oninput = () => { this.setW("save_root", this.saveRoot.value); this.refreshSavePath(); };
     sr.appendChild(this.saveRoot);
     this.saveSec.appendChild(sr);
-    this.saveSec.appendChild(el("div", "muted",
-      "Just an example of where this would save — not a required format:"));
+    // optional: let the node auto-file per pipeline instead (off by default)
+    const aol = el("label", "chk"); aol.style.marginTop = "6px";
+    this.autoOrg = el("input"); this.autoOrg.type = "checkbox";
+    this.autoOrg.onchange = () => { this.setW("auto_organize", this.autoOrg.checked); this.refreshSavePath(); };
+    aol.appendChild(this.autoOrg);
+    aol.appendChild(el("span", null, "Auto-organize into per-pipeline subfolders"));
+    this.saveSec.appendChild(aol);
+    this.saveSec.appendChild(el("div", "muted", "Where the next file lands (your text decides it):"));
     this.savePreview = el("div", "savepath");
     this.saveSec.appendChild(this.savePreview);
     R.appendChild(this.saveSec);
@@ -1400,6 +1417,7 @@ class AIO {
     if (up && !this.mBox.open) this.mBox.open = true;
 
     this.saveRoot.value = this.gv("save_root") ?? "Krea2AJ";
+    if (this.autoOrg) this.autoOrg.checked = !!this.gv("auto_organize");
     this.refreshSavePath();
     this.renderLoras();
     this.updateStatus();
@@ -1419,18 +1437,24 @@ class AIO {
 
   refreshSavePath() {
     const p = this.pipe();
-    const path = buildSavePath(
-      this.gv("save_root"), p,
-      String(this.gv("edit_mode") || "").startsWith("B"),
-      String(this.gv("fill_mode") || "").startsWith("B"),
-      !!this.gv("face_detail"), this.upscale());
-    this.savePreview.textContent = "e.g.  output/" + path + "_00001_.png";
+    let path;
+    if (this.gv("auto_organize")) {
+      path = buildSavePath(
+        this.gv("save_root"), p,
+        String(this.gv("edit_mode") || "").startsWith("B"),
+        String(this.gv("fill_mode") || "").startsWith("B"),
+        !!this.gv("face_detail"), this.upscale());
+    } else {
+      // used exactly as typed (folder + filename)
+      path = String(this.gv("save_root") || "Krea2AJ").trim().replace(/^[\/\\]+|[\/\\]+$/g, "") || "Krea2AJ";
+    }
+    this.savePreview.textContent = "output/" + path + "_00001_.png";
     const wired = (this.node.outputs || []).some(
       (o) => o.name === "save_path" && (o.links || []).length);
     this.savePreview.classList.toggle("unwired", !wired);
     this.savePreview.title = wired
-      ? "Example only. save_path is driving your SaveImage node — your typed folder decides the location."
-      : "Example only. Connect the save_path output to SaveImage.filename_prefix to use it, or just type any folder above.";
+      ? "save_path is driving your SaveImage node — your typed name/path decides the location."
+      : "Connect the save_path output to SaveImage.filename_prefix to use it, or set SaveImage's prefix yourself.";
   }
 
   updateStatus() {

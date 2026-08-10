@@ -205,8 +205,11 @@ class KreaAIO(io.ComfyNode):
                 io.Combo.Input("restore_mode", options=RESTORE_MODES, default=RESTORE_MODES[0]),
 
                 io.String.Input("save_root", default="Krea2AJ",
-                                tooltip="Top folder under ComfyUI/output. Each pipeline "
-                                        "files itself into its own subfolder automatically."),
+                                tooltip="Save name/path under ComfyUI/output — YOU decide it. "
+                                        "Used verbatim as SaveImage's filename_prefix, so it can "
+                                        "include folders and a name, e.g. 'MyProject/portrait'. "
+                                        "Turn on auto_organize to instead file each pipeline into "
+                                        "its own subfolder automatically."),
 
                 io.String.Input("loras_json", default="[]",
                                 tooltip="LoRA stack, managed by the node UI."),
@@ -254,6 +257,13 @@ class KreaAIO(io.ComfyNode):
                 io.String.Input("state_json", default="{}",
                                 tooltip="Per-pipeline settings, prompts and LoRA stacks, "
                                         "managed by the node UI. Do not edit by hand."),
+                # OFF by default: the save name/path is used exactly as you type it, so YOU
+                # decide the folder and filename. ON restores the automatic per-pipeline
+                # subfolder organisation. Appended last to keep widget positions stable.
+                io.Boolean.Input("auto_organize", default=False,
+                                 tooltip="Off (default): save name/path is used exactly as you "
+                                         "type it. On: auto-file each pipeline into its own "
+                                         "subfolder under the name you gave."),
 
             ],
             outputs=[
@@ -294,7 +304,7 @@ class KreaAIO(io.ComfyNode):
                 upscale_megapixels,
                 outpaint_bottom, outpaint_top, outpaint_left, outpaint_right,
                 outpaint_feather,
-                denoise=1.0, state_json="{}",
+                denoise=1.0, state_json="{}", auto_organize=False,
                 image=None, mask=None, reference=None) -> io.NodeOutput:
 
         try:
@@ -356,8 +366,13 @@ class KreaAIO(io.ComfyNode):
             log.error("[KreaAIO] pipeline %s failed:\n%s", idx, traceback.format_exc())
             raise RuntimeError(f"KREA2 AIO pipeline {idx} failed: {e}") from e
 
-        save_path = build_save_path(save_root, idx, ctx.mode_b, ctx.outpaint,
-                                    face_detail, upscale)
+        # By default the user's typed name/path is used verbatim (they decide folder +
+        # filename). auto_organize restores the automatic per-pipeline subfoldering.
+        if auto_organize:
+            save_path = build_save_path(save_root, idx, ctx.mode_b, ctx.outpaint,
+                                        face_detail, upscale)
+        else:
+            save_path = (save_root or "Krea2AJ").strip().strip("/\\") or "Krea2AJ"
 
         # Deliberately no ui images. Attaching a preview makes ComfyUI lay an image out
         # inside this node and refit the node around it, which squashes the embedded UI

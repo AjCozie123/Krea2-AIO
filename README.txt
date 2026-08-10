@@ -80,6 +80,8 @@ name in ComfyUI-Manager), then restart:
   face detail pass:
     https://github.com/ltdrdata/ComfyUI-Impact-Pack
     https://github.com/ltdrdata/ComfyUI-Impact-Subpack
+    plus the detector model yolov12l-face.pt in models/ultralytics/bbox/ :
+    https://github.com/akanametov/yolo-face/releases/download/1.0.0/yolov12l-face.pt
   pipeline 1 background removal:
     https://github.com/yolain/ComfyUI-Easy-Use
   colour match on the Flux upscale:
