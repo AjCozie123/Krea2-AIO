@@ -1274,7 +1274,7 @@ class AIO {
       const url = URL.createObjectURL(blob);
       this._prevFrames[p] = url;
       this.prevImg.src = url;
-      this.prevImg.style.display = "";
+      this.prevImg.style.display = "block";
       this.prevHint.style.display = "none";
     };
     this._showBlob = showBlob;
@@ -1309,7 +1309,7 @@ class AIO {
   showStoredPreview() {
     if (!this.prevImg) return;
     const u = this._prevFrames && this._prevFrames[this.pipe()];
-    if (u) { this.prevImg.src = u; this.prevImg.style.display = ""; this.prevHint.style.display = "none"; }
+    if (u) { this.prevImg.src = u; this.prevImg.style.display = "block"; this.prevHint.style.display = "none"; }
     else { this.prevImg.removeAttribute("src"); this.prevImg.style.display = "none"; this.prevHint.style.display = ""; }
   }
 
