@@ -268,6 +268,23 @@ class KreaAIO(io.ComfyNode):
         )
 
     @classmethod
+    def validate_inputs(cls, unet_name=None, clip_name=None, vae_name=None,
+                        flux_unet_name=None, flux_clip_name=None, flux_vae_name=None):
+        """Skip ComfyUI's 'Value not in list' pre-check on the model dropdowns.
+
+        ComfyUI validates EVERY input on a node at queue time, regardless of whether
+        the code path uses it. So a stale or foreign model path — most often the three
+        FLUX loaders, which only run for the optional upscale layer — would block the
+        whole node from generating even with the upscaler off.
+
+        Naming these inputs here defers their validation to us; returning True lets the
+        run proceed. The node loads each model lazily and only when a pipeline actually
+        needs it, so a genuinely missing model raises a clear error at load time instead
+        of a cryptic pre-run block. Every other input keeps its normal validation.
+        """
+        return True
+
+    @classmethod
     def execute(cls, pipeline, upscale, edit_mode, fill_mode, face_detail,
                 use_reference, remove_background, prompt,
                 seed, steps, cfg, sampler, scheduler, aspect_ratio, megapixels,
