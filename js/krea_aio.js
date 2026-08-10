@@ -7,9 +7,8 @@
 const { app } = window.comfyAPI.app;
 const { api } = window.comfyAPI.api;
 
-const NODE_W = 900;
-const NODE_H = 980;   // larger surface so grouped sampler / resolution / reference rows fit
-                      // without squashing; content scrolls inside if a pipeline needs more.
+const NODE_W = 1280;  // horizontal rectangle — 3 columns so everything fits without scrolling
+const NODE_H = 740;
 
 const PIPES = [
   { idx: 1, n: "CLASSIC", sub: "2 refs", label: "1 - CLASSIC EDIT (two references)" },
@@ -57,7 +56,7 @@ const PRESETS = {
 // everything else is a same-named widget. Models and the output folder are deliberately
 // NOT here — they are global, shared across pipelines.
 const PER_PIPE = [
-  "prompt", "seed", "seed_control", "steps", "cfg", "denoise", "sampler", "scheduler",
+  "prompt", "trigger_words", "seed", "seed_control", "steps", "cfg", "denoise", "sampler", "scheduler",
   "aspect_ratio", "megapixels", "grounding_px", "ref_boost", "restore_mode",
   "edit_mode", "fill_mode", "face_detail", "use_reference", "remove_background",
 ];
@@ -214,7 +213,7 @@ const CSS = `
  padding:12px;box-sizing:border-box;height:100%;overflow-y:auto;overflow-x:hidden;
 }
 .kaio > .kaio-inner{display:block}
-.kaio .cols{display:grid;grid-template-columns:1fr 1fr;gap:0 14px;align-items:start}
+.kaio .cols{display:grid;grid-template-columns:1fr 1fr 1fr;gap:0 12px;align-items:start}
 .kaio .col{min-width:0}
 .kaio .sec.grow{flex:0 0 auto;display:flex;flex-direction:column}
 .kaio .sec.grow textarea{min-height:70px}
@@ -247,7 +246,7 @@ const CSS = `
  padding:6px 8px;font-size:11.5px;font-family:inherit;box-sizing:border-box;width:100%}
 .kaio input:focus,.kaio select:focus,.kaio textarea:focus{outline:none;border-color:var(--acc);
  box-shadow:0 0 0 2px rgba(59,130,246,.25)}
-.kaio textarea{resize:vertical;min-height:74px;line-height:1.4}
+.kaio textarea{resize:vertical;min-height:52px;line-height:1.35}
 .kaio .grid{display:grid;grid-template-columns:repeat(3,1fr);gap:5px}
 .kaio .grid2{display:grid;grid-template-columns:1fr 1fr;gap:5px}
 .kaio .fld{display:flex;flex-direction:column;min-width:0}
@@ -346,7 +345,7 @@ const CSS = `
 .kaio .sec:has(.seg),
 .kaio .sec:has(.addbtn),
 .kaio .sec:has(.savepath){
- background:var(--panel);border:1px solid var(--line);border-radius:11px;padding:10px 12px;margin-bottom:9px}
+ background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:8px 10px;margin-bottom:7px}
 .kaio details.plain,.kaio details.card{border-radius:11px}
 /* range slider (LoRA strength) */
 .kaio input[type=range]{-webkit-appearance:none;appearance:none;width:100%;height:5px;border-radius:4px;
@@ -373,7 +372,7 @@ const CSS = `
 .kaio .trigrow input{font-size:10.5px}
 .kaio .trigrow .thint{font-size:8.5px;color:#5f6b7c;margin-top:3px}
 /* embedded live-preview box — fixed size, always present */
-.kaio .kaio-preview{position:relative;width:100%;height:210px;background:#07090d;
+.kaio .kaio-preview{position:relative;width:100%;height:160px;background:#07090d;
  border:1px solid var(--line);border-radius:10px;overflow:hidden;display:flex;
  align-items:center;justify-content:center}
 .kaio .kaio-preview-img{max-width:100%;max-height:100%;object-fit:contain;display:none}
@@ -682,8 +681,9 @@ class AIO {
     const body = el("div", "cols");
     r.appendChild(body);
     const L = el("div", "col");
+    const M = el("div", "col");
     const R = el("div", "col");
-    body.appendChild(L); body.appendChild(R);
+    body.appendChild(L); body.appendChild(M); body.appendChild(R);
 
     // Live preview — a FIXED-size box that is ALWAYS present, so a running generation
     // shows here without ever resizing the node. Sits top of the right column.
@@ -809,7 +809,7 @@ class AIO {
       pg.appendChild(f);
     }
     this.padSec.appendChild(pg);
-    R.appendChild(this.padSec);
+    M.appendChild(this.padSec);
 
     // input sockets — images live on real LoadImage nodes outside this one, which is
     // what keeps ComfyUI's MaskEditor working normally
@@ -831,7 +831,7 @@ class AIO {
     this.pSec.appendChild(el("label", "cap", "Prompt / instruction"));
     this.prompt = el("textarea");
     this.prompt.oninput = () => this.setP("prompt", this.prompt.value);
-    this.pSec.appendChild(this.prompt); r.appendChild(this.pSec);
+    this.pSec.appendChild(this.prompt); r.insertBefore(this.pSec, body);  // full-width, on top
 
     // Shared field builders. Every value is written per-pipeline through setP, so it is
     // remembered for that workflow and never leaks into another tab.
@@ -876,7 +876,7 @@ class AIO {
     mkc(ssRow, "sampler", "Sampler");
     mkc(ssRow, "scheduler", "Scheduler");
     this.sampSec.appendChild(ssRow);
-    R.appendChild(this.sampSec);
+    M.appendChild(this.sampSec);
 
     // ---- RESOLUTION ----
     this.resSec = el("div", "sec");
@@ -885,7 +885,7 @@ class AIO {
     mkc(resRow, "aspect_ratio", "Aspect");
     mk(resRow, "megapixels", "Megapixels", 0.1, 0.1, 16);
     this.resSec.appendChild(resRow);
-    R.appendChild(this.resSec);
+    M.appendChild(this.resSec);
 
     // ---- REFERENCE dials (pipeline 1 and pipeline 2 MODE A) ----
     this.refSec = el("div", "sec");
@@ -894,14 +894,14 @@ class AIO {
     mk(refRow, "grounding_px", "Grounding px", 64, 0, 4096);
     mk(refRow, "ref_boost", "Ref boost", 0.01, 0, 1000);
     this.refSec.appendChild(refRow);
-    R.appendChild(this.refSec);
+    M.appendChild(this.refSec);
 
     // restore (per-pipeline)
     this.rSec = el("div", "sec");
     this.rSec.appendChild(el("label", "cap", "Restore mode"));
     this.restore = el("select");
     this.restore.onchange = () => this.setP("restore_mode", this.restore.value);
-    this.rSec.appendChild(this.restore); R.appendChild(this.rSec);
+    this.rSec.appendChild(this.restore); M.appendChild(this.rSec);
 
     // loras
     this.lSec = el("div", "sec");
@@ -918,6 +918,15 @@ class AIO {
     this.pickList = el("div", "picklist");
     this.picker.appendChild(this.pickInput); this.picker.appendChild(this.pickList);
     this.lSec.appendChild(this.picker);
+    // ONE trigger-words box for all LoRAs — added to the prompt automatically.
+    const tw = el("div", "sec"); tw.style.marginTop = "6px";
+    tw.appendChild(el("label", "cap", "LoRA trigger words (added to prompt)"));
+    this.trigWords = el("textarea"); this.trigWords.rows = 2;
+    this.trigWords.style.minHeight = "34px";
+    this.trigWords.placeholder = "all your trigger words here…";
+    this.trigWords.oninput = () => this.setP("trigger_words", this.trigWords.value);
+    tw.appendChild(this.trigWords);
+    this.lSec.appendChild(tw);
     R.appendChild(this.lSec);
 
     // toggles
@@ -1195,6 +1204,16 @@ class AIO {
         this.saveLoras(list);
         this.picker.classList.add("hide");
         this.renderLoras();
+        // convenience: pull this LoRA's trigger words into the shared trigger box
+        this.fetchTriggers(x).then((t) => {
+          t = (t || "").trim();
+          if (!t) return;
+          const cur = (this.gv("trigger_words") || "").trim();
+          if (cur.toLowerCase().includes(t.toLowerCase())) return;
+          const merged = cur ? cur + ", " + t : t;
+          this.setP("trigger_words", merged);
+          if (this.trigWords) this.trigWords.value = merged;
+        });
       };
       this.pickList.appendChild(it);
     }
@@ -1209,11 +1228,8 @@ class AIO {
       this.lList.appendChild(el("div", "muted", "No LoRAs. Add one below."));
     }
     list.forEach((entry, i) => {
-      const card = el("div", "lcard");
-      if (!entry.on) card.classList.add("off");
-
-      // header: on/off · name · remove
-      const hd = el("div", "lcard-hd");
+      const row = el("div", "lrow");
+      if (!entry.on) row.classList.add("off");
       const cb = el("input"); cb.type = "checkbox"; cb.checked = !!entry.on;
       cb.onchange = () => { const l = this.loras(); l[i].on = cb.checked; this.saveLoras(l); this.renderLoras(); this.updateStatus(); };
       const nm = el("span", "lname", baseName(entry.lora));
@@ -1224,52 +1240,13 @@ class AIO {
         const okB = MODE_B_LORAS.some((x) => b.toLowerCase().includes(x.toLowerCase()));
         if ((!isB && !okA) || (isB && !okB)) nm.classList.add("bad");
       }
+      const st = el("input"); st.type = "number"; st.className = "lstr"; st.step = 0.05;
+      st.value = entry.strength ?? 1;
+      st.oninput = () => { const l = this.loras(); l[i].strength = Number(st.value || 0); this.saveLoras(l); };
       const x = el("button", "lx", "×");
       x.onclick = () => { const l = this.loras(); l.splice(i, 1); this.saveLoras(l); this.renderLoras(); this.updateStatus(); };
-      hd.appendChild(cb); hd.appendChild(nm); hd.appendChild(x);
-      card.appendChild(hd);
-
-      // strength as a slider with a live value readout
-      const sr = el("div", "strrow");
-      sr.appendChild(el("label", null, "Strength"));
-      const rng = el("input"); rng.type = "range"; rng.min = 0; rng.max = 2; rng.step = 0.05;
-      const cur = Number(entry.strength ?? 1);
-      rng.value = cur;
-      rng.style.setProperty("--pct", (cur / 2 * 100) + "%");
-      const sval = el("span", "sval", cur.toFixed(2));
-      rng.oninput = () => {
-        const v = Number(rng.value);
-        rng.style.setProperty("--pct", (v / 2 * 100) + "%");
-        sval.textContent = v.toFixed(2);
-        const l = this.loras(); l[i].strength = v; this.saveLoras(l);
-      };
-      sr.appendChild(rng); sr.appendChild(sval);
-      card.appendChild(sr);
-
-      // trigger word — auto-filled from the LoRA, added to the prompt for you
-      const tg = el("div", "trigrow");
-      tg.appendChild(el("label", null, "Trigger word"));
-      const ti = el("input"); ti.type = "text";
-      ti.placeholder = "auto-fills from the LoRA…";
-      ti.value = entry.trigger || "";
-      ti.oninput = () => { const l = this.loras(); l[i].trigger = ti.value; this.saveLoras(l); };
-      tg.appendChild(ti);
-      tg.appendChild(el("div", "thint",
-        "Added to the generation automatically — you don't type it in the prompt."));
-      card.appendChild(tg);
-      this.lList.appendChild(card);
-
-      // first time we see this entry (no trigger yet), try to read it from the file
-      if (entry.trigger === undefined) {
-        this.fetchTriggers(entry.lora).then((t) => {
-          const l = this.loras();
-          if (l[i] && l[i].lora === entry.lora && !l[i].trigger) {
-            l[i].trigger = t || "";
-            this.saveLoras(l);
-            ti.value = t || "";
-          }
-        });
-      }
+      row.appendChild(cb); row.appendChild(nm); row.appendChild(st); row.appendChild(x);
+      this.lList.appendChild(row);
     });
   }
 
@@ -1361,6 +1338,7 @@ class AIO {
     }
 
     this.prompt.value = this.gv("prompt") ?? "";
+    if (this.trigWords) this.trigWords.value = this.gv("trigger_words") ?? "";
     if (this.seedMode) this.seedMode.value = this.gv("control_after_generate") ?? "randomize";
     for (const k of Object.keys(this.num)) {
       this.num[k].i.value = this.gv(k) ?? 0;

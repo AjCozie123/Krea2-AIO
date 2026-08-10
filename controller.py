@@ -264,6 +264,10 @@ class KreaAIO(io.ComfyNode):
                                  tooltip="Off (default): save name/path is used exactly as you "
                                          "type it. On: auto-file each pipeline into its own "
                                          "subfolder under the name you gave."),
+                # One field for ALL LoRA trigger words — appended to the prompt for you.
+                io.String.Input("trigger_words", default="", multiline=True,
+                                tooltip="All your LoRA trigger words in one place; appended to "
+                                        "the prompt automatically so you don't type them there."),
 
             ],
             outputs=[
@@ -304,7 +308,7 @@ class KreaAIO(io.ComfyNode):
                 upscale_megapixels,
                 outpaint_bottom, outpaint_top, outpaint_left, outpaint_right,
                 outpaint_feather,
-                denoise=1.0, state_json="{}", auto_organize=False,
+                denoise=1.0, state_json="{}", auto_organize=False, trigger_words="",
                 image=None, mask=None, reference=None) -> io.NodeOutput:
 
         try:
@@ -315,13 +319,11 @@ class KreaAIO(io.ComfyNode):
             log.warning("[KreaAIO] loras_json is not valid JSON; ignoring it")
             loras = []
 
-        # Trigger words live on each ACTIVE LoRA (set in the node UI, auto-filled from the
-        # LoRA file). Append them to the prompt here so the user never types them in.
-        trigs = [str(e.get("trigger", "")).strip() for e in loras
-                 if e.get("on") and str(e.get("trigger", "")).strip()]
-        if trigs:
-            joined = ", ".join(trigs)
-            prompt = f"{prompt.strip()}, {joined}" if prompt.strip() else joined
+        # One trigger-words field for all LoRAs — appended to the prompt so the user
+        # doesn't type them in the prompt box.
+        tw = (trigger_words or "").strip()
+        if tw:
+            prompt = f"{prompt.strip()}, {tw}" if prompt.strip() else tw
 
         ctx = pipelines.Ctx(
             prompt=prompt, seed=seed, steps=steps, cfg=cfg, denoise=denoise,
