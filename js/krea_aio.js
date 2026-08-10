@@ -210,8 +210,10 @@ const CSS = `
  --ok:#3b82f6;--ok2:#16233a;--warn:#e0a33e;
  font-family:system-ui,-apple-system,"Segoe UI",sans-serif;font-size:12px;color:var(--txt);
  background:linear-gradient(180deg,#0f141d 0%,#0b0e14 100%);border-radius:10px;
- padding:12px;box-sizing:border-box;height:100%;overflow-y:auto;overflow-x:hidden;
+ padding:12px;box-sizing:border-box;width:100%;height:100%;overflow-y:auto;overflow-x:hidden;
 }
+.kaio > .kaio-inner{width:100%}
+.kaio .cols{width:100%}
 .kaio > .kaio-inner{display:block}
 .kaio .cols{display:grid;grid-template-columns:1fr 1fr 1fr;gap:0 12px;align-items:start}
 .kaio .col{min-width:0}
