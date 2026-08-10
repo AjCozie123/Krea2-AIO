@@ -7,8 +7,8 @@
 const { app } = window.comfyAPI.app;
 const { api } = window.comfyAPI.api;
 
-const NODE_W = 820;
-const NODE_H = 900;   // larger surface so grouped sampler / resolution / reference rows fit
+const NODE_W = 900;
+const NODE_H = 980;   // larger surface so grouped sampler / resolution / reference rows fit
                       // without squashing; content scrolls inside if a pipeline needs more.
 
 const PIPES = [
@@ -205,10 +205,13 @@ const CSS = `
  color:var(--txt);cursor:pointer;font-size:11px;font-family:inherit}
 .kaio .ovlhd button:hover{background:#3a3a3a}
 .kaio .ovlbody{flex:1;overflow-y:auto;padding:6px 10px 10px}
-.kaio{position:relative;--bg:#191919;--panel:#212121;--line:#333;--txt:#dcdcdc;--dim:#8a8a8a;--acc:#4a90d9;
- --acc2:#2d5c8a;--ok:#5a9c5a;--ok2:#3a6b3a;--warn:#e0a33e;
+.kaio{position:relative;
+ --bg:#0d1017;--panel:#141a24;--panel2:#1a2130;--field:#0b0e14;--line:#26303f;
+ --txt:#e7ecf3;--dim:#8791a1;--acc:#3b82f6;--acc2:#16233a;--acc-b:#4c8dff;
+ --ok:#3b82f6;--ok2:#16233a;--warn:#e0a33e;
  font-family:system-ui,-apple-system,"Segoe UI",sans-serif;font-size:12px;color:var(--txt);
- padding:8px;box-sizing:border-box;height:100%;overflow-y:auto;overflow-x:hidden;
+ background:linear-gradient(180deg,#0f141d 0%,#0b0e14 100%);border-radius:10px;
+ padding:12px;box-sizing:border-box;height:100%;overflow-y:auto;overflow-x:hidden;
 }
 .kaio > .kaio-inner{display:block}
 .kaio .cols{display:grid;grid-template-columns:1fr 1fr;gap:0 14px;align-items:start}
@@ -240,9 +243,10 @@ const CSS = `
 .kaio .seg button b{display:block;font-size:11.5px}
 .kaio .seg button i{font-style:normal;opacity:.75;font-size:9.5px}
 .kaio input[type=text],.kaio input[type=number],.kaio select,.kaio textarea{
- background:#141414;border:1px solid var(--line);border-radius:5px;color:var(--txt);
- padding:4px 6px;font-size:11.5px;font-family:inherit;box-sizing:border-box;width:100%}
-.kaio input:focus,.kaio select:focus,.kaio textarea:focus{outline:none;border-color:var(--acc)}
+ background:var(--field);border:1px solid var(--line);border-radius:7px;color:var(--txt);
+ padding:6px 8px;font-size:11.5px;font-family:inherit;box-sizing:border-box;width:100%}
+.kaio input:focus,.kaio select:focus,.kaio textarea:focus{outline:none;border-color:var(--acc);
+ box-shadow:0 0 0 2px rgba(59,130,246,.25)}
 .kaio textarea{resize:vertical;min-height:74px;line-height:1.4}
 .kaio .grid{display:grid;grid-template-columns:repeat(3,1fr);gap:5px}
 .kaio .grid2{display:grid;grid-template-columns:1fr 1fr;gap:5px}
@@ -325,6 +329,60 @@ const CSS = `
 .kaio .deplink.builtin{color:var(--dim);cursor:default}
 .kaio .depuse{font-size:9.5px;color:var(--dim);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .kaio .muted{font-size:9.5px;color:var(--dim);margin:5px 0 3px}
+
+/* ---------- polished "Krea 2 One Node" look ---------- */
+.kaio .hd h1{font-size:13px;letter-spacing:.14em}
+.kaio .tab{padding:8px 3px;border-radius:9px}
+.kaio .tab.on{box-shadow:0 0 0 1px var(--acc) inset,0 0 12px rgba(59,130,246,.35)}
+.kaio .seg button{padding:7px 6px;border-radius:8px}
+.kaio .seg button.on{box-shadow:0 0 10px rgba(59,130,246,.30)}
+.kaio .upbar{border-radius:9px;padding:8px}
+.kaio .upbar.on{box-shadow:0 0 12px rgba(59,130,246,.35)}
+.kaio .grouplab{color:#6f8bb0}
+/* group the big sections into cards without touching build() — :has() is supported in
+   the Chromium ComfyUI runs in */
+.kaio .sec:has(> .grouplab),
+.kaio .sec.grow,
+.kaio .sec:has(.seg),
+.kaio .sec:has(.addbtn),
+.kaio .sec:has(.savepath){
+ background:var(--panel);border:1px solid var(--line);border-radius:11px;padding:10px 12px;margin-bottom:9px}
+.kaio details.plain,.kaio details.card{border-radius:11px}
+/* range slider (LoRA strength) */
+.kaio input[type=range]{-webkit-appearance:none;appearance:none;width:100%;height:5px;border-radius:4px;
+ background:linear-gradient(90deg,var(--acc) 0%,var(--acc) var(--pct,100%),#243044 var(--pct,100%));
+ outline:none;padding:0;border:none;margin:2px 0}
+.kaio input[type=range]:focus{box-shadow:none}
+.kaio input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:14px;height:14px;border-radius:50%;
+ background:#eaf1ff;border:2px solid var(--acc);cursor:pointer;box-shadow:0 0 6px rgba(59,130,246,.5)}
+/* LoRA cards (strength slider + trigger word) */
+.kaio .lcard{background:var(--panel2);border:1px solid var(--line);border-radius:10px;padding:8px 9px;margin-bottom:7px}
+.kaio .lcard.off{opacity:.5}
+.kaio .lcard-hd{display:flex;align-items:center;gap:8px}
+.kaio .lcard-hd input[type=checkbox]{width:auto;flex:none;margin:0;accent-color:var(--acc)}
+.kaio .lcard-hd .lname{flex:1 1 auto;min-width:0;font-size:11px;font-weight:600;overflow:hidden;
+ text-overflow:ellipsis;white-space:nowrap}
+.kaio .lcard-hd .lname.bad{color:var(--warn)}
+.kaio .strrow{display:flex;align-items:center;gap:9px;margin-top:6px}
+.kaio .strrow > label{font-size:9px;text-transform:uppercase;letter-spacing:.05em;color:var(--dim);flex:none;width:56px}
+.kaio .strrow .sval{font-size:11px;color:var(--txt);width:36px;text-align:right;flex:none;
+ font-family:ui-monospace,Consolas,monospace}
+.kaio .trigrow{margin-top:7px}
+.kaio .trigrow > label{font-size:9px;text-transform:uppercase;letter-spacing:.05em;color:var(--dim);
+ display:block;margin-bottom:3px}
+.kaio .trigrow input{font-size:10.5px}
+.kaio .trigrow .thint{font-size:8.5px;color:#5f6b7c;margin-top:3px}
+/* embedded live-preview box — fixed size, always present */
+.kaio .kaio-preview{position:relative;width:100%;height:210px;background:#07090d;
+ border:1px solid var(--line);border-radius:10px;overflow:hidden;display:flex;
+ align-items:center;justify-content:center}
+.kaio .kaio-preview-img{max-width:100%;max-height:100%;object-fit:contain;display:none}
+.kaio .kaio-preview-hint{position:absolute;color:#4a5468;font-size:10.5px;text-align:center;
+ padding:12px;line-height:1.5;max-width:85%}
+.kaio .kaio-preview-bar{position:absolute;left:0;bottom:0;height:3px;background:var(--acc);
+ width:0%;transition:width .12s;box-shadow:0 0 8px rgba(59,130,246,.6)}
+.kaio .kaio-preview-pct{position:absolute;right:6px;bottom:6px;font:10px ui-monospace,Consolas,monospace;
+ color:#cfe0ff;background:rgba(0,0,0,.55);padding:1px 6px;border-radius:4px;display:none}
 `;
 
 function el(t, c, x) {
@@ -626,6 +684,22 @@ class AIO {
     const L = el("div", "col");
     const R = el("div", "col");
     body.appendChild(L); body.appendChild(R);
+
+    // Live preview — a FIXED-size box that is ALWAYS present, so a running generation
+    // shows here without ever resizing the node. Sits top of the right column.
+    this.prevSec = el("div", "sec previewsec");
+    this.prevSec.appendChild(el("label", "grouplab", "Live preview"));
+    const pv = el("div", "kaio-preview");
+    this.prevImg = el("img", "kaio-preview-img");
+    this.prevImg.onerror = () => { this.prevImg.style.display = "none"; };
+    this.prevHint = el("div", "kaio-preview-hint", "Your image appears here as it generates");
+    this.prevBar = el("div", "kaio-preview-bar");
+    this.prevPct = el("div", "kaio-preview-pct");
+    pv.appendChild(this.prevImg); pv.appendChild(this.prevHint);
+    pv.appendChild(this.prevBar); pv.appendChild(this.prevPct);
+    this.prevSec.appendChild(pv);
+    R.appendChild(this.prevSec);
+    this.setupLivePreview();
 
     // Models first — this is where you point it at your checkpoints, so it should be
     // the most obvious thing after picking a pipeline.
@@ -1118,8 +1192,11 @@ class AIO {
       this.lList.appendChild(el("div", "muted", "No LoRAs. Add one below."));
     }
     list.forEach((entry, i) => {
-      const row = el("div", "lrow");
-      if (!entry.on) row.classList.add("off");
+      const card = el("div", "lcard");
+      if (!entry.on) card.classList.add("off");
+
+      // header: on/off · name · remove
+      const hd = el("div", "lcard-hd");
       const cb = el("input"); cb.type = "checkbox"; cb.checked = !!entry.on;
       cb.onchange = () => { const l = this.loras(); l[i].on = cb.checked; this.saveLoras(l); this.renderLoras(); this.updateStatus(); };
       const nm = el("span", "lname", baseName(entry.lora));
@@ -1130,14 +1207,99 @@ class AIO {
         const okB = MODE_B_LORAS.some((x) => b.toLowerCase().includes(x.toLowerCase()));
         if ((!isB && !okA) || (isB && !okB)) nm.classList.add("bad");
       }
-      const st = el("input"); st.type = "number"; st.className = "lstr"; st.step = 0.05;
-      st.value = entry.strength ?? 1;
-      st.oninput = () => { const l = this.loras(); l[i].strength = Number(st.value || 0); this.saveLoras(l); };
       const x = el("button", "lx", "×");
       x.onclick = () => { const l = this.loras(); l.splice(i, 1); this.saveLoras(l); this.renderLoras(); this.updateStatus(); };
-      row.appendChild(cb); row.appendChild(nm); row.appendChild(st); row.appendChild(x);
-      this.lList.appendChild(row);
+      hd.appendChild(cb); hd.appendChild(nm); hd.appendChild(x);
+      card.appendChild(hd);
+
+      // strength as a slider with a live value readout
+      const sr = el("div", "strrow");
+      sr.appendChild(el("label", null, "Strength"));
+      const rng = el("input"); rng.type = "range"; rng.min = 0; rng.max = 2; rng.step = 0.05;
+      const cur = Number(entry.strength ?? 1);
+      rng.value = cur;
+      rng.style.setProperty("--pct", (cur / 2 * 100) + "%");
+      const sval = el("span", "sval", cur.toFixed(2));
+      rng.oninput = () => {
+        const v = Number(rng.value);
+        rng.style.setProperty("--pct", (v / 2 * 100) + "%");
+        sval.textContent = v.toFixed(2);
+        const l = this.loras(); l[i].strength = v; this.saveLoras(l);
+      };
+      sr.appendChild(rng); sr.appendChild(sval);
+      card.appendChild(sr);
+
+      // trigger word — auto-filled from the LoRA, added to the prompt for you
+      const tg = el("div", "trigrow");
+      tg.appendChild(el("label", null, "Trigger word"));
+      const ti = el("input"); ti.type = "text";
+      ti.placeholder = "auto-fills from the LoRA…";
+      ti.value = entry.trigger || "";
+      ti.oninput = () => { const l = this.loras(); l[i].trigger = ti.value; this.saveLoras(l); };
+      tg.appendChild(ti);
+      tg.appendChild(el("div", "thint",
+        "Added to the generation automatically — you don't type it in the prompt."));
+      card.appendChild(tg);
+      this.lList.appendChild(card);
+
+      // first time we see this entry (no trigger yet), try to read it from the file
+      if (entry.trigger === undefined) {
+        this.fetchTriggers(entry.lora).then((t) => {
+          const l = this.loras();
+          if (l[i] && l[i].lora === entry.lora && !l[i].trigger) {
+            l[i].trigger = t || "";
+            this.saveLoras(l);
+            ti.value = t || "";
+          }
+        });
+      }
     });
+  }
+
+  // Best-effort read of a LoRA's trigger/trained words from its safetensors metadata
+  // (served by the /kaio/lora_triggers route in server_routes.py). Empty on failure.
+  async fetchTriggers(name) {
+    try {
+      const r = await fetch("/kaio/lora_triggers?name=" + encodeURIComponent(name));
+      if (!r.ok) return "";
+      const d = await r.json();
+      return (d && d.triggers) || "";
+    } catch (e) { return ""; }
+  }
+
+  // ---- embedded live preview --------------------------------------------
+  // ComfyUI streams sampler preview frames as `b_preview` events (a Blob each) and
+  // `progress` events. We paint them into the fixed box; nothing here changes the node
+  // size, so a running generation never disturbs the layout.
+  setupLivePreview() {
+    let url = null;
+    this._prevCb = (e) => {
+      const blob = e.detail;
+      if (!(blob instanceof Blob)) return;
+      if (url) URL.revokeObjectURL(url);
+      url = URL.createObjectURL(blob);
+      this.prevImg.src = url;
+      this.prevImg.style.display = "";
+      this.prevHint.style.display = "none";
+    };
+    this._progCb = (e) => {
+      const d = e.detail || {};
+      const mx = Number(d.max) || 0, v = Number(d.value) || 0;
+      const pct = mx ? Math.min(100, Math.round(v / mx * 100)) : 0;
+      this.prevBar.style.width = pct + "%";
+      this.prevPct.textContent = pct + "%";
+      this.prevPct.style.display = (pct > 0 && pct < 100) ? "" : "none";
+      if (pct >= 100) setTimeout(() => { this.prevBar.style.width = "0%"; this.prevPct.style.display = "none"; }, 500);
+    };
+    api.addEventListener("b_preview", this._prevCb);
+    api.addEventListener("progress", this._progCb);
+  }
+
+  destroyPreview() {
+    try {
+      if (this._prevCb) api.removeEventListener("b_preview", this._prevCb);
+      if (this._progCb) api.removeEventListener("progress", this._progCb);
+    } catch (e) { /* ignore */ }
   }
 
   // ---- sync --------------------------------------------------------------
@@ -1386,6 +1548,13 @@ app.registerExtension({
         try { self._kaio?.renderConnections(); self._kaio?.updateStatus(); } catch (e) { }
       }, 0);
       return out;
+    };
+
+    // Detach the live-preview websocket listeners when the node is removed.
+    const onRemoved = nodeType.prototype.onRemoved;
+    nodeType.prototype.onRemoved = function () {
+      try { this._kaio?.destroyPreview(); } catch (e) { }
+      return onRemoved ? onRemoved.apply(this, arguments) : undefined;
     };
   },
 });

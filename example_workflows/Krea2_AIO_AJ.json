@@ -279,28 +279,6 @@
    "widgets_values": [
     []
    ]
-  },
-  {
-   "id": 6,
-   "type": "Krea2LivePreview",
-   "pos": [
-    900,
-    720
-   ],
-   "size": [
-    600,
-    600
-   ],
-   "flags": {},
-   "order": 3,
-   "mode": 0,
-   "inputs": [],
-   "outputs": [],
-   "title": "Krea2 Live Preview AJ  (watch it generate)",
-   "properties": {
-    "Node name for S&R": "Krea2LivePreview"
-   },
-   "widgets_values": []
   }
  ],
  "links": [

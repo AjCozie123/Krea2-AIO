@@ -305,6 +305,14 @@ class KreaAIO(io.ComfyNode):
             log.warning("[KreaAIO] loras_json is not valid JSON; ignoring it")
             loras = []
 
+        # Trigger words live on each ACTIVE LoRA (set in the node UI, auto-filled from the
+        # LoRA file). Append them to the prompt here so the user never types them in.
+        trigs = [str(e.get("trigger", "")).strip() for e in loras
+                 if e.get("on") and str(e.get("trigger", "")).strip()]
+        if trigs:
+            joined = ", ".join(trigs)
+            prompt = f"{prompt.strip()}, {joined}" if prompt.strip() else joined
+
         ctx = pipelines.Ctx(
             prompt=prompt, seed=seed, steps=steps, cfg=cfg, denoise=denoise,
             sampler=sampler, scheduler=scheduler,

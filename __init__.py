@@ -17,6 +17,13 @@ try:
 except Exception as _e:  # never let a vendoring hiccup stop the main node from loading
     logging.getLogger(__name__).warning("[KreaAIO] bundled dependency registration skipped: %s", _e)
 
+# HTTP route that auto-fills a LoRA's trigger word from its metadata (for the node UI).
+try:
+    from . import server_routes as _server_routes
+    _server_routes.register_routes()
+except Exception as _e:
+    logging.getLogger(__name__).warning("[KreaAIO] lora-trigger route not registered: %s", _e)
+
 
 class KreaAIOExtension(ComfyExtension):
     @override
