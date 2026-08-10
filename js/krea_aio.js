@@ -1267,8 +1267,7 @@ class AIO {
   // size, so a running generation never disturbs the layout.
   setupLivePreview() {
     this._prevFrames = {};   // last frame per pipeline, so switching shows THAT workflow's
-    this._prevCb = (e) => {
-      const blob = e.detail;
+    const showBlob = (blob) => {
       if (!(blob instanceof Blob)) return;
       const p = this.pipe();
       if (this._prevFrames[p]) URL.revokeObjectURL(this._prevFrames[p]);
@@ -1278,6 +1277,11 @@ class AIO {
       this.prevImg.style.display = "";
       this.prevHint.style.display = "none";
     };
+    this._showBlob = showBlob;
+    // Old preview path: detail IS the Blob. New path (1.4x): detail is {blob, ...}.
+    // Listen to BOTH so it works regardless of which the runtime uses.
+    this._prevCb = (e) => showBlob(e.detail instanceof Blob ? e.detail : (e.detail && e.detail.blob));
+    this._prevMetaCb = (e) => showBlob(e.detail && e.detail.blob);
     this._progCb = (e) => {
       const d = e.detail || {};
       const mx = Number(d.max) || 0, v = Number(d.value) || 0;
@@ -1288,12 +1292,14 @@ class AIO {
       if (pct >= 100) setTimeout(() => { this.prevBar.style.width = "0%"; this.prevPct.style.display = "none"; }, 500);
     };
     api.addEventListener("b_preview", this._prevCb);
+    api.addEventListener("b_preview_with_metadata", this._prevMetaCb);
     api.addEventListener("progress", this._progCb);
   }
 
   destroyPreview() {
     try {
       if (this._prevCb) api.removeEventListener("b_preview", this._prevCb);
+      if (this._prevMetaCb) api.removeEventListener("b_preview_with_metadata", this._prevMetaCb);
       if (this._progCb) api.removeEventListener("progress", this._progCb);
     } catch (e) { /* ignore */ }
   }
