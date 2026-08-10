@@ -157,7 +157,11 @@ def text_to_image(ctx):
                            latent_image=latent, denoise=float(ctx.get("denoise", 1.0)))
     image = engine.call1("VAEDecode", samples=sampled, vae=vae)
     if ctx.get("face_detail"):
-        image = face_detail(ctx, image, model, clip, vae, negative)
+        if engine.has("FaceDetailer"):
+            image = face_detail(ctx, image, model, clip, vae, negative)
+        else:
+            log.warning("[KreaAIO] face_detail is on but FaceDetailer (ComfyUI-Impact-Pack) "
+                        "isn't installed — skipping the face pass.")
     return image, image
 
 
@@ -170,8 +174,13 @@ def classic_edit(ctx):
     model, clip, vae = krea_base(ctx)
     model, _ = models.apply_loras(model, None, ctx.get("loras"))
 
-    # scene / source: optional background removal, then an ABSOLUTE megapixel target
-    src = rembg(source) if ctx.get("remove_background") else source
+    # scene / source: optional background removal, then an ABSOLUTE megapixel target.
+    # RMBG needs ComfyUI-Easy-Use; if it isn't installed, skip it instead of erroring.
+    do_rembg = bool(ctx.get("remove_background")) and engine.has("easy imageRemBg")
+    if ctx.get("remove_background") and not do_rembg:
+        log.warning("[KreaAIO] remove_background is on but 'easy imageRemBg' "
+                    "(ComfyUI-Easy-Use) isn't installed — skipping background removal.")
+    src = rembg(source) if do_rembg else source
     src = engine.call1("ImageScaleToTotalPixels", image=src, upscale_method="lanczos",
                        megapixels=float(ctx.megapixels), resolution_steps=64)
     src_latent = engine.call1("VAEEncode", pixels=src, vae=vae)
@@ -179,7 +188,7 @@ def classic_edit(ctx):
     ref = ctx.get("reference")
     ref_img = ref_latent = None
     if ref is not None:
-        r = rembg(ref) if ctx.get("remove_background") else ref
+        r = rembg(ref) if do_rembg else ref
         ref_img = engine.call1("ImageScaleToTotalPixels", image=r, upscale_method="lanczos",
                                megapixels=1.4, resolution_steps=64)
         ref_latent = engine.call1("VAEEncode", pixels=ref_img, vae=vae)
@@ -215,7 +224,11 @@ def classic_edit(ctx):
                            latent_image=target, denoise=float(ctx.get("denoise", 1.0)))
     image = engine.call1("VAEDecode", samples=sampled, vae=vae)
     if ctx.get("face_detail"):
-        image = face_detail(ctx, image, patched, clip, vae, negative)
+        if engine.has("FaceDetailer"):
+            image = face_detail(ctx, image, patched, clip, vae, negative)
+        else:
+            log.warning("[KreaAIO] face_detail is on but FaceDetailer (ComfyUI-Impact-Pack) "
+                        "isn't installed — skipping the face pass.")
     return image, source
 
 
@@ -415,6 +428,14 @@ def klein_upscale(ctx, image):
     out = engine.call("SamplerCustomAdvanced", noise=noise, guider=guider, sampler=sampler,
                       sigmas=sigmas, latent_image=empty)[0]
     decoded = engine.call1("VAEDecode", samples=out, vae=vae)
-    matched = engine.call1("ColorMatch", image_ref=scaled, image_target=decoded,
-                           method="mkl", strength=0.8, multithread=True)
-    return engine.call1("ImageSharpen", image=matched, sharpen_radius=1, sigma=0.3, alpha=0.3)
+    # ColorMatch (ComfyUI-KJNodes) and ImageSharpen are optional final polish — if a pack
+    # isn't installed, skip that step rather than failing the whole upscale.
+    matched = decoded
+    if engine.has("ColorMatch"):
+        matched = engine.call1("ColorMatch", image_ref=scaled, image_target=decoded,
+                               method="mkl", strength=0.8, multithread=True)
+    else:
+        log.warning("[KreaAIO] ColorMatch (ComfyUI-KJNodes) not installed — skipping colour match.")
+    if engine.has("ImageSharpen"):
+        matched = engine.call1("ImageSharpen", image=matched, sharpen_radius=1, sigma=0.3, alpha=0.3)
+    return matched

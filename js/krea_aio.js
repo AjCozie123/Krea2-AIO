@@ -150,16 +150,15 @@ const NOTES = {
 // Custom-node packs this node calls into. Links point to the repo PAGE so users can
 // git clone them into ComfyUI/custom_nodes (LoRAs below are direct file downloads).
 // [label, used by, repo url]  — null url = ships with ComfyUI core.
+// The core edit/inpaint/outpaint/identity nodes are now BUNDLED inside this pack
+// (see vendored/), so nothing below is required for the main pipelines. Only these
+// OPTIONAL extras remain — install them just for the feature listed.
 const DEPENDENCIES = [
-  ["comfyui-krea2edit", "P1 + P2 MODE A", "https://github.com/lbouaraba/comfyui-krea2edit"],
-  ["ComfyUI-Krea2-Ostris-Edit", "P2 MODE B + P3", "https://github.com/ostris/ComfyUI-Krea2-Ostris-Edit"],
-  ["ComfyUI-KreaImageAspectPreserve", "P2 restore", "https://github.com/aitrepreneur/ComfyUI-KreaImageAspectPreserve"],
-  ["ComfyUI-KreaAspectPreserveOutpaint", "P3 green mask", "https://github.com/aitrepreneur/ComfyUI-KreaAspectPreserveOutpaint"],
-  ["rgthree-comfy", "Image Comparer", "https://github.com/rgthree/rgthree-comfy"],
-  ["ComfyUI-Impact-Pack", "face detail", "https://github.com/ltdrdata/ComfyUI-Impact-Pack"],
-  ["ComfyUI-Impact-Subpack", "face detail", "https://github.com/ltdrdata/ComfyUI-Impact-Subpack"],
-  ["ComfyUI-Easy-Use", "P1 rembg", "https://github.com/yolain/ComfyUI-Easy-Use"],
-  ["ComfyUI core", "reference method, Klein chain", null],
+  ["ComfyUI-Impact-Pack", "OPTIONAL · face detail", "https://github.com/ltdrdata/ComfyUI-Impact-Pack"],
+  ["ComfyUI-Impact-Subpack", "OPTIONAL · face detail", "https://github.com/ltdrdata/ComfyUI-Impact-Subpack"],
+  ["ComfyUI-Easy-Use", "OPTIONAL · P1 background removal", "https://github.com/yolain/ComfyUI-Easy-Use"],
+  ["ComfyUI-KJNodes", "OPTIONAL · upscale colour match", "https://github.com/kijai/ComfyUI-KJNodes"],
+  ["rgthree-comfy", "OPTIONAL · before/after comparer", "https://github.com/rgthree/rgthree-comfy"],
 ];
 
 // Verified direct downloads; sizes checked against the local files.
@@ -882,11 +881,14 @@ class AIO {
     this.saveSec.appendChild(this.savePreview);
     R.appendChild(this.saveSec);
 
-    // required packs + LoRAs, as one-click direct downloads
+    // optional extras + LoRAs
     this.depBox = el("button", "refbtn plainbtn");
-    this.depBox.appendChild(el("span", null, "Required nodes & LoRAs — download links"));
+    this.depBox.appendChild(el("span", null, "Optional extras & LoRA downloads"));
     const depBody = el("div");
-    this.depBox.onclick = () => this.openOverlay("Required nodes & LoRAs", depBody);
+    this.depBox.onclick = () => this.openOverlay("Optional extras & LoRAs", depBody);
+    depBody.appendChild(el("div", "muted",
+      "The core edit / identity / inpaint / outpaint nodes are BUNDLED in this pack — " +
+      "nothing else is needed to run. The packs below are OPTIONAL, each only for its one feature."));
     for (const [pack, used, url] of DEPENDENCIES) {
       const row = el("div", "deprow");
       if (url) {
@@ -903,8 +905,8 @@ class AIO {
       depBody.appendChild(row);
     }
     depBody.appendChild(el("div", "muted",
-      "Open each link and git clone it into ComfyUI/custom_nodes/, then restart ComfyUI. " +
-      "e.g.  git clone <link>.git"));
+      "Only if you want that optional feature: open the link and git clone it into " +
+      "ComfyUI/custom_nodes/, then restart ComfyUI.  e.g.  git clone <link>.git"));
     for (const [name, used, url] of LORAS) {
       const row = el("div", "deprow");
       const a = el("a", "deplink", name);

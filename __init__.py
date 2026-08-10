@@ -1,8 +1,21 @@
+import logging
+
 from .controller import KreaAIO
 from .live_preview import Krea2LivePreview
 
 from comfy_api.latest import ComfyExtension, io
 from typing_extensions import override
+
+# Register the bundled dependency nodes (comfyui-krea2edit, Ostris edit, the two
+# aspect-preserve packs) into ComfyUI's global registry, so this pack works from a
+# single install. Only fills in node types a separately-installed pack hasn't already
+# provided, so there is never a duplicate-registration conflict.
+try:
+    import nodes as _comfy_nodes
+    from . import vendored as _vendored
+    _vendored.register(_comfy_nodes.NODE_CLASS_MAPPINGS, _comfy_nodes.NODE_DISPLAY_NAME_MAPPINGS)
+except Exception as _e:  # never let a vendoring hiccup stop the main node from loading
+    logging.getLogger(__name__).warning("[KreaAIO] bundled dependency registration skipped: %s", _e)
 
 
 class KreaAIOExtension(ComfyExtension):

@@ -58,32 +58,33 @@ so the krea2 identity-edit LoRA is kept ON by default in Classic (1) and Identit
 MODE A (2A) - where it belongs - and is NOT carried into MODE B (ai-toolkit only).
 
 
-REQUIRED CUSTOM NODE PACKS  (one-click zips, all verified)
----------------------------------------------------------
-Unzip each into ComfyUI/custom_nodes/ and restart. Or install by name in
-ComfyUI-Manager, whichever you prefer.
+DEPENDENCIES  (the core ones are now BUNDLED)
+---------------------------------------------
+The four core packs the pipelines rely on are shipped INSIDE this node (see
+vendored/), so a fresh install of Krea2 AIO AJ runs classic edit, identity edit
+(MODE A + B), inpaint, outpaint and text-to-image with NOTHING else to install:
 
-  comfyui-krea2edit                P1 + P2 MODE A
-    https://github.com/lbouaraba/comfyui-krea2edit/archive/HEAD.zip
-  ComfyUI-Krea2-Ostris-Edit        P2 MODE B + P3
-    https://github.com/ostris/ComfyUI-Krea2-Ostris-Edit/archive/HEAD.zip
-  ComfyUI-KreaImageAspectPreserve  P2 restore
-    https://github.com/aitrepreneur/ComfyUI-KreaImageAspectPreserve/archive/HEAD.zip
-  ComfyUI-KreaAspectPreserveOutpaint  P3 green mask
-    https://github.com/aitrepreneur/ComfyUI-KreaAspectPreserveOutpaint/archive/HEAD.zip
-  rgthree-comfy                    Image Comparer
-    https://github.com/rgthree/rgthree-comfy/archive/HEAD.zip
-  ComfyUI-Impact-Pack              face detail (optional)
-    https://github.com/ltdrdata/ComfyUI-Impact-Pack/archive/HEAD.zip
-  ComfyUI-Impact-Subpack           face detail (optional)
-    https://github.com/ltdrdata/ComfyUI-Impact-Subpack/archive/HEAD.zip
-  ComfyUI-Easy-Use                 P1 background removal (optional)
-    https://github.com/yolain/ComfyUI-Easy-Use/archive/HEAD.zip
+  comfyui-krea2edit                 (Apache-2.0)  bundled
+  ComfyUI-Krea2-Ostris-Edit         (MIT)         bundled
+  ComfyUI-KreaImageAspectPreserve   (Apache-2.0)  bundled
+  ComfyUI-KreaAspectPreserveOutpaint(Apache-2.0)  bundled
 
-FluxKontextMultiReferenceLatentMethod, ColorMatch, ImageSharpen, Flux2Scheduler
+If you already have any of those installed separately, your copy is used instead
+(the bundled copy only fills in what's missing — no conflicts). Credits + licenses
+are in vendored/NOTICE.md and vendored/LICENSES/.
+
+OPTIONAL packs — install only for the extra feature; the node runs fine without
+them and just skips that step:
+
+  ComfyUI-Impact-Pack + ComfyUI-Impact-Subpack   face detail pass
+  ComfyUI-Easy-Use                               pipeline 1 background removal
+  ComfyUI-KJNodes                                colour match on the Flux upscale
+  rgthree-comfy                                  before/after comparer (example wf)
+
+FluxKontextMultiReferenceLatentMethod, ImageSharpen, Flux2Scheduler, ResolutionSelector
 and SamplerCustomAdvanced are ComfyUI core — nothing to install.
 
-The same links are inside the node itself, under "Required nodes & LoRAs".
+The optional links are inside the node itself, under "Optional extras & LoRAs".
 
 
 LORAS  (direct downloads, into ComfyUI/models/loras/Krea2/)

@@ -35,6 +35,13 @@ def get_class(node_type):
     return cls
 
 
+def has(node_type):
+    """True if a node type is registered. Used to make OPTIONAL features (face detail,
+    background removal, upscale colour-match) degrade gracefully instead of erroring when
+    their pack isn't installed."""
+    return _mappings().get(node_type) is not None
+
+
 def _is_v3(cls):
     # V3 nodes expose define_schema(); V1 nodes expose INPUT_TYPES().
     return hasattr(cls, "define_schema") and hasattr(cls, "execute")
