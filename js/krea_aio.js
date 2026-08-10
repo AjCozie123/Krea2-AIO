@@ -8,7 +8,7 @@ const { app } = window.comfyAPI.app;
 const { api } = window.comfyAPI.api;
 
 const NODE_W = 1280;  // horizontal rectangle — 3 columns so everything fits without scrolling
-const NODE_H = 740;
+const NODE_H = 940;   // tall enough that a pipeline's controls are all visible; node is resizable
 
 const PIPES = [
   { idx: 1, n: "CLASSIC", sub: "2 refs", label: "1 - CLASSIC EDIT (two references)" },
@@ -44,7 +44,7 @@ const SOCKETS = {
 };
 
 const PRESETS = {
-  1: { steps: 8, cfg: 1.0, megapixels: 2.0, grounding_px: 512, ref_boost: 4.0 },
+  1: { steps: 8, cfg: 1.0, megapixels: 2.0, grounding_px: 768, ref_boost: 4.0 },
   2: { steps: 8, cfg: 1.0, megapixels: 1.0, grounding_px: 768, ref_boost: 1.0 },
   3: { steps: 8, cfg: 1.0, megapixels: 1.0, grounding_px: 768, ref_boost: 1.0 },
   4: { steps: 8, cfg: 1.0, megapixels: 1.0, grounding_px: 768, ref_boost: 1.0 },
@@ -504,16 +504,17 @@ class AIO {
   // This only pins the size back to the constant; it never reads the current size into
   // the calculation, so it cannot become a feedback loop.
   applyHeight() {
+    // The node is resizable now — the widget fills it via computeSize — so we no longer
+    // pin the size. Just make sure it never opens smaller than the default the first
+    // time; after that the user's dragged size is respected.
     const n = this.node;
-    // Learn the height LiteGraph settles on once (NODE_H plus its slot/title overhead)
-    // and pin to that. Never call n.computeSize() here — it recalculates width from the
-    // widgets and collapses the node to ~210px.
-    if (!this._pinnedH && Math.abs(n.size[1] - NODE_H) < 60) this._pinnedH = n.size[1];
-    const targetH = this._pinnedH || NODE_H;
-    if (n.size[0] === NODE_W && Math.abs(n.size[1] - targetH) <= 2) return;
-    n.size[0] = NODE_W;
-    n.size[1] = targetH;
-    app.graph.setDirtyCanvas(true, true);
+    if (!n) return;
+    if (!this._sized) {
+      this._sized = true;
+      if ((n.size[0] || 0) < NODE_W) n.size[0] = NODE_W;
+      if ((n.size[1] || 0) < NODE_H) n.size[1] = NODE_H;
+      app.graph.setDirtyCanvas(true, true);
+    }
   }
 
   w(n) { return this.node.widgets?.find((x) => x.name === n); }
@@ -945,7 +946,7 @@ class AIO {
     fda.title = "yolov12l-face.pt — required model for the face detail pass";
     fdnote.appendChild(fda);
     this.faceSec.appendChild(fdnote);
-    R.appendChild(this.faceSec);
+    L.appendChild(this.faceSec);
 
     this.rbSec = el("div", "sec");
     const rbl = el("label", "chk");
@@ -953,7 +954,7 @@ class AIO {
     this.rb.onchange = () => this.setP("remove_background", this.rb.checked);
     rbl.appendChild(this.rb);
     rbl.appendChild(el("span", null, "Remove background (RMBG-2.0)"));
-    this.rbSec.appendChild(rbl); R.appendChild(this.rbSec);
+    this.rbSec.appendChild(rbl); L.appendChild(this.rbSec);
 
 
 
@@ -1534,13 +1535,14 @@ app.registerExtension({
         getValue: () => "", setValue: () => { },
       });
       const self = this;
-      // Derive the height from CONTENT, never from self.size. LiteGraph computes the
-      // node's size from its widgets, so reading self.size[1] back here creates a
-      // feedback loop and the node grows without bound on every redraw.
+      // Resizable now: the DOM widget FILLS the node and follows the corner handle.
+      // Returning self.size (minus the title/slot overhead) is a stable fixed point —
+      // LiteGraph adds that overhead back, so node.computeSize() returns the SAME size,
+      // no runaway. Content is laid out to fit at the large default, so no scrolling.
       widget.computeSize = function () {
-        return [NODE_W - 26, NODE_H - 64];
+        return [Math.max(320, self.size[0] - 26), Math.max(220, self.size[1] - 64)];
       };
-      this.resizable = false;   // no corner handle -> the growth loop cannot start
+      this.resizable = true;    // drag the corner to resize freely
       this.size[0] = NODE_W;
       this.size[1] = NODE_H;
 
@@ -1565,8 +1567,8 @@ app.registerExtension({
     nodeType.prototype.onConfigure = function (info) {
       const out = onConfigure ? onConfigure.apply(this, arguments) : undefined;
       const self = this;
-      // Size is fixed by the node; never restore one from the file.
-      this.size[0] = NODE_W; this.size[1] = NODE_H;
+      // Keep the user's saved size if the workflow has one; otherwise use the big default.
+      if (!this.size || !this.size[0] || this.size[0] < 320) { this.size[0] = NODE_W; this.size[1] = NODE_H; }
       setTimeout(() => { try { self._kaio?.migrateOrInit(); self._kaio?.loadLorasForCurrent(); self._kaio?.sync(); } catch (e) { } }, 48);
       return out;
     };
