@@ -1461,6 +1461,36 @@ class AIO {
     const n = this.loras().filter((x) => x.on).length;
     this.status.appendChild(el("div", null, `${n} LoRA${n === 1 ? "" : "s"} active.`));
     for (const wn of warns) this.status.appendChild(el("div", "warn", "! " + wn));
+
+    // Optional-feature packs: if the user enabled a feature but its pack isn't installed,
+    // the run still works (that step is skipped) — but tell them, with a download link.
+    const OPT = [
+      { on: !!this.gv("remove_background") && p === 1, type: "easy imageRemBg",
+        feat: "Background removal", pack: "ComfyUI-Easy-Use", url: "https://github.com/yolain/ComfyUI-Easy-Use" },
+      { on: !!this.gv("face_detail") && (p === 1 || p === 4), type: "FaceDetailer",
+        feat: "Face detail", pack: "ComfyUI-Impact-Pack", url: "https://github.com/ltdrdata/ComfyUI-Impact-Pack" },
+      { on: up, type: "ColorMatch",
+        feat: "Upscale colour match", pack: "ComfyUI-KJNodes", url: "https://github.com/kijai/ComfyUI-KJNodes" },
+    ];
+    for (const o of OPT) {
+      if (!o.on || !this.nodeMissing(o.type)) continue;
+      const d = el("div", "warn");
+      d.appendChild(document.createTextNode(`! ${o.feat} needs ${o.pack} (not installed — step is skipped). `));
+      const a = el("a", "deplink", "git clone →");
+      a.href = o.url; a.target = "_blank"; a.rel = "noopener"; a.title = o.url;
+      d.appendChild(a);
+      this.status.appendChild(d);
+    }
+  }
+
+  // True if a node type is NOT registered in the frontend (i.e. its pack isn't installed).
+  // Unknown/registry-unavailable -> false, so we never warn on a false positive.
+  nodeMissing(type) {
+    try {
+      const reg = window.LiteGraph && window.LiteGraph.registered_node_types;
+      if (!reg) return false;
+      return !(reg[type] || reg[type.toLowerCase()]);
+    } catch (e) { return false; }
   }
 }
 

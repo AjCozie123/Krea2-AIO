@@ -74,12 +74,18 @@ If you already have any of those installed separately, your copy is used instead
 are in vendored/NOTICE.md and vendored/LICENSES/.
 
 OPTIONAL packs — install only for the extra feature; the node runs fine without
-them and just skips that step:
+them and just skips that step. git clone into ComfyUI/custom_nodes/ (or install by
+name in ComfyUI-Manager), then restart:
 
-  ComfyUI-Impact-Pack + ComfyUI-Impact-Subpack   face detail pass
-  ComfyUI-Easy-Use                               pipeline 1 background removal
-  ComfyUI-KJNodes                                colour match on the Flux upscale
-  rgthree-comfy                                  before/after comparer (example wf)
+  face detail pass:
+    https://github.com/ltdrdata/ComfyUI-Impact-Pack
+    https://github.com/ltdrdata/ComfyUI-Impact-Subpack
+  pipeline 1 background removal:
+    https://github.com/yolain/ComfyUI-Easy-Use
+  colour match on the Flux upscale:
+    https://github.com/kijai/ComfyUI-KJNodes
+  before/after comparer (example workflow only):
+    https://github.com/rgthree/rgthree-comfy
 
 FluxKontextMultiReferenceLatentMethod, ImageSharpen, Flux2Scheduler, ResolutionSelector
 and SamplerCustomAdvanced are ComfyUI core — nothing to install.
