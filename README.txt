@@ -1,5 +1,5 @@
-Krea2 AIO AJ  —  install notes
-==============================
+Krea2 AIO  —  install notes
+===========================
 
 WHAT THIS IS
 ------------
@@ -17,23 +17,37 @@ through ComfyUI's own registry, so the packs listed below must be installed.
 
 INSTALL
 -------
-1. Copy the folder  KreaUltraController  into:
+Easiest — git clone (recommended, so you can update with one command later).
+Open a terminal / command prompt and run:
 
-       ComfyUI/custom_nodes/
+    cd ComfyUI/custom_nodes
+    git clone https://github.com/AjCozie123/Krea2-AIO.git
 
-2. Restart ComfyUI completely (not just refresh the browser).
+  (On the ComfyUI portable build, that folder is usually
+   ComfyUI_windows_portable/ComfyUI/custom_nodes.)
+  This creates ComfyUI/custom_nodes/Krea2-AIO. Then FULLY restart ComfyUI —
+  close it completely and reopen it, not just a browser refresh.
 
-3. Open  example_workflows/Krea2_AIO_AJ.json  (a copy is placed in
-   ComfyUI/user/default/workflows/ on install), or just drag the .json onto
-   the ComfyUI canvas.
+No git? On the GitHub page click the green "Code" button -> Download ZIP, unzip
+  it, and drop the folder into ComfyUI/custom_nodes/. Restart ComfyUI.
 
-There is nothing to build, install or pip. It is plain Python + JavaScript.
+TO UPDATE later to the newest version, run:
+
+    cd ComfyUI/custom_nodes/Krea2-AIO
+    git pull
+
+  then FULLY restart ComfyUI.
+
+Then open  example_workflows/Krea2_AIO.json  — or just drag that .json file onto
+the ComfyUI canvas.
+
+There is nothing to build, pip-install or compile — it is plain Python + JavaScript.
 
 
 TWO NODES IN THIS PACK
 ----------------------
-  Krea2 AIO AJ          the 5-pipeline workflow node (below).
-  Krea2 Live Preview AJ a large, resizable window that shows the sampler preview
+  Krea2 AIO             the 5-pipeline workflow node (below).
+  Krea2 Live Preview    a large, resizable window that shows the sampler preview
                         WHILE generating, so you can watch the image form. Drop it
                         next to the AIO node. It needs live previews turned on:
                         Settings -> Preview method = Auto (or --preview-method auto).
@@ -58,10 +72,28 @@ so the krea2 identity-edit LoRA is kept ON by default in Classic (1) and Identit
 MODE A (2A) - where it belongs - and is NOT carried into MODE B (ai-toolkit only).
 
 
+PROMPT ENHANCER (LLM, optional)
+-------------------------------
+Tick "Prompt Enhancer (LLM)" to rewrite your prompt before generating — the same
+idea as ComfyUI's official Krea-2 workflow. It runs the core TextGenerate node on a
+Qwen3-VL text encoder (by default the SAME one you already load, so no extra VRAM),
+with a DIFFERENT system prompt per workflow: text-to-image expands into flowing Krea 2
+prose; the edit workflows produce a short, grounded edit instruction. Pick the encoder
+and a max-token size right in the node ("Text encoder - enhancer" + "Max tokens").
+
+For uncensored expansion, choose an ABLITERATED Qwen3-VL in the encoder dropdown — the
+stock qwen3vl model has its own refusals. If the enhancer errors, returns nothing, or
+refuses, your typed prompt is used unchanged, so a run is never blocked.
+
+Note: for the edit workflows the enhancer can be shown your reference image(s), but a
+small 4B model is unreliable at image-grounded editing — text-to-image is where it
+shines. Edit prompts are best kept short and written by hand anyway.
+
+
 DEPENDENCIES  (the core ones are now BUNDLED)
 ---------------------------------------------
 The four core packs the pipelines rely on are shipped INSIDE this node (see
-vendored/), so a fresh install of Krea2 AIO AJ runs classic edit, identity edit
+vendored/), so a fresh install of Krea2 AIO runs classic edit, identity edit
 (MODE A + B), inpaint, outpaint and text-to-image with NOTHING else to install:
 
   comfyui-krea2edit                 (Apache-2.0)  bundled
@@ -144,8 +176,11 @@ USAGE
 Wire LoadImage -> image (and its MASK -> mask for inpaint). Pick a pipeline tab.
 The node shows only the controls that pipeline actually uses. Its outputs are:
 
-  image   the result      -> your SaveImage
-  source  the original    -> Image Comparer input A (result goes to input B)
+  image      the result      -> your SaveImage, and Image Comparer input B
+  source     the BEFORE image -> Image Comparer input A. Normally the original input;
+             when Face detail pass is ON it is the PRE-face-detail image, so the
+             comparer shows exactly what the face pass changed.
+  save_path  a name/prefix    -> wire into SaveImage.filename_prefix (optional)
 
 The node previews the result on itself but never saves; saving is your
 SaveImage node's job, so you choose the folder and prefix.
