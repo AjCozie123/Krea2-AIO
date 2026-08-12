@@ -1,0 +1,453 @@
+{
+  "id": "54e824b6-0c90-4e26-a92b-49bd2497a758",
+  "revision": 0,
+  "last_node_id": 8,
+  "last_link_id": 9,
+  "nodes": [
+    {
+      "id": 5,
+      "type": "Image Comparer (rgthree)",
+      "pos": [
+        1358.2456219815367,
+        1.520462698334328
+      ],
+      "size": [
+        578.2456219815363,
+        565.4970667759017
+      ],
+      "flags": {},
+      "order": 3,
+      "mode": 0,
+      "inputs": [
+        {
+          "dir": 3,
+          "name": "image_a",
+          "type": "IMAGE",
+          "link": 9
+        },
+        {
+          "dir": 3,
+          "name": "image_b",
+          "type": "IMAGE",
+          "link": 8
+        }
+      ],
+      "outputs": [
+        {
+          "dir": 4,
+          "name": "images",
+          "shape": 3,
+          "type": "IMAGE",
+          "links": null
+        }
+      ],
+      "title": "Before / after",
+      "properties": {
+        "cnr_id": "rgthree-comfy",
+        "ver": "1.0.2605082257",
+        "comparer_mode": "Slide",
+        "ue_properties": {
+          "widget_ue_connectable": {},
+          "version": "7.8",
+          "input_ue_unconnectable": {}
+        }
+      },
+      "widgets_values": [
+        [
+          {
+            "name": "A",
+            "selected": true,
+            "url": "/api/view?filename=rgthree.compare._temp_opxxh_00001_.png&type=temp&subfolder=&rand=0.0006229852235184463"
+          },
+          {
+            "name": "B",
+            "selected": true,
+            "url": "/api/view?filename=rgthree.compare._temp_opxxh_00002_.png&type=temp&subfolder=&rand=0.7617004635274826"
+          }
+        ]
+      ],
+      "color": "#222",
+      "bgcolor": "#000"
+    },
+    {
+      "id": 1,
+      "type": "LoadImage",
+      "pos": [
+        -360,
+        13.062704061091024
+      ],
+      "size": [
+        300,
+        360
+      ],
+      "flags": {},
+      "order": 0,
+      "mode": 0,
+      "inputs": [],
+      "outputs": [
+        {
+          "name": "IMAGE",
+          "type": "IMAGE",
+          "links": [
+            1
+          ]
+        },
+        {
+          "name": "MASK",
+          "type": "MASK",
+          "links": [
+            2
+          ]
+        }
+      ],
+      "title": "Reference A",
+      "properties": {
+        "cnr_id": "comfy-core",
+        "ver": "0.29.2",
+        "Node name for S&R": "LoadImage",
+        "ue_properties": {
+          "widget_ue_connectable": {},
+          "version": "7.8",
+          "input_ue_unconnectable": {}
+        }
+      },
+      "widgets_values": [
+        "Katarina_Krea2_00046_.png",
+        "image"
+      ],
+      "color": "#222",
+      "bgcolor": "#000"
+    },
+    {
+      "id": 4,
+      "type": "SaveImage",
+      "pos": [
+        1359.7659976779657,
+        616.1402708634796
+      ],
+      "size": [
+        419.88820384466794,
+        479.66811483201207
+      ],
+      "flags": {},
+      "order": 4,
+      "mode": 0,
+      "inputs": [
+        {
+          "name": "images",
+          "type": "IMAGE",
+          "link": 4
+        },
+        {
+          "name": "filename_prefix",
+          "type": "STRING",
+          "widget": {
+            "name": "filename_prefix"
+          },
+          "link": 5
+        }
+      ],
+      "outputs": [
+        {
+          "name": "images",
+          "type": "IMAGE",
+          "links": null
+        }
+      ],
+      "title": "Save  (small)",
+      "properties": {
+        "cnr_id": "comfy-core",
+        "ver": "0.29.2",
+        "Node name for S&R": "SaveImage",
+        "ue_properties": {
+          "widget_ue_connectable": {
+            "filename_prefix": true
+          },
+          "version": "7.8",
+          "input_ue_unconnectable": {}
+        }
+      },
+      "widgets_values": [
+        "ComfyUI"
+      ],
+      "color": "#222",
+      "bgcolor": "#000"
+    },
+    {
+      "id": 3,
+      "type": "KreaAIO",
+      "pos": [
+        0.2536227263272277,
+        7.539513215510782
+      ],
+      "size": [
+        1300,
+        984
+      ],
+      "flags": {},
+      "order": 2,
+      "mode": 0,
+      "inputs": [
+        {
+          "name": "image",
+          "shape": 7,
+          "type": "IMAGE",
+          "link": 1
+        },
+        {
+          "name": "mask",
+          "shape": 7,
+          "type": "MASK",
+          "link": 2
+        },
+        {
+          "name": "reference",
+          "shape": 7,
+          "type": "IMAGE",
+          "link": 3
+        }
+      ],
+      "outputs": [
+        {
+          "name": "image",
+          "type": "IMAGE",
+          "links": [
+            4,
+            9
+          ]
+        },
+        {
+          "name": "source",
+          "type": "IMAGE",
+          "links": [
+            8
+          ]
+        },
+        {
+          "name": "save_path",
+          "type": "STRING",
+          "links": [
+            5
+          ]
+        }
+      ],
+      "properties": {
+        "aux_id": "AjCozie123/Krea2-AIO",
+        "ver": "1ca5b9c36fb9056825b9eac10b8a6019fb9c6eb7",
+        "Node name for S&R": "KreaAIO",
+        "ue_properties": {
+          "widget_ue_connectable": {},
+          "version": "7.8",
+          "input_ue_unconnectable": {}
+        }
+      },
+      "widgets_values": [
+        "2 - IDENTITY / OSTRIS EDIT",
+        false,
+        "A - Native Krea2Edit (identity)",
+        "A - INPAINT (you paint the mask)",
+        false,
+        true,
+        false,
+        "",
+        0,
+        "randomize",
+        8,
+        1,
+        "euler",
+        "simple",
+        "3:4 (Portrait Standard)",
+        1,
+        768,
+        1,
+        "smart: manual mask, local auto, or full frame",
+        "Krea2",
+        "[{\"on\":true,\"lora\":\"Krea2\\krea2_identity_edit_v1_2.safetensors\",\"strength\":1}]",
+        "Krea2\\pornmasterKrea2_v2TurboInt8.safetensors",
+        "Qwen\\qwen3vl_4b_fp8_scaled.safetensors",
+        "wan\\wan_2.1_vae.safetensors",
+        "Flux 2 9B\\flux-2-klein-9b-fp8.safetensors",
+        "Qwen\\qwen_3_8b_fp8mixed.safetensors",
+        "Flux 2 9b\\full_encoder_small_decoder.safetensors",
+        2,
+        4,
+        256,
+        0,
+        0,
+        0,
+        0,
+        1,
+        "{\"1\":{\"prompt\":\"\",\"seed\":0,\"seed_control\":\"randomize\",\"steps\":8,\"cfg\":1,\"denoise\":1,\"sampler\":\"euler\",\"scheduler\":\"simple\",\"aspect_ratio\":\"3:4 (Portrait Standard)\",\"megapixels\":2,\"grounding_px\":768,\"ref_boost\":4,\"restore_mode\":\"smart: manual mask, local auto, or full frame\",\"edit_mode\":\"A - Native Krea2Edit (identity)\",\"fill_mode\":\"A - INPAINT (you paint the mask)\",\"face_detail\":false,\"use_reference\":true,\"remove_background\":false,\"trigger_words\":\"\",\"enhance_prompt\":true},\"2\":{\"prompt\":\"\",\"seed\":0,\"seed_control\":\"randomize\",\"steps\":8,\"cfg\":1,\"denoise\":1,\"sampler\":\"euler\",\"scheduler\":\"simple\",\"aspect_ratio\":\"3:4 (Portrait Standard)\",\"megapixels\":1,\"grounding_px\":768,\"ref_boost\":1,\"restore_mode\":\"smart: manual mask, local auto, or full frame\",\"edit_mode\":\"A - Native Krea2Edit (identity)\",\"fill_mode\":\"A - INPAINT (you paint the mask)\",\"face_detail\":false,\"use_reference\":true,\"remove_background\":false,\"trigger_words\":\"\",\"enhance_prompt\":false},\"3\":{\"prompt\":\"\",\"seed\":0,\"seed_control\":\"randomize\",\"steps\":8,\"cfg\":1,\"denoise\":1,\"sampler\":\"euler\",\"scheduler\":\"simple\",\"aspect_ratio\":\"3:4 (Portrait Standard)\",\"megapixels\":1,\"grounding_px\":768,\"ref_boost\":1,\"restore_mode\":\"smart: manual mask, local auto, or full frame\",\"edit_mode\":\"A - Native Krea2Edit (identity)\",\"fill_mode\":\"A - INPAINT (you paint the mask)\",\"face_detail\":false,\"use_reference\":true,\"remove_background\":false,\"trigger_words\":\"\",\"enhance_prompt\":false},\"4\":{\"prompt\":\"\",\"seed\":0,\"seed_control\":\"randomize\",\"steps\":8,\"cfg\":1,\"denoise\":1,\"sampler\":\"euler\",\"scheduler\":\"simple\",\"aspect_ratio\":\"2:3 (Portrait Photo)\",\"megapixels\":2,\"grounding_px\":768,\"ref_boost\":1,\"restore_mode\":\"smart: manual mask, local auto, or full frame\",\"edit_mode\":\"A - Native Krea2Edit (identity)\",\"fill_mode\":\"A - INPAINT (you paint the mask)\",\"face_detail\":false,\"use_reference\":true,\"remove_background\":true,\"trigger_words\":\"\",\"enhance_prompt\":true},\"_loras\":{\"1\":\"[{\\\"on\\\":true,\\\"lora\\\":\\\"Krea2\\\\krea2_identity_edit_v1_2.safetensors\\\",\\\"strength\\\":1}]\",\"3\":\"[]\",\"4\":\"[]\",\"2A\":\"[{\\\"on\\\":true,\\\"lora\\\":\\\"Krea2\\\\krea2_identity_edit_v1_2.safetensors\\\",\\\"strength\\\":1}]\",\"2B\":\"[]\"}}",
+        false,
+        "",
+        false,
+        "(loaded text encoder · low VRAM)",
+        "256 (low VRAM · fast)",
+        ""
+      ],
+      "color": "#222",
+      "bgcolor": "#000"
+    },
+    {
+      "id": 2,
+      "type": "LoadImage",
+      "pos": [
+        -360,
+        420
+      ],
+      "size": [
+        300,
+        360
+      ],
+      "flags": {},
+      "order": 1,
+      "mode": 0,
+      "inputs": [],
+      "outputs": [
+        {
+          "name": "IMAGE",
+          "type": "IMAGE",
+          "links": [
+            3
+          ]
+        },
+        {
+          "name": "MASK",
+          "type": "MASK",
+          "links": null
+        }
+      ],
+      "title": "Reference B",
+      "properties": {
+        "cnr_id": "comfy-core",
+        "ver": "0.29.2",
+        "Node name for S&R": "LoadImage",
+        "ue_properties": {
+          "widget_ue_connectable": {},
+          "version": "7.8",
+          "input_ue_unconnectable": {}
+        }
+      },
+      "widgets_values": [
+        "example.png",
+        "image"
+      ],
+      "color": "#222",
+      "bgcolor": "#000"
+    }
+  ],
+  "links": [
+    [
+      1,
+      1,
+      0,
+      3,
+      0,
+      "IMAGE"
+    ],
+    [
+      2,
+      1,
+      1,
+      3,
+      1,
+      "MASK"
+    ],
+    [
+      3,
+      2,
+      0,
+      3,
+      2,
+      "IMAGE"
+    ],
+    [
+      4,
+      3,
+      0,
+      4,
+      0,
+      "IMAGE"
+    ],
+    [
+      5,
+      3,
+      2,
+      4,
+      1,
+      "STRING"
+    ],
+    [
+      8,
+      3,
+      1,
+      5,
+      1,
+      "IMAGE"
+    ],
+    [
+      9,
+      3,
+      0,
+      5,
+      0,
+      "IMAGE"
+    ]
+  ],
+  "groups": [
+    {
+      "id": 1,
+      "title": "Inputs",
+      "bounding": [
+        -380,
+        -60,
+        340,
+        880
+      ],
+      "color": "#3f789e",
+      "flags": {}
+    },
+    {
+      "id": 2,
+      "title": "Krea2 AIO — all 4 workflows",
+      "bounding": [
+        -20,
+        -60,
+        1339.3242624420752,
+        1338.8201905372048
+      ],
+      "color": "#3f5159",
+      "flags": {}
+    },
+    {
+      "id": 3,
+      "title": "Outputs",
+      "bounding": [
+        1338.2456219815367,
+        -58.47953730166567,
+        621.0794746497866,
+        1161.7803295208737
+      ],
+      "color": "#59463f",
+      "flags": {}
+    }
+  ],
+  "config": {},
+  "extra": {
+    "ds": {
+      "scale": 0.8390545288824027,
+      "offset": [
+        795.3063501674267,
+        407.89656500258593
+      ]
+    },
+    "ue_links": [],
+    "links_added_by_ue": [],
+    "frontendVersion": "1.48.7",
+    "VHS_latentpreview": false,
+    "VHS_latentpreviewrate": 0,
+    "VHS_MetadataImage": true,
+    "VHS_KeepIntermediate": true
+  },
+  "version": 0.4
+}

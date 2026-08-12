@@ -22,7 +22,7 @@ Two easily-confused prepare nodes, verified against object_info:
 
 import logging
 
-from . import engine, models
+from . import engine, models, prompt_enhancer
 
 log = logging.getLogger(__name__)
 
@@ -93,6 +93,54 @@ def krea_base(ctx):
     return model, clip, vae
 
 
+def finalize_prompt(ctx, clip):
+    """Turn the user's raw prompt into the final prompt the pipeline samples with.
+
+    Two steps, in order: (1) LLM enhancement, if the user ticked it — rewritten with the
+    per-pipeline system prompt in prompt_enhancer.py; (2) trigger words appended verbatim,
+    AFTER enhancement, so the LLM can never drop or reword a LoRA's activation tokens.
+    Mutates and returns ctx.prompt. Never raises: enhancement failures fall back to the raw
+    prompt (see prompt_enhancer.enhance).
+    """
+    base = (ctx.get("prompt") or "").strip()
+    if ctx.get("enhance_prompt"):
+        idx = int(ctx.get("pipeline_idx", 4) or 4)
+        enh_clip = clip
+        sel = ctx.get("enhancer_model")
+        # A specific text-encoder pick (not the "(loaded …)" sentinel) is loaded just for the
+        # rewrite — e.g. an abliterated Qwen3-VL that won't refuse spicy prompts.
+        if sel and not str(sel).startswith("("):
+            try:
+                enh_clip = models.clip(sel, KREA_CLIP_TYPE)
+            except Exception as e:
+                log.warning("[KreaAIO] enhancer model %r failed to load (%s); using the loaded "
+                            "text encoder for the rewrite instead.", sel, e)
+                enh_clip = clip
+        # Vision: show the enhancer the image(s) for edit workflows (1/2/3) so it grounds the
+        # prompt in what is actually there. Text-to-image (4) has no source image. Reference 2 is
+        # already None when the user disabled it (controller passes reference=None), so a disabled
+        # reference is ignored automatically. Two images batch as image 1 (source) + image 2 (ref).
+        vis_image = None
+        if idx != 4:
+            src = ctx.get("image")
+            ref = ctx.get("reference")
+            if src is not None and ref is not None:
+                try:
+                    vis_image = engine.call1("ImageBatch", image1=src, image2=ref)
+                except Exception as e:
+                    log.warning("[KreaAIO] could not batch source+reference for the enhancer (%s); "
+                                "showing the source only.", e)
+                    vis_image = src
+            elif src is not None:
+                vis_image = src
+        base = prompt_enhancer.enhance(ctx, enh_clip, idx, base, image=vis_image)
+    tw = (ctx.get("trigger_words") or "").strip()
+    if tw:
+        base = f"{base}, {tw}" if base else tw
+    ctx.prompt = base
+    return base
+
+
 def need_image(ctx, what="image"):
     img = ctx.get(what)
     if img is None:
@@ -141,6 +189,7 @@ def rembg(image):
 def text_to_image(ctx):
     model, clip, vae = krea_base(ctx)
     model, clip = models.apply_loras(model, clip, ctx.get("loras"))
+    finalize_prompt(ctx, clip)
 
     positive = engine.call1("CLIPTextEncode", clip=clip, text=ctx.prompt)
     negative = engine.call1("ConditioningZeroOut", conditioning=positive)
@@ -155,14 +204,18 @@ def text_to_image(ctx):
                            scheduler=ctx.get("scheduler") or "simple",
                            positive=positive, negative=negative,
                            latent_image=latent, denoise=float(ctx.get("denoise", 1.0)))
-    image = engine.call1("VAEDecode", samples=sampled, vae=vae)
+    base_image = engine.call1("VAEDecode", samples=sampled, vae=vae)
+    final = base_image
     if ctx.get("face_detail"):
         if engine.has("FaceDetailer"):
-            image = face_detail(ctx, image, model, clip, vae, negative)
+            final = face_detail(ctx, base_image, model, clip, vae, negative)
         else:
             log.warning("[KreaAIO] face_detail is on but FaceDetailer (ComfyUI-Impact-Pack) "
                         "isn't installed — skipping the face pass.")
-    return image, image
+    # Before/after: `source` is the image BEFORE the face-detail pass, so an Image Comparer
+    # shows exactly what face detail changed. With face detail OFF there is no earlier stage
+    # for text-to-image, so both outputs are the same image (nothing to compare).
+    return final, base_image
 
 
 # ---------------------------------------------------------------------------
@@ -173,6 +226,7 @@ def classic_edit(ctx):
     source = need_image(ctx, "image")
     model, clip, vae = krea_base(ctx)
     model, _ = models.apply_loras(model, None, ctx.get("loras"))
+    finalize_prompt(ctx, clip)
 
     # scene / source: optional background removal, then an ABSOLUTE megapixel target.
     # RMBG needs ComfyUI-Easy-Use; if it isn't installed, skip it instead of erroring.
@@ -223,14 +277,17 @@ def classic_edit(ctx):
                            scheduler=ctx.get("scheduler") or "simple",
                            positive=positive, negative=negative,
                            latent_image=target, denoise=float(ctx.get("denoise", 1.0)))
-    image = engine.call1("VAEDecode", samples=sampled, vae=vae)
+    base_image = engine.call1("VAEDecode", samples=sampled, vae=vae)
+    final = base_image
+    before = source  # default: compare the finished edit against the original input
     if ctx.get("face_detail"):
         if engine.has("FaceDetailer"):
-            image = face_detail(ctx, image, patched, clip, vae, negative)
+            final = face_detail(ctx, base_image, patched, clip, vae, negative)
+            before = base_image   # face detail on: compare pre/post face detail instead
         else:
             log.warning("[KreaAIO] face_detail is on but FaceDetailer (ComfyUI-Impact-Pack) "
                         "isn't installed — skipping the face pass.")
-    return image, source
+    return final, before
 
 
 # ---------------------------------------------------------------------------
@@ -241,14 +298,29 @@ def identity_edit(ctx):
     source = need_image(ctx, "image")
     model, clip, vae = krea_base(ctx)
     model, _ = models.apply_loras(model, None, ctx.get("loras"))
+    finalize_prompt(ctx, clip)
 
     # 6 outputs: prepared_image, restore_map, width, height, batch_size, prepare_info
     prep = engine.call("KreaImageAspectPreservePrepare", image=source)
     prepared, restore_map, width, height = prep[0], prep[1], prep[2], prep[3]
 
+    # RESOLUTION OPTION (identity works a bit less well with it — surfaced deliberately).
+    # Identity edit is tuned to the SOURCE's own aspect/size (width/height above come from the
+    # prepare node). We let the user pick an explicit Aspect + Megapixels for the sampled target
+    # anyway: it works, but a different aspect crops framing and can soften identity/edit adherence.
+    # The restore step below re-composites onto the original regardless. Falls back to the
+    # source-derived size if the selector ever errors.
+    try:
+        width, height = engine.call("ResolutionSelector",
+                                    aspect_ratio=resolve_aspect(ctx.get("aspect_ratio")),
+                                    megapixels=float(ctx.get("megapixels") or 1.0), multiple=8)[:2]
+    except Exception as e:
+        log.warning("[KreaAIO] resolution selector failed for identity (%s); using the "
+                    "source-derived size instead.", e)
+
     # The source goes in through the REFERENCE path, not the latent. The sampler and
     # the patch's target_latent both take a CLEAN Wan21-format empty latent at the
-    # bucket size — feeding them the VAE-encoded source instead misaligns the
+    # target size — feeding them the VAE-encoded source instead misaligns the
     # reference geometry against the output grid and wrecks edit adherence.
     source_latent = engine.call1("VAEEncode", pixels=prepared, vae=vae)
     target = engine.call1("EmptyHunyuanLatentVideo", width=width, height=height,
@@ -327,6 +399,7 @@ def green_mask_fill(ctx):
     source = need_image(ctx, "image")
     model, clip, vae = krea_base(ctx)
     model, _ = models.apply_loras(model, None, ctx.get("loras"))
+    finalize_prompt(ctx, clip)
 
     if ctx.get("outpaint"):
         # OUTPAINT — no painting. The pad node produces both the canvas and the mask,

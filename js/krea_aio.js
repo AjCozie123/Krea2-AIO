@@ -8,7 +8,9 @@ const { app } = window.comfyAPI.app;
 const { api } = window.comfyAPI.api;
 
 const NODE_W = 1300;  // horizontal rectangle — 3 columns so everything fits without scrolling
-const NODE_H = 920;   // fixed (not user-resizable); sized so all controls show without scroll
+const NODE_H = 920;   // initial height before the DOM UI measures itself
+// The node hugs its own content exactly (this is just a small floor). Node height = box + 64.
+const NODE_MIN_BOX = 320;
 
 const PIPES = [
   { idx: 1, n: "CLASSIC", sub: "2 refs", label: "1 - CLASSIC EDIT (two references)" },
@@ -27,7 +29,7 @@ const SHOW = {
       "face_detail", "remove_background", "use_reference"],
   2: ["conn", "prompt", "seed", "steps", "cfg", "denoise", "sampler", "scheduler",
       "grounding_px", "ref_boost", "restore_mode", "loras", "edit_mode",
-      "use_reference"],
+      "use_reference", "aspect_ratio", "megapixels"],
   3: ["conn", "prompt", "seed", "steps", "cfg", "denoise", "sampler", "scheduler", "loras", "fill_mode"],
   4: ["prompt", "seed", "steps", "cfg", "denoise", "sampler", "scheduler", "aspect_ratio", "megapixels",
       "loras", "face_detail"],
@@ -47,7 +49,7 @@ const PRESETS = {
   1: { steps: 8, cfg: 1.0, megapixels: 2.0, grounding_px: 768, ref_boost: 4.0 },
   2: { steps: 8, cfg: 1.0, megapixels: 1.0, grounding_px: 768, ref_boost: 1.0 },
   3: { steps: 8, cfg: 1.0, megapixels: 1.0, grounding_px: 768, ref_boost: 1.0 },
-  4: { steps: 8, cfg: 1.0, megapixels: 1.0, grounding_px: 768, ref_boost: 1.0 },
+  4: { steps: 8, cfg: 1.0, megapixels: 2.0, grounding_px: 768, ref_boost: 1.0 },
 };
 
 // Every field that belongs to ONE pipeline. Each pipeline keeps its own copy in
@@ -59,7 +61,20 @@ const PER_PIPE = [
   "prompt", "trigger_words", "seed", "seed_control", "steps", "cfg", "denoise", "sampler", "scheduler",
   "aspect_ratio", "megapixels", "grounding_px", "ref_boost", "restore_mode",
   "edit_mode", "fill_mode", "face_detail", "use_reference", "remove_background",
+  "enhance_prompt",
 ];
+
+// Per-workflow explanation of what the LLM prompt enhancer does (mirrors prompt_enhancer.py).
+const ENH_INFO = {
+  1: "Expands your prompt into a full description of the finished reference-edit image " +
+     "(subject + scene), positive-only.",
+  2: "Rewrites your request into a crisp Krea2Edit instruction — only what changes, keeping " +
+     "everything else untouched.",
+  3: "Rewrites your request into a description of just the masked / extended region so it " +
+     "blends with the kept image.",
+  4: "Expands your prompt into a grounded, parseable text-to-image description in Krea 2's " +
+     "flowing-prose format.",
+};
 // NOTE: loras are NOT in PER_PIPE — they use their own per-slot store (see LORA_DEFAULTS
 // and loraKey()), because pipeline 2 keeps a SEPARATE stack for MODE A vs MODE B.
 
@@ -76,6 +91,7 @@ const _PBASE = {
   edit_mode: "A - Native Krea2Edit (identity)",
   fill_mode: "A - INPAINT (you paint the mask)",
   face_detail: false, use_reference: true, remove_background: false,
+  enhance_prompt: false,
 };
 const PIPE_DEFAULTS = {
   1: { ..._PBASE, ...PRESETS[1] },
@@ -121,6 +137,7 @@ const NOTES = {
     ["LoRA must match the encoder", "A MODE A LoRA under MODE B (or the reverse) degrades quietly - no error, just a worse image. Mismatches are flagged amber in the LoRA list."],
     ["Clothing changes - use this", "Verified: MODE A, maskless, restore_mode 'smart'. Measured 11.3% of frame changed. Do NOT use a full-body mask in pipeline 3; those fail and leave green limbs."],
     ["restore_mode", "'smart' tries the manual mask, then local auto-detected edits, then the full frame. Everything outside the edit comes back at native resolution."],
+    ["Resolution (optional here)", "Identity edit is tuned to the SOURCE image's own aspect and size, so it normally follows the source. You CAN set an Aspect + Megapixels here, but it works a bit LESS well — a different aspect can crop the framing and soften identity/edit adherence. For the best likeness keep it near the source's aspect; raise megapixels only if you want a larger result."],
   ]],
   3: ["GREEN-MASK INPAINT / OUTPAINT", [
     ["How to prompt - INPAINT", "Describe only what should APPEAR in the painted region, e.g. \"a leather jacket\" or \"a bunch of red roses\". Do not describe the rest of the image; only the mask is regenerated. Keep it short and concrete."],
@@ -374,7 +391,7 @@ const CSS = `
 .kaio .trigrow input{font-size:10.5px}
 .kaio .trigrow .thint{font-size:8.5px;color:#5f6b7c;margin-top:3px}
 /* embedded live-preview box — fixed size, always present */
-.kaio .kaio-preview{position:relative;width:100%;height:520px;background:#07090d;
+.kaio .kaio-preview{position:relative;width:100%;height:400px;background:#07090d;
  border:1px solid var(--line);border-radius:10px;overflow:hidden;display:flex;
  align-items:center;justify-content:center}
 .kaio .kaio-preview-img{max-width:100%;max-height:100%;object-fit:contain;display:none}
@@ -453,6 +470,18 @@ class AIO {
 
     // Re-fit when a <details> section is toggled, since that changes the height a lot.
     this.mBox.addEventListener("toggle", () => this.applyHeight());
+
+    // Auto-fit the node to its content so NOTHING scrolls. The DOM widget element is the
+    // node's whole body, so we grab it to keep its computeSize in step with the height we
+    // pick. A ResizeObserver on the content wrapper re-fits whenever the visible controls
+    // change (tab switch, LoRA added, guide toggled, …). Content height depends only on the
+    // FIXED width, so reading it back to set the height can never become a growth loop.
+    this._domWidget = this.node.widgets?.find((w) => w.name === "kaio_ui");
+    this._fitBox = NODE_H - 64;
+    try {
+      this._ro = new ResizeObserver(() => this.applyHeight());
+      this._ro.observe(this.inner);
+    } catch (e) { /* no ResizeObserver: sync()/toggle still drive applyHeight() */ }
   }
 
   // Deterministic height from what is actually shown.
@@ -506,13 +535,26 @@ class AIO {
   // This only pins the size back to the constant; it never reads the current size into
   // the calculation, so it cannot become a feedback loop.
   applyHeight() {
-    // Fixed size: pin the node back to the constant. Never read the current size into
-    // this calculation (that would create a growth loop) — it is a plain constant.
     const n = this.node;
     if (!n) return;
-    if (n.size[0] === NODE_W && Math.abs(n.size[1] - NODE_H) <= 2) return;
+    // Measure the real content height. ComfyUI detaches/hides DOM widget elements when the
+    // node is off-screen, so scrollHeight can momentarily read ~0 — ignore those junk reads
+    // and keep the last good value so the node never collapses.
+    const measured = this.inner ? this.inner.scrollHeight : 0;
+    if (measured > 120) {
+      // +24 = the .kaio vertical padding (12 top + 12 bottom). The node is held at a LARGE
+      // minimum height so it fills its area (and always has room for the Flux upscaler / enhancer
+      // without scrolling); it only grows beyond that if a pipeline's content is taller still.
+      this._fitBox = Math.min(Math.max(measured + 24, NODE_MIN_BOX), 2700);
+    }
+    const box = this._fitBox || (NODE_H - 64);
+    const targetH = box + 64;  // + node title bar and input-socket rows
+    // Width stays FIXED; only the height tracks content. Keep the DOM widget's own size in
+    // step so the frontend gives the element the full box it needs.
+    if (this._domWidget) this._domWidget.computeSize = () => [NODE_W - 26, box];
+    if (n.size[0] === NODE_W && Math.abs(n.size[1] - targetH) <= 2) return;
     n.size[0] = NODE_W;
-    n.size[1] = NODE_H;
+    n.size[1] = targetH;
     app.graph.setDirtyCanvas(true, true);
   }
 
@@ -629,7 +671,7 @@ class AIO {
   build() {
     const r = this.inner;
     const hd = el("div", "hd");
-    hd.appendChild(el("h1", null, "Krea2 AIO AJ"));
+    hd.appendChild(el("h1", null, "Krea2 AIO"));
     r.appendChild(hd);
 
     // Contextual guide, ABOVE the workflow row. An "i" button opens the help as a
@@ -957,6 +999,40 @@ class AIO {
     rbl.appendChild(el("span", null, "Remove background (RMBG-2.0)"));
     this.rbSec.appendChild(rbl); M.appendChild(this.rbSec);
 
+    // ---- PROMPT ENHANCER (LLM) ----
+    // The Krea2-style enhancer: rewrites the prompt with core TextGenerate on the loaded
+    // Qwen3-VL, using a per-workflow system prompt (backend prompt_enhancer.py). A tick to
+    // enable/disable, an "i" that explains what it does for THIS workflow, and (when on) the
+    // model + token controls.
+    this.enhSec = el("div", "sec");
+    this.enhSec.appendChild(el("label", "grouplab", "Prompt enhancer"));
+    const ehHd = el("label", "chk");
+    this.enhChk = el("input"); this.enhChk.type = "checkbox";
+    this.enhChk.onchange = () => { this.setP("enhance_prompt", this.enhChk.checked); this.sync(); };
+    ehHd.appendChild(this.enhChk);
+    ehHd.appendChild(el("span", null, "Prompt Enhancer (LLM)"));
+    this.enhSec.appendChild(ehHd);
+    this.enhInfoBtn = el("button", "refbtn");
+    this.enhInfoBtn.style.marginTop = "5px";
+    this.enhInfoBtn.appendChild(el("i", null, "i"));
+    this.enhInfoBtn.appendChild(el("span", null, "What does this do?"));
+    this.enhInfoBtn.onclick = () => this.openOverlay("Prompt enhancer (LLM)", this.buildEnhInfo());
+    this.enhSec.appendChild(this.enhInfoBtn);
+    // model + tokens — shown only when the enhancer is enabled
+    this.enhCfg = el("div"); this.enhCfg.style.marginTop = "6px";
+    const emf = el("div", "fld");
+    emf.appendChild(el("label", "cap", "Text encoder - enhancer"));
+    this.enhModel = el("select");
+    this.enhModel.onchange = () => { this.setW("enhancer_model", this.enhModel.value); this.enhModel.title = this.enhModel.value; };
+    emf.appendChild(this.enhModel); this.enhCfg.appendChild(emf);
+    const etf = el("div", "fld"); etf.style.marginTop = "5px";
+    etf.appendChild(el("label", "cap", "Max tokens — pick a size (low → high VRAM)"));
+    this.enhTok = el("select");
+    this.enhTok.onchange = () => { this.setW("llm_max_token", this.enhTok.value); this.enhTok.title = this.enhTok.value; };
+    etf.appendChild(this.enhTok); this.enhCfg.appendChild(etf);
+    this.enhSec.appendChild(this.enhCfg);
+    L.appendChild(this.enhSec);   // Prompt Enhancer on the LEFT column (below the LoRA stack)
+
 
 
     // save name / path — YOU decide it. Used verbatim as SaveImage's filename_prefix
@@ -981,7 +1057,7 @@ class AIO {
     this.saveSec.appendChild(el("div", "muted", "Where the next file lands (your text decides it):"));
     this.savePreview = el("div", "savepath");
     this.saveSec.appendChild(this.savePreview);
-    R.appendChild(this.saveSec);
+    R.appendChild(this.saveSec);   // Save sits directly under the Live preview on the RIGHT
 
     // optional extras + LoRAs
     this.depBox = el("button", "refbtn plainbtn");
@@ -1029,7 +1105,7 @@ class AIO {
 
     this.foot.appendChild(this.depBox);
 
-    r.appendChild(this.foot);
+    M.appendChild(this.foot);   // Optional extras & LoRA downloads sit under Remove background (middle)
     this.status = el("div", "status");
     r.appendChild(this.status);
   }
@@ -1303,6 +1379,7 @@ class AIO {
       if (this._prevCb) api.removeEventListener("b_preview", this._prevCb);
       if (this._prevMetaCb) api.removeEventListener("b_preview_with_metadata", this._prevMetaCb);
       if (this._progCb) api.removeEventListener("progress", this._progCb);
+      if (this._ro) { this._ro.disconnect(); this._ro = null; }
     } catch (e) { /* ignore */ }
   }
 
@@ -1404,6 +1481,13 @@ class AIO {
     this.face.checked = !!this.gv("face_detail");
     this.rb.checked = !!this.gv("remove_background");
 
+    // prompt enhancer — the section is always visible; the model + token controls show
+    // only once it's enabled. enhancer_model / llm_max_token are global (setW).
+    if (this.enhChk) this.enhChk.checked = !!this.gv("enhance_prompt");
+    if (this.enhModel) this.fillCombo(this.enhModel, "enhancer_model");
+    if (this.enhTok) this.fillCombo(this.enhTok, "llm_max_token");
+    if (this.enhCfg) this.enhCfg.classList.toggle("hide", !this.gv("enhance_prompt"));
+
     // Flux loaders appear with the upscale; outpaint padding with pipeline 3 OUTPAINT.
     this.fluxWrap.classList.toggle("hide", !up);
     this.upSteps.value = this.gv("upscale_steps") ?? 2;
@@ -1431,6 +1515,35 @@ class AIO {
     this.ovlBody.innerHTML = "";
     this.ovlBody.appendChild(contentEl);
     this.ovl.classList.remove("hide");
+  }
+
+  // Per-workflow explanation of the LLM prompt enhancer (opened by the "i" in its section).
+  buildEnhInfo() {
+    const wrap = el("div");
+    const dl = el("dl");
+    const add = (t, d) => { dl.appendChild(el("dt", null, t)); dl.appendChild(el("dd", null, d)); };
+    add("What it does",
+      "Rewrites your prompt with a small LLM (the Krea 2 text encoder you already load) BEFORE " +
+      "generating — the same idea as ComfyUI's official Krea-2 workflow. Your LoRA trigger words " +
+      "are kept exactly and appended AFTER the rewrite, so they are never lost.");
+    add("For this workflow", ENH_INFO[this.pipe()] || ENH_INFO[4]);
+    add("Text encoder (enhancer) + VRAM",
+      "The default '(loaded text encoder)' reuses the Qwen3-VL you already loaded — no extra VRAM. " +
+      "Choosing a different text encoder loads THAT one just for the rewrite (heavier). Use an " +
+      "abliterated Qwen3-VL here for no refusals.");
+    add("Max tokens (VRAM)",
+      "How long the rewritten prompt can get. 256 is the safe LOW-VRAM default. Higher values " +
+      "(up to 2048) give longer, richer prompts but use more VRAM and take longer to generate — " +
+      "raise it only on a higher-VRAM card.");
+    add("Spicy / NSFW prompts",
+      "The built-in instructions do not sanitise, cover up, or refuse what you wrote. But the base " +
+      "Qwen3-VL still has its own safety training and may refuse anyway — for fully uncensored " +
+      "expansion, pick an ABLITERATED Qwen3-VL in the model dropdown.");
+    add("If it fails",
+      "Any error, empty result, or refusal falls back to your prompt exactly as typed, so a run is " +
+      "never blocked by the enhancer.");
+    wrap.appendChild(dl);
+    return wrap;
   }
 
   refreshSavePath() {
@@ -1477,11 +1590,10 @@ class AIO {
       }
     }
 
-    const label = PIPES.find((x) => x.idx === p)?.label || "?";
     this.status.innerHTML = "";
-    this.status.appendChild(el("div", null, `Active: ${label}${up ? "  +  upscale" : ""}`));
-    const n = this.loras().filter((x) => x.on).length;
-    this.status.appendChild(el("div", null, `${n} LoRA${n === 1 ? "" : "s"} active.`));
+    // Removed the always-on "Active: … / N LoRAs active" lines — redundant with the highlighted
+    // tab and the LoRA list, and they added height and an odd empty bar. Only real warnings
+    // appear here now.
     for (const wn of warns) this.status.appendChild(el("div", "warn", "! " + wn));
 
     // Optional-feature packs: if the user enabled a feature but its pack isn't installed,
@@ -1503,6 +1615,9 @@ class AIO {
       d.appendChild(a);
       this.status.appendChild(d);
     }
+    // Hide the status box entirely when there's nothing to warn about, so it never shows as an
+    // empty bar at the bottom (no bloat, and the node auto-fit shrinks accordingly).
+    this.status.classList.toggle("hide", !this.status.children.length);
   }
 
   // True if a node type is NOT registered in the frontend (i.e. its pack isn't installed).

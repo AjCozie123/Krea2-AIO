@@ -30,6 +30,14 @@ PIPELINES = [
 EDIT_MODES = ["A - Native Krea2Edit (identity)", "B - Ostris Edit (ai-toolkit)"]
 FILL_MODES = ["A - INPAINT (you paint the mask)", "B - OUTPAINT (auto green border)"]
 
+# Sentinel for the prompt-enhancer model dropdown meaning "reuse the loaded text encoder".
+ENHANCER_LOADED = "(loaded text encoder · low VRAM)"
+
+# Preset max-token sizes for the enhancer, as a dropdown (no free typing). The pipeline reads
+# the leading number; the labels just tell the user the VRAM/speed tradeoff.
+ENHANCER_TOKENS = ["256 (low VRAM · fast)", "512 (medium)", "1024 (high VRAM)",
+                   "2048 (highest VRAM · slowest)"]
+
 RESTORE_MODES = [
     "smart: manual mask, local auto, or full frame",
     "full generated frame",
@@ -149,9 +157,13 @@ class KreaAIO(io.ComfyNode):
         _unet_opts = _files("diffusion_models") or ["none"]
         _clip_opts = _files("text_encoders") or ["none"]
         _vae_opts = _files("vae") or ["none"]
+        # Prompt-enhancer LLM choice. The first option reuses whatever text encoder the
+        # pipeline already loads (Qwen3-VL) — zero extra VRAM. Any other pick loads that
+        # encoder just for the rewrite (use an abliterated Qwen3-VL here for no refusals).
+        _enh_opts = [ENHANCER_LOADED] + _clip_opts
         return io.Schema(
             node_id="KreaAIO",
-            display_name="Krea2 AIO AJ",
+            display_name="Krea2 AIO",
             category="KREA2",
             description=(
                 "The whole 5-pipeline KREA2 workflow in one node. Pick a pipeline and the "
@@ -198,7 +210,7 @@ class KreaAIO(io.ComfyNode):
                                default="simple"),
 
                 io.Combo.Input("aspect_ratio", options=ASPECTS, default=ASPECTS[1]),
-                io.Float.Input("megapixels", default=1.0, min=0.1, max=16.0, step=0.1,
+                io.Float.Input("megapixels", default=2.0, min=0.1, max=16.0, step=0.1,
                                tooltip="ABSOLUTE megapixel target, not a multiplier."),
                 io.Int.Input("grounding_px", default=768, min=0, max=4096, step=64),
                 io.Float.Input("ref_boost", default=1.0, min=0.0, max=1000.0, step=0.01),
@@ -269,6 +281,23 @@ class KreaAIO(io.ComfyNode):
                                 tooltip="All your LoRA trigger words in one place; appended to "
                                         "the prompt automatically so you don't type them there."),
 
+                # LLM prompt enhancer — the same idea as ComfyUI's official Krea-2 workflow:
+                # rewrite your prompt with core TextGenerate on a Qwen3-VL text encoder, using
+                # a per-pipeline system prompt (see prompt_enhancer.py). OFF by default (the
+                # enable/disable tick). Appended last so saved workflows keep widget positions.
+                io.Boolean.Input("enhance_prompt", default=False,
+                                 tooltip="Rewrite your prompt with an LLM before generating "
+                                         "(per-workflow system prompt). Trigger words are kept "
+                                         "verbatim and appended AFTER enhancement."),
+                io.Combo.Input("enhancer_model", options=_enh_opts, default=_enh_opts[0],
+                               tooltip="Which LLM rewrites the prompt. '(loaded text encoder)' "
+                                       "reuses the Qwen3-VL you already load — no extra VRAM. "
+                                       "Pick an abliterated Qwen3-VL here to avoid refusals."),
+                io.Combo.Input("llm_max_token", options=ENHANCER_TOKENS, default=ENHANCER_TOKENS[0],
+                               tooltip="Length cap for the enhanced prompt. 256 = low VRAM / fast; "
+                                       "higher = longer, richer prompts but more VRAM and slower. "
+                                       "The prompt is front-loaded so it stays complete at any size."),
+
             ],
             outputs=[
                 io.Image.Output(display_name="image"),
@@ -309,6 +338,7 @@ class KreaAIO(io.ComfyNode):
                 outpaint_bottom, outpaint_top, outpaint_left, outpaint_right,
                 outpaint_feather,
                 denoise=1.0, state_json="{}", auto_organize=False, trigger_words="",
+                enhance_prompt=False, enhancer_model=None, llm_max_token=256,
                 image=None, mask=None, reference=None) -> io.NodeOutput:
 
         try:
@@ -319,11 +349,11 @@ class KreaAIO(io.ComfyNode):
             log.warning("[KreaAIO] loras_json is not valid JSON; ignoring it")
             loras = []
 
-        # One trigger-words field for all LoRAs — appended to the prompt so the user
-        # doesn't type them in the prompt box.
+        # Pipeline index (1-4) — needed now so the enhancer can pick the right per-workflow
+        # system prompt. The prompt is finalised INSIDE the pipeline, after the text encoder
+        # loads: LLM-enhanced first (if enabled), then trigger words appended verbatim.
+        idx = PIPELINES.index(pipeline) + 1 if pipeline in PIPELINES else 4
         tw = (trigger_words or "").strip()
-        if tw:
-            prompt = f"{prompt.strip()}, {tw}" if prompt.strip() else tw
 
         ctx = pipelines.Ctx(
             prompt=prompt, seed=seed, steps=steps, cfg=cfg, denoise=denoise,
@@ -345,9 +375,10 @@ class KreaAIO(io.ComfyNode):
             pad_bottom=outpaint_bottom, pad_top=outpaint_top,
             pad_left=outpaint_left, pad_right=outpaint_right,
             pad_feather=outpaint_feather,
+            # prompt finalisation (LLM enhancer + trigger words), applied in the pipeline
+            enhance_prompt=enhance_prompt, enhancer_model=enhancer_model,
+            llm_max_token=llm_max_token, trigger_words=tw, pipeline_idx=idx,
         )
-
-        idx = PIPELINES.index(pipeline) + 1 if pipeline in PIPELINES else 4
         RUNNERS = {
             1: pipelines.classic_edit,
             2: pipelines.identity_edit,
