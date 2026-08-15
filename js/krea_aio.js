@@ -25,11 +25,11 @@ const SHOW = {
   // Pipeline 1 samples into a ResolutionSelector-sized latent, so aspect_ratio and
   // megapixels are its resolution controls — they must be visible here.
   1: ["conn", "prompt", "seed", "steps", "cfg", "denoise", "sampler", "scheduler",
-      "aspect_ratio", "megapixels", "grounding_px", "ref_boost", "loras",
+      "aspect_ratio", "megapixels", "size_mode", "grounding_px", "ref_boost", "loras",
       "face_detail", "remove_background", "use_reference"],
   2: ["conn", "prompt", "seed", "steps", "cfg", "denoise", "sampler", "scheduler",
       "grounding_px", "ref_boost", "restore_mode", "loras", "edit_mode",
-      "use_reference", "aspect_ratio", "megapixels"],
+      "use_reference", "aspect_ratio", "megapixels", "size_mode"],
   3: ["conn", "prompt", "seed", "steps", "cfg", "denoise", "sampler", "scheduler", "loras", "fill_mode"],
   4: ["prompt", "seed", "steps", "cfg", "denoise", "sampler", "scheduler", "aspect_ratio", "megapixels",
       "loras", "face_detail"],
@@ -59,9 +59,9 @@ const PRESETS = {
 // NOT here — they are global, shared across pipelines.
 const PER_PIPE = [
   "prompt", "trigger_words", "seed", "seed_control", "steps", "cfg", "denoise", "sampler", "scheduler",
-  "aspect_ratio", "megapixels", "grounding_px", "ref_boost", "restore_mode",
+  "aspect_ratio", "megapixels", "size_mode", "grounding_px", "ref_boost", "restore_mode",
   "edit_mode", "fill_mode", "face_detail", "use_reference", "remove_background",
-  "enhance_prompt",
+  "enhance_prompt", "negative_prompt",
 ];
 
 // Per-workflow explanation of what the LLM prompt enhancer does (mirrors prompt_enhancer.py).
@@ -91,7 +91,10 @@ const _PBASE = {
   edit_mode: "A - Native Krea2Edit (identity)",
   fill_mode: "A - INPAINT (you paint the mask)",
   face_detail: false, use_reference: true, remove_background: false,
-  enhance_prompt: false,
+  enhance_prompt: false, negative_prompt: "",
+  // Default for pipelines 1 & 2: keep the edit at the input image's own size — what Krea2 edit
+  // is tuned for. Switch to the aspect+megapixel option in the node to force a resolution.
+  size_mode: "Match input image size (keeps the edit's own size)",
 };
 const PIPE_DEFAULTS = {
   1: { ..._PBASE, ...PRESETS[1] },
@@ -318,6 +321,13 @@ const CSS = `
 .kaio .lx{flex:none;width:20px;height:20px;border-radius:4px;background:#2a2a2a;border:1px solid var(--line);
  color:var(--dim);cursor:pointer;font-size:12px;line-height:1;padding:0}
 .kaio .lx:hover{background:#5a2a2a;color:#fff;border-color:#8a3a3a}
+/* LoRA chain-order controls: position badge + move up/down */
+.kaio .lord{flex:none;width:15px;text-align:center;font-size:9px;color:#6f8bb0;
+ font-family:ui-monospace,Consolas,monospace}
+.kaio .lmv{flex:none;width:17px;height:20px;border-radius:4px;background:#2a2a2a;
+ border:1px solid var(--line);color:var(--dim);cursor:pointer;font-size:8px;line-height:1;padding:0}
+.kaio .lmv:hover:not(:disabled){background:#2c3d52;color:#cfe3f7;border-color:var(--acc)}
+.kaio .lmv:disabled{opacity:.25;cursor:default}
 .kaio .addbtn{width:100%;padding:6px;border-radius:5px;background:#2a2a2a;border:1px dashed #444;
  color:var(--dim);cursor:pointer;font-size:11px;font-family:inherit}
 .kaio .addbtn:hover{background:#303030;color:var(--txt);border-color:var(--acc)}
@@ -671,7 +681,7 @@ class AIO {
   build() {
     const r = this.inner;
     const hd = el("div", "hd");
-    hd.appendChild(el("h1", null, "Krea2 AIO"));
+    hd.appendChild(el("h1", null, "Krea2 All In One Workflow"));
     r.appendChild(hd);
 
     // Contextual guide, ABOVE the workflow row. An "i" button opens the help as a
@@ -875,7 +885,23 @@ class AIO {
     this.pSec.appendChild(el("label", "cap", "Prompt / instruction"));
     this.prompt = el("textarea");
     this.prompt.oninput = () => this.setP("prompt", this.prompt.value);
-    this.pSec.appendChild(this.prompt); r.insertBefore(this.pSec, body);  // full-width, on top
+    this.pSec.appendChild(this.prompt);
+    // Negative prompt. Collapsed by default because it is INERT on Krea 2 Turbo (cfg 1.0) —
+    // the summary says so, so nobody wastes an hour writing negatives that cannot apply.
+    this.negBox = el("details", "plain");
+    this.negSum = el("summary", null, "Negative prompt — needs CFG above 1.0");
+    this.negBox.appendChild(this.negSum);
+    const negBody = el("div", "body");
+    this.negPrompt = el("textarea"); this.negPrompt.rows = 2;
+    this.negPrompt.style.minHeight = "38px";
+    this.negPrompt.placeholder = "e.g. shallow depth of field, bokeh, blurred foreground";
+    this.negPrompt.oninput = () => this.setP("negative_prompt", this.negPrompt.value);
+    negBody.appendChild(this.negPrompt);
+    this.negHint = el("div", "muted", "");
+    negBody.appendChild(this.negHint);
+    this.negBox.appendChild(negBody);
+    this.pSec.appendChild(this.negBox);
+    r.insertBefore(this.pSec, body);  // full-width, on top
 
     // Shared field builders. Every value is written per-pipeline through setP, so it is
     // remembered for that workflow and never leaks into another tab.
@@ -925,6 +951,18 @@ class AIO {
     // ---- RESOLUTION ----
     this.resSec = el("div", "sec");
     this.resSec.appendChild(el("label", "grouplab", "Resolution"));
+    // Pipelines 1 & 2 choose HOW the size is decided: keep the input image's own size (best for
+    // identity / edit adherence) or force an aspect + megapixel target. Hidden for 3 and 4.
+    this.sizeSec = el("div", "fld");
+    this.sizeSec.style.marginBottom = "5px";
+    this.sizeSec.appendChild(el("label", "cap", "Output size"));
+    this.sizeSel = el("select");
+    this.sizeSel.title = "Match input image size = the edit comes out at the source image's own "
+      + "dimensions (best identity / edit adherence). Aspect ratio + megapixels = force the "
+      + "resolution you pick below.";
+    this.sizeSel.onchange = () => { this.setP("size_mode", this.sizeSel.value); this.sync(); };
+    this.sizeSec.appendChild(this.sizeSel);
+    this.resSec.appendChild(this.sizeSec);
     const resRow = el("div", "grid2");
     mkc(resRow, "aspect_ratio", "Aspect");
     mk(resRow, "megapixels", "Megapixels", 0.1, 0.1, 16);
@@ -1321,9 +1359,30 @@ class AIO {
       const st = el("input"); st.type = "number"; st.className = "lstr"; st.step = 0.05;
       st.value = entry.strength ?? 1;
       st.oninput = () => { const l = this.loras(); l[i].strength = Number(st.value || 0); this.saveLoras(l); };
+      // LoRAs are applied in list order and each one patches the model the previous one
+      // produced, so the order genuinely changes the result. These move a LoRA up or down
+      // the chain. Position 1 is applied first.
+      const mv = (dir) => {
+        const l = this.loras();
+        const j = i + dir;
+        if (j < 0 || j >= l.length) return;
+        [l[i], l[j]] = [l[j], l[i]];
+        this.saveLoras(l); this.renderLoras(); this.updateStatus();
+      };
+      const up = el("button", "lmv", "▲");
+      up.title = "Move earlier in the chain (applied sooner)";
+      up.disabled = i === 0;
+      up.onclick = () => mv(-1);
+      const dn = el("button", "lmv", "▼");
+      dn.title = "Move later in the chain (applied after the ones above)";
+      dn.disabled = i === list.length - 1;
+      dn.onclick = () => mv(1);
+      const ord = el("span", "lord", String(i + 1));
+      ord.title = `Applied ${i === 0 ? "first" : i === list.length - 1 ? "last" : "#" + (i + 1)} in the chain`;
       const x = el("button", "lx", "×");
       x.onclick = () => { const l = this.loras(); l.splice(i, 1); this.saveLoras(l); this.renderLoras(); this.updateStatus(); };
-      row.appendChild(cb); row.appendChild(nm); row.appendChild(st); row.appendChild(x);
+      row.appendChild(ord); row.appendChild(cb); row.appendChild(nm);
+      row.appendChild(st); row.appendChild(up); row.appendChild(dn); row.appendChild(x);
       this.lList.appendChild(row);
     });
   }
@@ -1372,6 +1431,35 @@ class AIO {
     api.addEventListener("b_preview", this._prevCb);
     api.addEventListener("b_preview_with_metadata", this._prevMetaCb);
     api.addEventListener("progress", this._progCb);
+    this.setupDoneChime();
+  }
+
+  // The chime is triggered from the node's onExecuted() hook (see beforeRegisterNodeDef),
+  // which is the same mechanism pysssss's PlaySound uses and the only one that reliably
+  // fires on this frontend. onExecuted only runs if the backend returns a `ui` payload,
+  // which controller.py now does ({"kaio_done": …}) for exactly this purpose.
+  setupDoneChime() { /* wiring lives in onExecuted; nothing to bind here */ }
+
+  chime() {
+    try {
+      const AC = window.AudioContext || window.webkitAudioContext;
+      if (!AC) return;
+      const ctx = new AC();
+      if (ctx.state === "suspended") ctx.resume().catch(() => { });
+      const vol = 0.5;
+      // Two soft notes (C6 -> E6): pleasant, short, hard to mistake for a system error.
+      [[1046.5, 0], [1318.5, 0.16]].forEach(([hz, at]) => {
+        const o = ctx.createOscillator(), g = ctx.createGain();
+        o.type = "sine"; o.frequency.value = hz;
+        const t = ctx.currentTime + at;
+        g.gain.setValueAtTime(0.0001, t);
+        g.gain.exponentialRampToValueAtTime(Math.max(0.0002, vol * 0.6), t + 0.02);
+        g.gain.exponentialRampToValueAtTime(0.0001, t + 0.45);
+        o.connect(g); g.connect(ctx.destination);
+        o.start(t); o.stop(t + 0.5);
+      });
+      setTimeout(() => { try { ctx.close(); } catch (e) { } }, 1200);
+    } catch (e) { console.warn("[KreaAIO] chime failed:", e); }
   }
 
   destroyPreview() {
@@ -1434,6 +1522,19 @@ class AIO {
     }
 
     this.prompt.value = this.gv("prompt") ?? "";
+    if (this.negPrompt) {
+      this.negPrompt.value = this.gv("negative_prompt") ?? "";
+      const cfg = Number(this.gv("cfg") ?? 1);
+      const live = cfg > 1.05;
+      this.negSum.textContent = live
+        ? "Negative prompt — ACTIVE (CFG " + cfg + ")"
+        : "Negative prompt — inactive at CFG " + cfg;
+      this.negHint.textContent = live
+        ? "Active. Describe what the model keeps adding unasked."
+        : "Krea 2 Turbo runs at CFG 1.0, where a negative prompt does nothing at all. "
+        + "To use it, load a RAW checkpoint and raise CFG to about 5.5 with ~28 steps.";
+      this.negHint.style.color = live ? "#8fbf8f" : "var(--warn)";
+    }
     if (this.trigWords) this.trigWords.value = this.gv("trigger_words") ?? "";
     if (this.seedMode) this.seedMode.value = this.gv("control_after_generate") ?? "randomize";
     for (const k of Object.keys(this.num)) {
@@ -1466,7 +1567,19 @@ class AIO {
 
     // Hide a whole labelled group when none of its fields apply, so there are no empty
     // captioned boxes. Sampler always applies.
-    const resVis = shown.has("aspect_ratio") || shown.has("megapixels");
+    // Output-size mode (pipelines 1 & 2). When it's on "match input image size" the aspect and
+    // megapixel fields do nothing, so hide them rather than leave dead controls on screen.
+    const sizeVis = shown.has("size_mode");
+    if (this.sizeSec) this.sizeSec.classList.toggle("hide", !sizeVis);
+    if (this.sizeSel) this.fillCombo(this.sizeSel, "size_mode");
+    const matchInput = sizeVis && !String(this.gv("size_mode") || "").toLowerCase().startsWith("aspect");
+    if (matchInput) { shown.delete("aspect_ratio"); shown.delete("megapixels"); }
+    for (const k of ["aspect_ratio", "megapixels"]) {
+      if (this.num[k]) this.num[k].f.classList.toggle("hide", !shown.has(k));
+      if (this.combo[k]) this.combo[k].f.classList.toggle("hide", !shown.has(k));
+    }
+
+    const resVis = sizeVis || shown.has("aspect_ratio") || shown.has("megapixels");
     const refVis = (shown.has("grounding_px") || shown.has("ref_boost")) && !(p === 2 && isB);
     this.resSec.classList.toggle("hide", !resVis);
     this.refSec.classList.toggle("hide", !refVis);
@@ -1740,6 +1853,19 @@ app.registerExtension({
       setTimeout(() => {
         try { self._kaio?.renderConnections(); self._kaio?.updateStatus(); } catch (e) { }
       }, 0);
+      return out;
+    };
+
+    // Finish chime. onExecuted fires once the backend returns its ui payload, i.e. after the
+    // WHOLE node is done — pipeline, face detail, Flux 2 upscale and save included. This is
+    // the same hook pysssss's PlaySound uses, and unlike the websocket events it fires
+    // reliably on every frontend version.
+    const onExecuted = nodeType.prototype.onExecuted;
+    nodeType.prototype.onExecuted = function (output) {
+      const out = onExecuted ? onExecuted.apply(this, arguments) : undefined;
+      try {
+        if (output && output.kaio_done) this._kaio?.chime();
+      } catch (e) { console.warn("[KreaAIO] chime failed:", e); }
       return out;
     };
 

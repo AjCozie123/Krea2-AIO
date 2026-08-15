@@ -38,6 +38,14 @@ ENHANCER_LOADED = "(loaded text encoder · low VRAM)"
 ENHANCER_TOKENS = ["256 (low VRAM · fast)", "512 (medium)", "1024 (high VRAM)",
                    "2048 (highest VRAM · slowest)"]
 
+# How pipelines 1 and 2 decide their output size. "Match input image size" keeps the edit at
+# the source image's own dimensions (best identity/edit adherence); the other lets you force an
+# explicit aspect + megapixel target.
+SIZE_MODES = [
+    "Match input image size (keeps the edit's own size)",
+    "Aspect ratio + megapixels (choose a resolution)",
+]
+
 RESTORE_MODES = [
     "smart: manual mask, local auto, or full frame",
     "full generated frame",
@@ -298,6 +306,23 @@ class KreaAIO(io.ComfyNode):
                                        "higher = longer, richer prompts but more VRAM and slower. "
                                        "The prompt is front-loaded so it stays complete at any size."),
 
+                # Pipelines 1 & 2 only: keep the edit at the source image's own size, or force an
+                # explicit aspect + megapixel target. Appended last to keep widget positions stable.
+                # Negative prompt. Krea 2 TURBO runs at cfg 1.0, where classifier-free guidance
+                # is off and a negative is mathematically inert — so this only does anything with
+                # a RAW checkpoint at cfg > 1 (~5.5, ~28 steps). Below cfg 1.05 we keep the old
+                # zero-out behaviour so turbo is unchanged. The UI says the same thing.
+                io.String.Input("negative_prompt", default="", multiline=True,
+                                tooltip="Only works when CFG is above 1.0 (i.e. a RAW checkpoint). "
+                                        "Krea 2 Turbo runs at CFG 1.0 where negatives do nothing. "
+                                        "Useful for things the model adds unasked, e.g. "
+                                        "'shallow depth of field, bokeh, blurred foreground'."),
+                io.Combo.Input("size_mode", options=SIZE_MODES, default=SIZE_MODES[0],
+                               tooltip="Classic / Identity output size. 'Match input image size' "
+                                       "keeps the edit at the source image's own dimensions — best "
+                                       "for identity and edit adherence. 'Aspect ratio + megapixels' "
+                                       "forces the resolution you pick instead (can crop framing)."),
+
             ],
             outputs=[
                 io.Image.Output(display_name="image"),
@@ -339,6 +364,7 @@ class KreaAIO(io.ComfyNode):
                 outpaint_feather,
                 denoise=1.0, state_json="{}", auto_organize=False, trigger_words="",
                 enhance_prompt=False, enhancer_model=None, llm_max_token=256,
+                size_mode=None, negative_prompt="",
                 image=None, mask=None, reference=None) -> io.NodeOutput:
 
         try:
@@ -378,6 +404,7 @@ class KreaAIO(io.ComfyNode):
             # prompt finalisation (LLM enhancer + trigger words), applied in the pipeline
             enhance_prompt=enhance_prompt, enhancer_model=enhancer_model,
             llm_max_token=llm_max_token, trigger_words=tw, pipeline_idx=idx,
+            size_mode=size_mode, negative_prompt=(negative_prompt or "").strip(),
         )
         RUNNERS = {
             1: pipelines.classic_edit,
@@ -407,8 +434,13 @@ class KreaAIO(io.ComfyNode):
         else:
             save_path = (save_root or "Krea2AJ").strip().strip("/\\") or "Krea2AJ"
 
-        # Deliberately no ui images. Attaching a preview makes ComfyUI lay an image out
-        # inside this node and refit the node around it, which squashes the embedded UI
+        # Deliberately no ui IMAGES. Attaching an image preview makes ComfyUI lay an image
+        # out inside this node and refit the node around it, which squashes the embedded UI
         # to a narrow strip mid-run. Results are viewed through the SaveImage / Image
         # Comparer nodes wired to the outputs.
-        return io.NodeOutput(image, source, save_path)
+        #
+        # We DO return a tiny non-image ui payload: that is what makes ComfyUI call the
+        # frontend's node.onExecuted() hook, which is how the finish chime fires (the same
+        # mechanism pysssss's PlaySound uses). A custom key never triggers the image layout.
+        return io.NodeOutput(image, source, save_path,
+                             ui={"kaio_done": [{"pipeline": idx, "upscaled": bool(upscale)}]})

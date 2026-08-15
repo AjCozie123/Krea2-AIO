@@ -141,6 +141,48 @@ def finalize_prompt(ctx, clip):
     return base
 
 
+def negative_cond(ctx, positive, encode):
+    """Build the negative conditioning.
+
+    Krea 2 TURBO samples at cfg 1.0, where classifier-free guidance is disabled and the
+    negative branch is never subtracted — a negative prompt there is mathematically inert,
+    which is why "no bokeh"-style prompts appear to do nothing. So we only encode a real
+    negative when cfg is meaningfully above 1 (i.e. a RAW checkpoint); otherwise we keep the
+    original zero-out. `encode` is a callable that encodes a text string with the right
+    encoder for this pipeline, so each pipeline stays on its own conditioning path.
+    """
+    neg = (ctx.get("negative_prompt") or "").strip()
+    if neg and float(ctx.get("cfg", 1.0) or 1.0) > 1.05:
+        try:
+            return encode(neg)
+        except Exception as e:
+            log.warning("[KreaAIO] negative prompt failed to encode (%s); falling back to "
+                        "an empty negative.", e)
+    elif neg:
+        log.info("[KreaAIO] a negative prompt is set but CFG is %.2f — Krea 2 Turbo runs at "
+                 "cfg 1.0 where negatives do nothing. Use a RAW checkpoint at cfg ~5.5 with "
+                 "~28 steps for it to take effect.", float(ctx.get("cfg", 1.0) or 1.0))
+    return engine.call1("ConditioningZeroOut", conditioning=positive)
+
+
+def use_resolution_selector(ctx):
+    """True when the user asked for an explicit Aspect + Megapixels target (pipelines 1 & 2).
+
+    Default is FALSE — i.e. match the input image's own size, which is what Krea2 edit is tuned
+    for and what preserves identity/edit adherence best. An old saved workflow has no size_mode
+    at all; treating that as 'match input' keeps those graphs behaving as they always did.
+    """
+    return str(ctx.get("size_mode") or "").lower().startswith("aspect")
+
+
+def source_size(image, multiple=8):
+    """The source image's own pixel size, floored to a multiple the sampler can use."""
+    w, h = engine.call("GetImageSize", image=image)[:2]
+    w = max(multiple, (int(w) // multiple) * multiple)
+    h = max(multiple, (int(h) // multiple) * multiple)
+    return w, h
+
+
 def need_image(ctx, what="image"):
     img = ctx.get(what)
     if img is None:
@@ -192,7 +234,8 @@ def text_to_image(ctx):
     finalize_prompt(ctx, clip)
 
     positive = engine.call1("CLIPTextEncode", clip=clip, text=ctx.prompt)
-    negative = engine.call1("ConditioningZeroOut", conditioning=positive)
+    negative = negative_cond(ctx, positive,
+                             lambda t: engine.call1("CLIPTextEncode", clip=clip, text=t))
 
     width, height = engine.call("ResolutionSelector",
                                aspect_ratio=resolve_aspect(ctx.get("aspect_ratio")),
@@ -247,9 +290,14 @@ def classic_edit(ctx):
                                megapixels=1.4, resolution_steps=64)
         ref_latent = engine.call1("VAEEncode", pixels=ref_img, vae=vae)
 
-    width, height = engine.call("ResolutionSelector",
-                               aspect_ratio=resolve_aspect(ctx.get("aspect_ratio")),
-                               megapixels=float(ctx.megapixels), multiple=8)[:2]
+    # OUTPUT SIZE: either the source image's own dimensions (default — keeps the edit at the
+    # size/aspect you fed in) or an explicit Aspect + Megapixels target that you chose.
+    if use_resolution_selector(ctx):
+        width, height = engine.call("ResolutionSelector",
+                                    aspect_ratio=resolve_aspect(ctx.get("aspect_ratio")),
+                                    megapixels=float(ctx.megapixels), multiple=8)[:2]
+    else:
+        width, height = source_size(src)
     target = engine.call1("EmptyHunyuanLatentVideo", width=width, height=height,
                           length=1, batch_size=1)
 
@@ -267,7 +315,8 @@ def classic_edit(ctx):
     if ref_img is not None:
         enc_kw["image_b"] = ref_img
     positive = engine.call1("Krea2EditGroundedEncode", **enc_kw)
-    negative = engine.call1("ConditioningZeroOut", conditioning=positive)
+    negative = negative_cond(ctx, positive, lambda t: engine.call1(
+        "Krea2EditGroundedEncode", **{**enc_kw, "prompt": t}))
 
     # the graph shifts sampling before the sampler, and again (0.7) for face detail
     sampling = engine.call1("ModelSamplingAuraFlow", model=patched, shift=4.0)
@@ -304,19 +353,19 @@ def identity_edit(ctx):
     prep = engine.call("KreaImageAspectPreservePrepare", image=source)
     prepared, restore_map, width, height = prep[0], prep[1], prep[2], prep[3]
 
-    # RESOLUTION OPTION (identity works a bit less well with it — surfaced deliberately).
-    # Identity edit is tuned to the SOURCE's own aspect/size (width/height above come from the
-    # prepare node). We let the user pick an explicit Aspect + Megapixels for the sampled target
-    # anyway: it works, but a different aspect crops framing and can soften identity/edit adherence.
-    # The restore step below re-composites onto the original regardless. Falls back to the
-    # source-derived size if the selector ever errors.
-    try:
-        width, height = engine.call("ResolutionSelector",
-                                    aspect_ratio=resolve_aspect(ctx.get("aspect_ratio")),
-                                    megapixels=float(ctx.get("megapixels") or 1.0), multiple=8)[:2]
-    except Exception as e:
-        log.warning("[KreaAIO] resolution selector failed for identity (%s); using the "
-                    "source-derived size instead.", e)
+    # OUTPUT SIZE. By DEFAULT identity keeps the width/height the prepare node derived from the
+    # SOURCE image above — that is what Krea2 edit is tuned for and it preserves identity and edit
+    # adherence best. Choosing "Aspect ratio + megapixels" instead forces your own target: it works,
+    # but a different aspect crops the framing and can soften adherence. Either way the restore step
+    # below re-composites onto the original. Falls back to the source size if the selector errors.
+    if use_resolution_selector(ctx):
+        try:
+            width, height = engine.call("ResolutionSelector",
+                                        aspect_ratio=resolve_aspect(ctx.get("aspect_ratio")),
+                                        megapixels=float(ctx.get("megapixels") or 1.0), multiple=8)[:2]
+        except Exception as e:
+            log.warning("[KreaAIO] resolution selector failed for identity (%s); using the "
+                        "source-derived size instead.", e)
 
     # The source goes in through the REFERENCE path, not the latent. The sampler and
     # the patch's target_latent both take a CLEAN Wan21-format empty latent at the
@@ -335,8 +384,10 @@ def identity_edit(ctx):
         if ref is not None:
             kw["image2"] = ref
         positive = engine.call1("TextEncodeKrea2OstrisEdit", **kw)
+        _neg_txt = (ctx.get("negative_prompt") or "").strip() \
+            if float(ctx.get("cfg", 1.0) or 1.0) > 1.05 else ""
         negative = engine.call1("TextEncodeKrea2OstrisEdit", clip=clip, vae=vae,
-                                image1=prepared, prompt="")
+                                image1=prepared, prompt=_neg_txt)
         positive = engine.call1("FluxKontextMultiReferenceLatentMethod",
                                 conditioning=positive,
                                 reference_latents_method="index_timestep_zero")
@@ -348,8 +399,10 @@ def identity_edit(ctx):
         # MODE A — native Krea2Edit.
         positive = engine.call1("Krea2EditGroundedEncode", clip=clip, image=prepared,
                                 prompt=ctx.prompt, grounding_px=int(ctx.grounding_px))
+        _neg_txt = (ctx.get("negative_prompt") or "").strip() \
+            if float(ctx.get("cfg", 1.0) or 1.0) > 1.05 else ""
         negative = engine.call1("Krea2EditGroundedEncode", clip=clip, image=prepared,
-                                prompt="", grounding_px=int(ctx.grounding_px))
+                                prompt=_neg_txt, grounding_px=int(ctx.grounding_px))
         patch_kw = dict(model=model, source_latent=source_latent, vae=vae,
                         source_image=prepared, target_latent=target,
                         ref_boost=float(ctx.ref_boost), ref_boost_a=1.0, fit_mode="fit")
@@ -445,8 +498,10 @@ def green_mask_fill(ctx):
 
     positive = engine.call1("TextEncodeKrea2OstrisEdit", clip=clip, vae=vae,
                             image1=prepared, prompt=ctx.prompt)
+    _neg_txt = (ctx.get("negative_prompt") or "").strip() \
+        if float(ctx.get("cfg", 1.0) or 1.0) > 1.05 else ""
     negative = engine.call1("TextEncodeKrea2OstrisEdit", clip=clip, vae=vae,
-                            image1=prepared, prompt="")
+                            image1=prepared, prompt=_neg_txt)
     # REQUIRED — without this the reference latents are silently ignored.
     positive = engine.call1("FluxKontextMultiReferenceLatentMethod", conditioning=positive,
                             reference_latents_method="index_timestep_zero")
