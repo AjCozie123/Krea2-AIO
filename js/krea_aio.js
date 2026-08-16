@@ -237,6 +237,10 @@ const CSS = `
 .kaio > .kaio-inner{display:block}
 .kaio .cols{display:grid;grid-template-columns:1fr 1fr 1fr;gap:0 12px;align-items:start}
 .kaio .col{min-width:0}
+/* Backstop for a panel that is forced narrower than we asked for (see applyWidth):
+   fewer, readable columns instead of three squashed ones. */
+.kaio.kaio-2col .cols{grid-template-columns:1fr 1fr}
+.kaio.kaio-1col .cols{grid-template-columns:1fr}
 .kaio .sec.grow{flex:0 0 auto;display:flex;flex-direction:column}
 .kaio .sec.grow textarea{min-height:70px}
 .kaio::-webkit-scrollbar{width:8px}.kaio::-webkit-scrollbar-thumb{background:#3a3a3a;border-radius:4px}
@@ -453,6 +457,7 @@ class AIO {
     this.node = node;
     this.root = root;
     root.className = "kaio";
+    this.applyWidth();   // before anything measures itself — see applyWidth()
     if (!document.getElementById("kaio-css")) {
       const s = el("style"); s.id = "kaio-css"; s.textContent = CSS;
       document.head.appendChild(s);
@@ -535,6 +540,38 @@ class AIO {
     return Math.min(Math.max(Math.round(h), 260), 1100);
   }
 
+  // Own the panel's WIDTH instead of inheriting it.
+  //
+  // The whole layout rests on this one number: the 3-column grid and every height estimate
+  // derive from it. We live inside a `.dom-widget` wrapper that ComfyUI sizes for us — and
+  // for a node added FRESH from the node menu that wrapper is given `width:0; height:0` and
+  // never revisited (measured on frontend 1.48.7). `.kaio{width:100%}` then resolves to
+  // zero, `.cols` computes to "0px 0px 0px", and the panel is a dead 22px strip. It does not
+  // self-heal on redraw. Loading a saved workflow happens to size the wrapper correctly,
+  // which is the only reason this went unnoticed. Packs that patch the widget layer can
+  // produce the same result.
+  //
+  // Overflowing the wrapper is safe: it computes `overflow:visible`, so nothing is clipped.
+  applyWidth() {
+    const root = this.root;
+    if (!root) return;
+    const want = NODE_W - 26;
+    if (root.style.width !== want + "px") {
+      root.style.width = want + "px";
+      root.style.minWidth = want + "px";
+    }
+    // Backstop: if something still forces us narrower, drop to 2 or 1 columns so the panel
+    // stays readable rather than squashing. A 0 reading means ComfyUI has detached the
+    // element (it does that whenever the node is off-screen) — never collapse on a junk
+    // measurement, just leave the current choice alone.
+    let real = 0;
+    try { real = parseFloat(getComputedStyle(root).width) || 0; } catch (e) { }
+    if (real > 0) {
+      root.classList.toggle("kaio-2col", real >= 620 && real < 980);
+      root.classList.toggle("kaio-1col", real < 620);
+    }
+  }
+
   // Natural height is the floor, not the law: if the node has been dragged taller we
   // keep that and let the prompt box absorb the slack.
   // The node is a FIXED size and not resizable — see computeSize(). LiteGraph derives
@@ -547,6 +584,11 @@ class AIO {
   applyHeight() {
     const n = this.node;
     if (!n) return;
+    // Re-assert the width on every layout tick. This runs from the ResizeObserver, from
+    // sync(), and from every <details> toggle, so anything that steals the width later gets
+    // it taken back on the next tick. Must be BEFORE the early return below, which skips
+    // out once the node size has settled.
+    this.applyWidth();
     // Measure the real content height. ComfyUI detaches/hides DOM widget elements when the
     // node is off-screen, so scrollHeight can momentarily read ~0 — ignore those junk reads
     // and keep the last good value so the node never collapses.
@@ -1801,6 +1843,9 @@ app.registerExtension({
 
       const c = document.createElement("div");
       c.style.boxSizing = "border-box";
+      // Own the width from the moment the element exists, not just from when AIO is
+      // constructed (that happens a tick later). See AIO.applyWidth() for why.
+      c.style.width = c.style.minWidth = (NODE_W - 26) + "px";
       const widget = this.addDOMWidget("kaio_ui", "kaio_ui", c, {
         getValue: () => "", setValue: () => { },
       });
