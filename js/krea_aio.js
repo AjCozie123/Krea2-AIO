@@ -346,6 +346,10 @@ const CSS = `
 .kaio .mrow{display:flex;align-items:center;gap:7px;margin-bottom:4px}
 .kaio .mrow span{font-size:10px;color:var(--dim);width:52px;flex:none}
 .kaio .mrow select{font-size:10.5px;padding:4px 5px}
+/* Model-panel tick boxes (RTX VSR enable). Without this they inherit the generic
+   full-width input rule and the browser's default grey, so a ticked box looks the
+   same as an unticked one — they must read as ON/OFF like every other tick here. */
+.kaio .mrow input[type=checkbox]{width:auto;flex:none;margin:0;accent-color:var(--acc)}
 .kaio .chk{display:flex;align-items:center;gap:7px;font-size:11.5px;cursor:pointer}
 .kaio .chk input{width:auto;accent-color:var(--acc)}
 .kaio .status{font-size:10px;color:var(--dim);border-top:1px solid var(--line);padding-top:5px;
