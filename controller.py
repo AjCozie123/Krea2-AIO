@@ -46,6 +46,10 @@ SIZE_MODES = [
     "Aspect ratio + megapixels (choose a resolution)",
 ]
 
+# NVIDIA RTX VSR quality presets. Same four in both packs that provide the node
+# (Nvidia_RTX_Nodes_ComfyUI and ComfyUI-NVIDIA-RTX-VSR-Pro).
+RTX_VSR_QUALITY = ["LOW", "MEDIUM", "HIGH", "ULTRA"]
+
 RESTORE_MODES = [
     "smart: manual mask, local auto, or full frame",
     "full generated frame",
@@ -323,6 +327,27 @@ class KreaAIO(io.ComfyNode):
                                        "for identity and edit adherence. 'Aspect ratio + megapixels' "
                                        "forces the resolution you pick instead (can crop framing)."),
 
+                # OPTIONAL final stage: NVIDIA RTX Video Super Resolution, applied after the
+                # decode (and after the Flux upscale layer if that is on). OFF by default —
+                # it needs an RTX card and the nvidia-vfx runtime, which not every user has,
+                # so it is a tick-box, never a requirement. With the node missing the run
+                # logs a warning and returns the image unchanged. Appended last to keep
+                # widget positions stable in saved workflows.
+                io.Boolean.Input("rtx_vsr", default=False,
+                                 tooltip="Optional. Upscale the finished image with NVIDIA RTX "
+                                         "Video Super Resolution. Needs an NVIDIA RTX GPU, the "
+                                         "nvidia-vfx package and the RTX VSR node pack — leave "
+                                         "it off if you don't have those. Runs last, after the "
+                                         "decode and after the Flux upscale."),
+                io.Float.Input("rtx_vsr_scale", default=2.0, min=1.0, max=4.0, step=0.01,
+                               tooltip="RTX VSR multiplier. 2.0 doubles each edge. Ignored when "
+                                       "rtx_vsr is off."),
+                io.Combo.Input("rtx_vsr_quality", options=RTX_VSR_QUALITY,
+                               default=RTX_VSR_QUALITY[-1],
+                               tooltip="RTX VSR quality preset. ULTRA is the best result and the "
+                                       "slowest; drop it if you are tight on VRAM. Ignored when "
+                                       "rtx_vsr is off."),
+
             ],
             outputs=[
                 io.Image.Output(display_name="image"),
@@ -365,6 +390,7 @@ class KreaAIO(io.ComfyNode):
                 denoise=1.0, state_json="{}", auto_organize=False, trigger_words="",
                 enhance_prompt=False, enhancer_model=None, llm_max_token=256,
                 size_mode=None, negative_prompt="",
+                rtx_vsr=False, rtx_vsr_scale=2.0, rtx_vsr_quality="ULTRA",
                 image=None, mask=None, reference=None) -> io.NodeOutput:
 
         try:
@@ -405,6 +431,7 @@ class KreaAIO(io.ComfyNode):
             enhance_prompt=enhance_prompt, enhancer_model=enhancer_model,
             llm_max_token=llm_max_token, trigger_words=tw, pipeline_idx=idx,
             size_mode=size_mode, negative_prompt=(negative_prompt or "").strip(),
+            rtx_vsr_scale=rtx_vsr_scale, rtx_vsr_quality=rtx_vsr_quality,
         )
         RUNNERS = {
             1: pipelines.classic_edit,
@@ -420,6 +447,11 @@ class KreaAIO(io.ComfyNode):
             image, source = runner(ctx)
             if upscale:
                 image = pipelines.klein_upscale(ctx, image)
+            # Last stage, after everything else has finished: optional RTX VSR.
+            # Off by default; a missing node pack or a VSR failure passes the image
+            # through untouched rather than losing a finished generation.
+            if rtx_vsr:
+                image = pipelines.rtx_vsr(ctx, image)
         except engine.NodeCallError:
             raise
         except Exception as e:

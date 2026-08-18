@@ -569,3 +569,44 @@ def klein_upscale(ctx, image):
     if engine.has("ImageSharpen"):
         matched = engine.call1("ImageSharpen", image=matched, sharpen_radius=1, sigma=0.3, alpha=0.3)
     return matched
+
+
+# ---------------------------------------------------------------------------
+# OPTIONAL FINAL STAGE — NVIDIA RTX VIDEO SUPER RESOLUTION
+# ---------------------------------------------------------------------------
+
+def rtx_vsr(ctx, image):
+    """Optional last-step upscale through NVIDIA's RTX VSR node.
+
+    Runs AFTER the VAE decode (and after the Flux upscale layer, if that is on), so it
+    only ever sees finished pixels. It is OFF by default and entirely opt-in: RTX VSR
+    needs an NVIDIA RTX card plus the nvidia-vfx runtime, which plenty of users will not
+    have, so a missing node is a warning and a pass-through, never an error.
+
+    Works with either pack that provides the node — Comfy's stock Nvidia_RTX_Nodes_ComfyUI
+    or ComfyUI-NVIDIA-RTX-VSR-Pro. Both register the same node id and both take the same
+    'scale by multiplier' branch of the resize_type combo, so we do not care which one is
+    installed.
+    """
+    if not engine.has("RTXVideoSuperResolution"):
+        log.warning("[KreaAIO] rtx_vsr is on but the RTXVideoSuperResolution node isn't "
+                    "installed (needs Nvidia_RTX_Nodes_ComfyUI or ComfyUI-NVIDIA-RTX-VSR-Pro, "
+                    "an RTX GPU and the nvidia-vfx package) — skipping the RTX upscale.")
+        return image
+
+    scale = float(ctx.get("rtx_vsr_scale") or 2.0)
+    quality = str(ctx.get("rtx_vsr_quality") or "ULTRA")
+
+    # resize_type is a DynamicCombo: the executor hands the node a dict holding the chosen
+    # option plus that option's own inputs. "scale by multiplier" is the enum VALUE in both
+    # packs, so passing the plain string keeps this working without importing either pack.
+    try:
+        return engine.call1("RTXVideoSuperResolution", images=image,
+                            resize_type={"resize_type": "scale by multiplier", "scale": scale},
+                            quality=quality)
+    except Exception as e:
+        # A VSR failure (no RTX card, driver too old, VRAM, 16K edge case) must not throw
+        # away a finished generation — hand back the un-upscaled image and say why.
+        log.warning("[KreaAIO] RTX VSR failed (%s: %s) — returning the image un-upscaled.",
+                    type(e).__name__, e)
+        return image

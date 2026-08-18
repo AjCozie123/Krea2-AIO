@@ -178,6 +178,8 @@ const DEPENDENCIES = [
   ["ComfyUI-Easy-Use", "OPTIONAL · P1 background removal", "https://github.com/yolain/ComfyUI-Easy-Use"],
   ["ComfyUI-KJNodes", "OPTIONAL · upscale colour match", "https://github.com/kijai/ComfyUI-KJNodes"],
   ["rgthree-comfy", "OPTIONAL · before/after comparer", "https://github.com/rgthree/rgthree-comfy"],
+  ["ComfyUI-NVIDIA-RTX-VSR-Pro", "OPTIONAL · RTX VSR final upscale (needs an RTX GPU + pip install nvidia-vfx)",
+   "https://github.com/whmc76/ComfyUI-NVIDIA-RTX-VSR-Pro"],
 ];
 
 // Verified direct downloads; sizes checked against the local files.
@@ -511,7 +513,11 @@ class AIO {
     h += 52 + 5;                               // pipeline tabs
     h += 33 + 8;                               // upscale bar
     const fluxRows = (this.fluxWrap && !this.fluxWrap.classList.contains("hide")) ? 5 * 30 + 18 : 0;
-    h += (this.mBox.open ? 30 + 3 * 30 + fluxRows : 32) + 9;   // models (top)
+    // RTX VSR block: header + the always-visible tick row, plus 2 dial rows once ticked.
+    const vsrRows = this.vsrWrap
+      ? (30 + 18 + ((this.vsrCfg && !this.vsrCfg.classList.contains("hide")) ? 2 * 30 : 0))
+      : 0;
+    h += (this.mBox.open ? 30 + 3 * 30 + fluxRows + vsrRows : 32) + 9;   // models (top)
     h += 30 + 6;                               // notes button
     if (shown(this.modeSec)) h += 14 + 44 + 9;
     if (shown(this.fillSec)) h += 14 + 44 + 9;
@@ -850,6 +856,41 @@ class AIO {
     umRow.appendChild(this.upMP);
     this.fluxWrap.appendChild(umRow);
     this.mBody.appendChild(this.fluxWrap);
+
+    // OPTIONAL · NVIDIA RTX Video Super Resolution. Runs last, after the decode and after
+    // the Flux upscale. Deliberately a tick-box that is OFF by default: it needs an NVIDIA
+    // RTX card, the nvidia-vfx runtime and the RTX VSR node pack, which many users won't
+    // have. The tick row is always visible so the option is discoverable; its two dials
+    // only appear once it's ticked, same idea as the Flux block above.
+    this.vsrWrap = el("div");
+    this.vsrWrap.appendChild(el("div", "muted", "OPTIONAL · NVIDIA RTX VSR"));
+    const vsrOnRow = el("div", "mrow");
+    vsrOnRow.appendChild(el("span", null, "Enable"));
+    this.vsrChk = el("input"); this.vsrChk.type = "checkbox";
+    this.vsrChk.title = "Upscale the finished image with NVIDIA RTX Video Super Resolution. " +
+                        "Needs an RTX GPU, the nvidia-vfx package and the RTX VSR node pack. " +
+                        "Leave off if you don't have those — the run is unaffected.";
+    this.vsrChk.onchange = () => { this.setW("rtx_vsr", this.vsrChk.checked); this.sync(); };
+    vsrOnRow.appendChild(this.vsrChk);
+    this.vsrWrap.appendChild(vsrOnRow);
+
+    this.vsrCfg = el("div");
+    const vsRow = el("div", "mrow");
+    vsRow.appendChild(el("span", null, "Scale"));
+    this.vsrScale = el("input"); this.vsrScale.type = "number";
+    this.vsrScale.min = 1; this.vsrScale.max = 4; this.vsrScale.step = 0.25;
+    this.vsrScale.title = "Multiplier. 2.0 doubles each edge.";
+    this.vsrScale.oninput = () => this.setW("rtx_vsr_scale", Number(this.vsrScale.value || 2));
+    vsRow.appendChild(this.vsrScale);
+    this.vsrCfg.appendChild(vsRow);
+    const vqRow = el("div", "mrow");
+    vqRow.appendChild(el("span", null, "Quality"));
+    this.vsrQual = el("select");
+    this.vsrQual.onchange = () => this.setW("rtx_vsr_quality", this.vsrQual.value);
+    vqRow.appendChild(this.vsrQual);
+    this.vsrCfg.appendChild(vqRow);
+    this.vsrWrap.appendChild(this.vsrCfg);
+    this.mBody.appendChild(this.vsrWrap);
 
     // The per-workflow guide now lives at the top of the panel (built above). The footer
     // holds only the download-links button, which opens as an OVERLAY — inside a
@@ -1647,6 +1688,16 @@ class AIO {
     this.fluxWrap.classList.toggle("hide", !up);
     this.upSteps.value = this.gv("upscale_steps") ?? 2;
     this.upMP.value = this.gv("upscale_megapixels") ?? 4;
+
+    // RTX VSR: the tick is always available, its dials follow the tick. Global (setW),
+    // not per-pipeline — it is a hardware capability, not a creative setting.
+    if (this.vsrChk) {
+      const vsrOn = !!this.gv("rtx_vsr");
+      this.vsrChk.checked = vsrOn;
+      this.vsrScale.value = this.gv("rtx_vsr_scale") ?? 2;
+      this.fillCombo(this.vsrQual, "rtx_vsr_quality");
+      this.vsrCfg.classList.toggle("hide", !vsrOn);
+    }
     const showPad = (p === 3) && outp;
     this.padSec.classList.toggle("hide", !showPad);
     for (const k of Object.keys(this.pad)) this.pad[k].i.value = this.gv(k) ?? 0;

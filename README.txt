@@ -72,6 +72,28 @@ so the krea2 identity-edit LoRA is kept ON by default in Classic (1) and Identit
 MODE A (2A) - where it belongs - and is NOT carried into MODE B (ai-toolkit only).
 
 
+NVIDIA RTX VSR  (optional final upscale)
+----------------------------------------
+In the node's MODELS panel there is an "OPTIONAL - NVIDIA RTX VSR" block with an
+Enable tick. It is OFF by default and it is a CHOICE, not a requirement.
+
+When ticked, the finished image gets one last pass through NVIDIA's RTX Video Super
+Resolution after the VAE decode - and after the Flux 2 Klein upscale, if that layer
+is also on. Two dials appear with the tick:
+
+  Scale     multiplier, 1.0-4.0 (2.0 doubles each edge)
+  Quality   LOW / MEDIUM / HIGH / ULTRA  (ULTRA is best and slowest)
+
+It needs an NVIDIA RTX GPU, the nvidia-vfx runtime and a pack that provides the
+RTXVideoSuperResolution node. If any of that is missing, or the VSR call fails, the
+run logs a warning and hands back the image UN-upscaled - a finished generation is
+never thrown away because an optional extra was unavailable. Leave the tick off and
+nothing about the node changes.
+
+Note: the two packs that provide this node register the SAME node id, so install
+only one of them or ComfyUI will load whichever wins and ignore the other.
+
+
 PROMPT ENHANCER (LLM, optional)
 -------------------------------
 Tick "Prompt Enhancer (LLM)" to rewrite your prompt before generating — the same
@@ -120,6 +142,10 @@ name in ComfyUI-Manager), then restart:
     https://github.com/kijai/ComfyUI-KJNodes
   before/after comparer (example workflow only):
     https://github.com/rgthree/rgthree-comfy
+  NVIDIA RTX Video Super Resolution (final upscale, OFF by default):
+    https://github.com/whmc76/ComfyUI-NVIDIA-RTX-VSR-Pro
+    (or Comfy's stock Nvidia_RTX_Nodes_ComfyUI — either provides the node)
+    also needs an NVIDIA RTX GPU and:  pip install nvidia-vfx
 
 FluxKontextMultiReferenceLatentMethod, ImageSharpen, Flux2Scheduler, ResolutionSelector
 and SamplerCustomAdvanced are ComfyUI core — nothing to install.
