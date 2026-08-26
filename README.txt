@@ -105,6 +105,37 @@ Note: the two packs that provide this node register the SAME node id, so install
 only one of them or ComfyUI will load whichever wins and ignore the other.
 
 
+FREE VRAM / RAM  (optional tick, in the MODELS panel)
+-----------------------------------------------------
+Tick "OPTIONAL - FREE VRAM / RAM" and the node unloads models and hands freed memory
+back at three points, chosen because nothing after them needs the model resident:
+
+  1  after a SEPARATE enhancer LLM finishes  (the prompt is a plain string by then;
+     skipped when the enhancer reuses the loaded encoder, since that would unload the
+     very encoder about to be used)
+  2  before the FLUX 2 KLEIN upscale  (a different model family is about to load, and
+     it only consumes finished pixels - this is where 8 GB cards die)
+  3  once the whole run is finished
+
+It CANNOT change your image. It only unloads weights and returns freed blocks to the
+driver; weights reload identically and nothing touches a latent, a seed or a
+conditioning. The only cost is reload time.
+
+It deliberately does NOT clear between the encoder and the sampler, between sampling
+and the decode, or inside the face-detail pass - purging there unloads the very model
+about to be used again, which is pure slowdown for no memory saved.
+
+At the end of the run it also drops this node's OWN model cache (models.py keeps the
+UNET / encoder / VAE in RAM between runs so it never re-reads from disk). That cache is
+what leaves Krea 2 and Flux 2 sitting in system RAM after you are done with them, so
+dropping it is what actually makes room for a heavy workflow like MiniMax H3 or LTX
+afterwards. Leave the tick OFF if you are doing run after run in this node alone -
+every purge means a reload.
+
+The expanded example workflow has the same three points as FREE VRAM: groups holding
+KJNodes' VRAM_Debug, with their own Fast Groups Muter panel to switch them on and off.
+
+
 PROMPT ENHANCER (LLM, optional)
 -------------------------------
 Tick "Prompt Enhancer (LLM)" to rewrite your prompt before generating — the same

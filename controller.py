@@ -348,7 +348,21 @@ class KreaAIO(io.ComfyNode):
                                        "slowest; drop it if you are tight on VRAM. Ignored when "
                                        "rtx_vsr is off."),
 
+                # Housekeeping, not an image control. OFF by default. Appended last to keep
+                # widget positions stable in saved workflows.
+                io.Boolean.Input("free_memory", default=False,
+                                 tooltip="Unload models and release VRAM + RAM at the points "
+                                         "where nothing downstream needs them: after a separate "
+                                         "enhancer LLM, before the Flux 2 Klein upscale, and once "
+                                         "the run is finished. Cannot change the image — weights "
+                                         "reload identically — it only costs reload time. Turn it "
+                                         "on when you switch between this and a heavy workflow "
+                                         "such as MiniMax H3 or LTX."),
+
             ],
+            # unique_id lets the run push its finished prompt straight to THIS node's UI
+            # over the websocket, before sampling starts (pipelines.send_prompt_preview).
+            hidden=[io.Hidden.unique_id],
             outputs=[
                 io.Image.Output(display_name="image"),
                 # The original, at native resolution, so an Image Comparer can do
@@ -391,6 +405,7 @@ class KreaAIO(io.ComfyNode):
                 enhance_prompt=False, enhancer_model=None, llm_max_token=256,
                 size_mode=None, negative_prompt="",
                 rtx_vsr=False, rtx_vsr_scale=2.0, rtx_vsr_quality="ULTRA",
+                free_memory=False,
                 image=None, mask=None, reference=None) -> io.NodeOutput:
 
         try:
@@ -432,6 +447,8 @@ class KreaAIO(io.ComfyNode):
             llm_max_token=llm_max_token, trigger_words=tw, pipeline_idx=idx,
             size_mode=size_mode, negative_prompt=(negative_prompt or "").strip(),
             rtx_vsr_scale=rtx_vsr_scale, rtx_vsr_quality=rtx_vsr_quality,
+            node_id=cls.hidden.unique_id if getattr(cls, "hidden", None) else None,
+            free_memory=free_memory,
         )
         RUNNERS = {
             1: pipelines.classic_edit,
@@ -452,6 +469,9 @@ class KreaAIO(io.ComfyNode):
             # through untouched rather than losing a finished generation.
             if rtx_vsr:
                 image = pipelines.rtx_vsr(ctx, image)
+            # Everything is finished and `image` is final pixels, so this is the one place a
+            # full purge — model cache included — is guaranteed to be free of consequences.
+            pipelines.free_vram(ctx, "end", drop_model_cache=True)
         except engine.NodeCallError:
             raise
         except Exception as e:

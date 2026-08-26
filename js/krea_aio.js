@@ -911,6 +911,30 @@ class AIO {
     this.vsrWrap.appendChild(this.vsrCfg);
     this.mBody.appendChild(this.vsrWrap);
 
+    // OPTIONAL · free VRAM/RAM between stages. Housekeeping, not an image control — it only
+    // fires where nothing downstream still needs a model, so it cannot change a result. OFF
+    // by default because the reloads cost time; on when you alternate this with a heavy
+    // workflow (MiniMax H3, LTX) and don't want the previous models still resident.
+    this.memWrap = el("div");
+    this.memWrap.appendChild(el("div", "muted", "OPTIONAL · FREE VRAM / RAM"));
+    const memRow = el("div", "mrow");
+    memRow.appendChild(el("span", null, "Enable"));
+    this.memChk = el("input"); this.memChk.type = "checkbox";
+    this.memChk.title = "Unload models and release VRAM + RAM at the safe points: after a " +
+                        "separate enhancer LLM, before the Flux 2 Klein upscale, and once the " +
+                        "run has finished. Cannot change the image - weights reload identically " +
+                        "- it only costs reload time.";
+    this.memChk.onchange = () => { this.setW("free_memory", this.memChk.checked); this.sync(); };
+    memRow.appendChild(this.memChk);
+    this.memWrap.appendChild(memRow);
+    this.memInfo = el("button", "refbtn");
+    this.memInfo.style.marginTop = "5px";
+    this.memInfo.appendChild(el("i", null, "i"));
+    this.memInfo.appendChild(el("span", null, "Where does it clear, and is it safe?"));
+    this.memInfo.onclick = () => this.openOverlay("Free VRAM / RAM", this.buildMemInfo());
+    this.memWrap.appendChild(this.memInfo);
+    this.mBody.appendChild(this.memWrap);
+
     // The per-workflow guide now lives at the top of the panel (built above). The footer
     // holds only the download-links button, which opens as an OVERLAY — inside a
     // fixed-height node an inline expander would push controls out of view.
@@ -1742,6 +1766,7 @@ class AIO {
       this.fillCombo(this.vsrQual, "rtx_vsr_quality");
       this.vsrCfg.classList.toggle("hide", !vsrOn);
     }
+    if (this.memChk) this.memChk.checked = !!this.gv("free_memory");
     const showPad = (p === 3) && outp;
     this.padSec.classList.toggle("hide", !showPad);
     for (const k of Object.keys(this.pad)) this.pad[k].i.value = this.gv(k) ?? 0;
@@ -1767,8 +1792,12 @@ class AIO {
     this.ovl.classList.remove("hide");
   }
 
-  // Store the prompt payload the backend returned (controller.py -> ui.kaio_done) and light
-  // up the round reveal button so it is obvious there is something to look at.
+  // Store the prompt payload the backend sent and light up the round reveal button so it is
+  // obvious there is something to look at. Two senders: the live "kaio_prompt" websocket
+  // event, which arrives BEFORE sampling starts, and the ui.kaio_done payload at the end of
+  // the run (which also covers a page refresh, via app.nodeOutputs).
+  // Never opens anything by itself — it only stocks the panel and lights the button, so the
+  // prompt is already waiting the moment you choose to click the eye.
   setEnhResult(d) {
     if (!d) return;
     this.enhResult = d;
@@ -1845,6 +1874,37 @@ class AIO {
       setTimeout(() => { copy.querySelector("span").textContent = "Copy the final prompt"; }, 2200);
     };
     wrap.appendChild(copy);
+    return wrap;
+  }
+
+  // What the free-VRAM tick actually does, and why it cannot change an image.
+  buildMemInfo() {
+    const wrap = el("div");
+    const dl = el("dl");
+    const add = (t, d) => { dl.appendChild(el("dt", null, t)); dl.appendChild(el("dd", null, d)); };
+    add("Where it clears",
+      "Three points, all chosen because nothing after them needs the model still resident: " +
+      "(1) after a SEPARATE enhancer LLM has produced its rewrite — the prompt is a plain " +
+      "string by then; (2) before the Flux 2 Klein upscale, which only consumes finished " +
+      "pixels and is about to load a different model family; (3) once the whole run is done.");
+    add("Why it can't change your image",
+      "It only unloads weights and returns freed blocks to the driver. Weights reload " +
+      "identically, sampling is unaffected, and nothing touches a latent, a seed or a " +
+      "conditioning. The only cost is the time to load a model again.");
+    add("Where it deliberately does NOT clear",
+      "Between the encoder and the sampler, between sampling and the decode, or inside the " +
+      "face-detail pass. Purging there unloads the very model about to be used again — pure " +
+      "slowdown for no memory saved, because it is reloaded moments later.");
+    add("RAM as well as VRAM",
+      "At the end of the run it also drops this node's own model cache (models.py keeps the " +
+      "UNET / encoder / VAE in RAM between runs so it never re-reads from disk). That cache " +
+      "is what keeps Krea 2 and Flux 2 sitting in system RAM after you have finished with " +
+      "them, so dropping it is what actually leaves room for MiniMax H3 or LTX. The next " +
+      "Krea 2 run reloads from disk.");
+    add("When to leave it OFF",
+      "If you are doing run after run in this node alone. Every purge means a reload, so " +
+      "back-to-back generations get slower for no benefit.");
+    wrap.appendChild(dl);
     return wrap;
   }
 
@@ -2094,6 +2154,22 @@ app.registerExtension({
       } catch (e) { console.warn("[KreaAIO] chime failed:", e); }
       return out;
     };
+
+    // The prompt this run is about to sample with, pushed from inside the run the moment the
+    // enhancer finishes and BEFORE the sampler starts (pipelines.send_prompt_preview). The
+    // ui payload above only arrives once the whole node is done — far too late to decide
+    // whether the rewrite was worth generating. Registered once, not per node.
+    if (!window.__kaioPromptListener) {
+      window.__kaioPromptListener = true;
+      api.addEventListener("kaio_prompt", (e) => {
+        try {
+          const d = e.detail;
+          if (!d || d.node == null) return;
+          const node = app.graph.getNodeById(Number(d.node)) || app.graph.getNodeById(d.node);
+          node?._kaio?.setEnhResult(d);
+        } catch (err) { console.warn("[KreaAIO] prompt preview failed:", err); }
+      });
+    }
 
     // Detach the live-preview websocket listeners when the node is removed.
     const onRemoved = nodeType.prototype.onRemoved;

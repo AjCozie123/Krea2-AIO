@@ -118,6 +118,7 @@ def finalize_prompt(ctx, clip):
         if sel and not str(sel).startswith("("):
             try:
                 enh_clip = models.clip(sel, KREA_CLIP_TYPE)
+                ctx.enhancer_separate = True
             except Exception as e:
                 log.warning("[KreaAIO] enhancer model %r failed to load (%s); using the loaded "
                             "text encoder for the rewrite instead.", sel, e)
@@ -140,13 +141,89 @@ def finalize_prompt(ctx, clip):
             elif src is not None:
                 vis_image = src
         base = prompt_enhancer.enhance(ctx, enh_clip, idx, base, image=vis_image)
+        # A separate enhancer LLM is dead weight from here on — the rewrite is a plain
+        # string now. Drop it before conditioning + sampling load the real encoder.
+        if ctx.get("enhancer_separate"):
+            free_vram(ctx, "enhancer")
         ctx.prompt_enhanced = base
         ctx.enhancer_changed = base.strip() != ctx.prompt_typed.strip()
     tw = (ctx.get("trigger_words") or "").strip()
     if tw:
         base = f"{base}, {tw}" if base else tw
     ctx.prompt = base
+    # Push the finished prompt to the node UI NOW, before sampling starts. The ui payload
+    # returned from execute() only reaches the frontend when the whole node is done, which
+    # is far too late to decide whether the rewrite was worth generating.
+    send_prompt_preview(ctx)
     return base
+
+
+def free_vram(ctx, stage, drop_model_cache=False):
+    """Unload models and release VRAM/RAM between stages. Opt-in (`free_memory` tick).
+
+    Only ever called at points where NOTHING downstream depends on a model still being
+    resident, so it cannot change an image:
+
+      "enhancer"  the LLM rewrite is finished and the prompt is already a plain string.
+                  Only fires when a SEPARATE enhancer encoder was loaded — purging the
+                  encoder we are about to condition with would just reload it for nothing.
+      "upscale"   the Krea 2 image is fully decoded (and face-detailed). The Flux 2 Klein
+                  layer only consumes those finished pixels, and is a different model
+                  family about to load ~9B + an 8B encoder. This is where 8 GB cards die.
+      "end"       everything is done and the image is final.
+
+    Weights reload deterministically, so the only cost is time. `drop_model_cache` also
+    drops models.py's own cache — that is what actually frees RAM for a different
+    workflow (MiniMax H3, LTX) afterwards, at the price of re-reading from disk next run.
+    """
+    if not ctx.get("free_memory"):
+        return
+    try:
+        import gc
+        import comfy.model_management as mm
+        before = mm.get_free_memory() / (1024 ** 3)
+        if drop_model_cache:
+            models.clear_cache()
+        # Order matters: drop the references, collect them, THEN hand the freed blocks back
+        # to the driver. Emptying the cache first (as some cleanup nodes do) releases only
+        # what was already unreferenced.
+        mm.unload_all_models()
+        gc.collect()
+        mm.soft_empty_cache(True)
+        after = mm.get_free_memory() / (1024 ** 3)
+        log.info("[KreaAIO] free_memory (%s): %.2f GB -> %.2f GB free VRAM%s",
+                 stage, before, after, " (model cache dropped)" if drop_model_cache else "")
+    except Exception as e:
+        # Never let housekeeping kill a finished generation.
+        log.warning("[KreaAIO] free_memory (%s) failed: %s", stage, e)
+
+
+def send_prompt_preview(ctx):
+    """Tell the node's UI what prompt this run is about to sample with.
+
+    Fires from inside the run, the moment the prompt is final and before the sampler
+    starts, so you can read the LLM's rewrite while there is still time to cancel.
+    Never raises: a websocket hiccup must not take down a generation.
+    """
+    node_id = ctx.get("node_id")
+    if node_id is None:
+        return
+    try:
+        from server import PromptServer
+        PromptServer.instance.send_sync("kaio_prompt", {
+            "node": str(node_id),
+            "pipeline": int(ctx.get("pipeline_idx", 4) or 4),
+            "enhancer_on": bool(ctx.get("enhance_prompt")),
+            "enhancer_changed": bool(ctx.get("enhancer_changed")),
+            "prompt_typed": ctx.get("prompt_typed") or "",
+            "prompt_enhanced": ctx.get("prompt_enhanced") or "",
+            "prompt_final": ctx.get("prompt") or "",
+            "trigger_words": (ctx.get("trigger_words") or "").strip(),
+            "enhancer_model": str(ctx.get("enhancer_model") or ""),
+            "llm_max_token": str(ctx.get("llm_max_token") or ""),
+        })
+    except Exception as e:
+        log.debug("[KreaAIO] could not send the prompt preview (%s)", e)
 
 
 def negative_cond(ctx, positive, encode):
@@ -535,6 +612,9 @@ def green_mask_fill(ctx):
 # ---------------------------------------------------------------------------
 
 def klein_upscale(ctx, image):
+    # The Krea 2 image is finished; this layer only consumes those pixels. Unloading the
+    # Krea 2 family first is the difference between fitting and thrashing on 8 GB.
+    free_vram(ctx, "upscale")
     model = models.unet(ctx.get("flux_unet_name") or FLUX_UNET)
     clip = models.clip(ctx.get("flux_clip_name") or FLUX_CLIP, FLUX_CLIP_TYPE)
     vae = models.vae(ctx.get("flux_vae_name") or FLUX_VAE)
