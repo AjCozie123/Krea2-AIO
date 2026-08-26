@@ -132,8 +132,16 @@ dropping it is what actually makes room for a heavy workflow like MiniMax H3 or 
 afterwards. Leave the tick OFF if you are doing run after run in this node alone -
 every purge means a reload.
 
+The enhancer purge is DOUBLE-GATED: it is inside the "enhancer enabled" branch and also
+requires that a separate encoder actually loaded. With the enhancer off, or on the
+default "(loaded text encoder)", it never fires.
+
 The expanded example workflow has the same three points as FREE VRAM: groups holding
 KJNodes' VRAM_Debug, with their own Fast Groups Muter panel to switch them on and off.
+There the enhancer purge is NESTED inside the "SEPARATE ENHANCER LLM" group, because a
+VRAM_Debug has no required inputs and would otherwise run whenever the prompt chain is
+needed - enhancer or no enhancer. Nesting means muting the enhancer, or that group,
+necessarily mutes the purge too, while it can still be switched off on its own.
 
 
 PROMPT ENHANCER (LLM, optional)

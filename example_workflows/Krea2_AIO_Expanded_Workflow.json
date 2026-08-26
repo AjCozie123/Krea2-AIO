@@ -1,5 +1,5 @@
 {
-  "id": "5d5b03e7-af90-4ef5-bdf6-89b4e6b82901",
+  "id": "dc1b8baf-48e2-44d7-b8b3-73c5de41ce37",
   "revision": 0,
   "last_node_id": 172,
   "last_link_id": 290,
@@ -1238,7 +1238,7 @@
       "id": 35,
       "type": "Any Switch (rgthree)",
       "pos": [
-        4204,
+        4614,
         3227
       ],
       "size": [
@@ -1285,7 +1285,7 @@
       "id": 36,
       "type": "ImageBatch",
       "pos": [
-        3798,
+        4208,
         3261
       ],
       "size": [
@@ -1327,7 +1327,7 @@
       "id": 37,
       "type": "TextGenerate",
       "pos": [
-        4204,
+        4614,
         3374
       ],
       "size": [
@@ -1391,8 +1391,8 @@
       "id": 38,
       "type": "VRAM_Debug",
       "pos": [
-        4690,
-        3261
+        3766,
+        3299
       ],
       "size": [
         340,
@@ -1461,7 +1461,7 @@
       "id": 39,
       "type": "Any Switch (rgthree)",
       "pos": [
-        5116,
+        5084,
         3227
       ],
       "size": [
@@ -1611,7 +1611,7 @@
       "id": 42,
       "type": "Note",
       "pos": [
-        5506,
+        5474,
         3227
       ],
       "size": [
@@ -1635,7 +1635,7 @@
       "id": 43,
       "type": "LoraLoaderModelOnly",
       "pos": [
-        6186,
+        6154,
         82
       ],
       "size": [
@@ -1675,7 +1675,7 @@
       "id": 44,
       "type": "LoraLoaderModelOnly",
       "pos": [
-        6186,
+        6154,
         241
       ],
       "size": [
@@ -1715,7 +1715,7 @@
       "id": 45,
       "type": "easy imageRemBg",
       "pos": [
-        6668,
+        6636,
         82
       ],
       "size": [
@@ -1765,7 +1765,7 @@
       "id": 46,
       "type": "easy imageRemBg",
       "pos": [
-        6668,
+        6636,
         370
       ],
       "size": [
@@ -1815,7 +1815,7 @@
       "id": 47,
       "type": "Any Switch (rgthree)",
       "pos": [
-        7094,
+        7062,
         48
       ],
       "size": [
@@ -1862,7 +1862,7 @@
       "id": 48,
       "type": "ImageScaleToTotalPixels",
       "pos": [
-        7464,
+        7432,
         48
       ],
       "size": [
@@ -1915,7 +1915,7 @@
       "id": 49,
       "type": "VAEEncode",
       "pos": [
-        7874,
+        7842,
         48
       ],
       "size": [
@@ -1957,7 +1957,7 @@
       "id": 50,
       "type": "Any Switch (rgthree)",
       "pos": [
-        8260,
+        8228,
         82
       ],
       "size": [
@@ -2004,7 +2004,7 @@
       "id": 51,
       "type": "ImageScaleToTotalPixels",
       "pos": [
-        8630,
+        8598,
         82
       ],
       "size": [
@@ -2048,7 +2048,7 @@
       "id": 52,
       "type": "VAEEncode",
       "pos": [
-        9040,
+        9008,
         82
       ],
       "size": [
@@ -2090,7 +2090,7 @@
       "id": 53,
       "type": "ResolutionSelector",
       "pos": [
-        9442,
+        9410,
         82
       ],
       "size": [
@@ -2142,7 +2142,7 @@
       "id": 54,
       "type": "GetImageSize",
       "pos": [
-        9868,
+        9836,
         48
       ],
       "size": [
@@ -2193,7 +2193,7 @@
       "id": 55,
       "type": "Any Switch (rgthree)",
       "pos": [
-        10238,
+        10206,
         48
       ],
       "size": [
@@ -2240,7 +2240,7 @@
       "id": 56,
       "type": "Any Switch (rgthree)",
       "pos": [
-        10238,
+        10206,
         195
       ],
       "size": [
@@ -2287,7 +2287,7 @@
       "id": 57,
       "type": "EmptyHunyuanLatentVideo",
       "pos": [
-        10568,
+        10536,
         48
       ],
       "size": [
@@ -2341,7 +2341,7 @@
       "id": 58,
       "type": "Krea2EditModelPatch",
       "pos": [
-        10958,
+        10926,
         48
       ],
       "size": [
@@ -2421,7 +2421,7 @@
       "id": 59,
       "type": "Krea2EditGroundedEncode",
       "pos": [
-        10958,
+        10926,
         381
       ],
       "size": [
@@ -2489,7 +2489,7 @@
       "id": 60,
       "type": "Krea2EditGroundedEncode",
       "pos": [
-        11444,
+        11412,
         82
       ],
       "size": [
@@ -2556,7 +2556,7 @@
       "id": 61,
       "type": "ConditioningZeroOut",
       "pos": [
-        11910,
+        11878,
         48
       ],
       "size": [
@@ -2593,7 +2593,7 @@
       "id": 62,
       "type": "Any Switch (rgthree)",
       "pos": [
-        11910,
+        11878,
         153
       ],
       "size": [
@@ -2641,7 +2641,7 @@
       "id": 63,
       "type": "ModelSamplingAuraFlow",
       "pos": [
-        12300,
+        12268,
         48
       ],
       "size": [
@@ -2680,7 +2680,7 @@
       "id": 64,
       "type": "KSampler",
       "pos": [
-        12690,
+        12658,
         48
       ],
       "size": [
@@ -2772,7 +2772,7 @@
       "id": 65,
       "type": "VAEDecode",
       "pos": [
-        13100,
+        13068,
         48
       ],
       "size": [
@@ -2814,7 +2814,7 @@
       "id": 66,
       "type": "Any Switch (rgthree)",
       "pos": [
-        13100,
+        13068,
         174
       ],
       "size": [
@@ -2856,7 +2856,7 @@
       "id": 67,
       "type": "PrimitiveString",
       "pos": [
-        13100,
+        13068,
         320
       ],
       "size": [
@@ -2889,7 +2889,7 @@
       "id": 68,
       "type": "LoraLoaderModelOnly",
       "pos": [
-        6186,
+        6154,
         828
       ],
       "size": [
@@ -2929,7 +2929,7 @@
       "id": 69,
       "type": "LoraLoaderModelOnly",
       "pos": [
-        6186,
+        6154,
         987
       ],
       "size": [
@@ -2970,7 +2970,7 @@
       "id": 70,
       "type": "KreaImageAspectPreservePrepare",
       "pos": [
-        6652,
+        6620,
         794
       ],
       "size": [
@@ -3048,7 +3048,7 @@
       "id": 71,
       "type": "ResolutionSelector",
       "pos": [
-        7098,
+        7066,
         828
       ],
       "size": [
@@ -3100,7 +3100,7 @@
       "id": 72,
       "type": "Any Switch (rgthree)",
       "pos": [
-        7524,
+        7492,
         794
       ],
       "size": [
@@ -3147,7 +3147,7 @@
       "id": 73,
       "type": "Any Switch (rgthree)",
       "pos": [
-        7524,
+        7492,
         941
       ],
       "size": [
@@ -3194,7 +3194,7 @@
       "id": 74,
       "type": "VAEEncode",
       "pos": [
-        7854,
+        7822,
         794
       ],
       "size": [
@@ -3236,7 +3236,7 @@
       "id": 75,
       "type": "EmptyHunyuanLatentVideo",
       "pos": [
-        7854,
+        7822,
         920
       ],
       "size": [
@@ -3290,7 +3290,7 @@
       "id": 76,
       "type": "Any Switch (rgthree)",
       "pos": [
-        8260,
+        8228,
         828
       ],
       "size": [
@@ -3333,7 +3333,7 @@
       "id": 77,
       "type": "ImageScaleToTotalPixels",
       "pos": [
-        8630,
+        8598,
         828
       ],
       "size": [
@@ -3375,7 +3375,7 @@
       "id": 78,
       "type": "VAEEncode",
       "pos": [
-        8630,
+        8598,
         1014
       ],
       "size": [
@@ -3417,7 +3417,7 @@
       "id": 79,
       "type": "Krea2EditModelPatch",
       "pos": [
-        9072,
+        9040,
         828
       ],
       "size": [
@@ -3496,7 +3496,7 @@
       "id": 80,
       "type": "Krea2EditGroundedEncode",
       "pos": [
-        9072,
+        9040,
         1161
       ],
       "size": [
@@ -3558,7 +3558,7 @@
       "id": 81,
       "type": "Krea2EditGroundedEncode",
       "pos": [
-        9072,
+        9040,
         1407
       ],
       "size": [
@@ -3620,7 +3620,7 @@
       "id": 82,
       "type": "TextEncodeKrea2OstrisEdit",
       "pos": [
-        9574,
+        9542,
         828
       ],
       "size": [
@@ -3682,7 +3682,7 @@
       "id": 83,
       "type": "TextEncodeKrea2OstrisEdit",
       "pos": [
-        9574,
+        9542,
         1044
       ],
       "size": [
@@ -3739,7 +3739,7 @@
       "id": 84,
       "type": "FluxKontextMultiReferenceLatentMethod",
       "pos": [
-        10024,
+        9992,
         828
       ],
       "size": [
@@ -3778,7 +3778,7 @@
       "id": 85,
       "type": "FluxKontextMultiReferenceLatentMethod",
       "pos": [
-        10024,
+        9992,
         960
       ],
       "size": [
@@ -3817,7 +3817,7 @@
       "id": 86,
       "type": "Any Switch (rgthree)",
       "pos": [
-        10490,
+        10458,
         794
       ],
       "size": [
@@ -3864,7 +3864,7 @@
       "id": 87,
       "type": "Any Switch (rgthree)",
       "pos": [
-        10490,
+        10458,
         941
       ],
       "size": [
@@ -3911,7 +3911,7 @@
       "id": 88,
       "type": "Any Switch (rgthree)",
       "pos": [
-        10490,
+        10458,
         1088
       ],
       "size": [
@@ -3958,7 +3958,7 @@
       "id": 89,
       "type": "KSampler",
       "pos": [
-        10880,
+        10848,
         794
       ],
       "size": [
@@ -4050,7 +4050,7 @@
       "id": 90,
       "type": "VAEDecode",
       "pos": [
-        11290,
+        11258,
         794
       ],
       "size": [
@@ -4092,7 +4092,7 @@
       "id": 91,
       "type": "KreaImageUniversalAspectPreserveRestore",
       "pos": [
-        11660,
+        11628,
         794
       ],
       "size": [
@@ -4170,7 +4170,7 @@
       "id": 92,
       "type": "Any Switch (rgthree)",
       "pos": [
-        11660,
+        11628,
         1151
       ],
       "size": [
@@ -4212,7 +4212,7 @@
       "id": 93,
       "type": "PrimitiveString",
       "pos": [
-        11660,
+        11628,
         1297
       ],
       "size": [
@@ -4245,7 +4245,7 @@
       "id": 94,
       "type": "LoraLoaderModelOnly",
       "pos": [
-        6186,
+        6154,
         1823
       ],
       "size": [
@@ -4285,7 +4285,7 @@
       "id": 95,
       "type": "LoraLoaderModelOnly",
       "pos": [
-        6186,
+        6154,
         1982
       ],
       "size": [
@@ -4325,7 +4325,7 @@
       "id": 96,
       "type": "GrowMask",
       "pos": [
-        6668,
+        6636,
         1823
       ],
       "size": [
@@ -4365,7 +4365,7 @@
       "id": 97,
       "type": "MaskToImage",
       "pos": [
-        7038,
+        7006,
         1823
       ],
       "size": [
@@ -4402,7 +4402,7 @@
       "id": 98,
       "type": "ImageBlur",
       "pos": [
-        7388,
+        7356,
         1823
       ],
       "size": [
@@ -4442,7 +4442,7 @@
       "id": 99,
       "type": "ImageToMask",
       "pos": [
-        7758,
+        7726,
         1823
       ],
       "size": [
@@ -4481,7 +4481,7 @@
       "id": 100,
       "type": "ImagePadForOutpaint",
       "pos": [
-        8160,
+        8128,
         1823
       ],
       "size": [
@@ -4534,7 +4534,7 @@
       "id": 101,
       "type": "GetImageSize",
       "pos": [
-        8570,
+        8538,
         1823
       ],
       "size": [
@@ -4585,7 +4585,7 @@
       "id": 102,
       "type": "EmptyImage",
       "pos": [
-        8940,
+        8908,
         1823
       ],
       "size": [
@@ -4638,7 +4638,7 @@
       "id": 103,
       "type": "ImageCompositeMasked",
       "pos": [
-        9330,
+        9298,
         1823
       ],
       "size": [
@@ -4689,7 +4689,7 @@
       "id": 104,
       "type": "Any Switch (rgthree)",
       "pos": [
-        9756,
+        9724,
         1789
       ],
       "size": [
@@ -4738,7 +4738,7 @@
       "id": 105,
       "type": "Any Switch (rgthree)",
       "pos": [
-        9756,
+        9724,
         1936
       ],
       "size": [
@@ -4786,7 +4786,7 @@
       "id": 106,
       "type": "KreaAspectPreservePrepare",
       "pos": [
-        10146,
+        10114,
         1789
       ],
       "size": [
@@ -4871,7 +4871,7 @@
       "id": 107,
       "type": "EmptyHunyuanLatentVideo",
       "pos": [
-        10596,
+        10564,
         1789
       ],
       "size": [
@@ -4924,7 +4924,7 @@
       "id": 108,
       "type": "TextEncodeKrea2OstrisEdit",
       "pos": [
-        10986,
+        10954,
         1789
       ],
       "size": [
@@ -4981,7 +4981,7 @@
       "id": 109,
       "type": "TextEncodeKrea2OstrisEdit",
       "pos": [
-        10986,
+        10954,
         1997
       ],
       "size": [
@@ -5038,7 +5038,7 @@
       "id": 110,
       "type": "FluxKontextMultiReferenceLatentMethod",
       "pos": [
-        11436,
+        11404,
         1789
       ],
       "size": [
@@ -5077,7 +5077,7 @@
       "id": 111,
       "type": "FluxKontextMultiReferenceLatentMethod",
       "pos": [
-        11436,
+        11404,
         1921
       ],
       "size": [
@@ -5116,7 +5116,7 @@
       "id": 112,
       "type": "KSampler",
       "pos": [
-        11886,
+        11854,
         1789
       ],
       "size": [
@@ -5208,7 +5208,7 @@
       "id": 113,
       "type": "VAEDecode",
       "pos": [
-        12296,
+        12264,
         1789
       ],
       "size": [
@@ -5250,7 +5250,7 @@
       "id": 114,
       "type": "KreaAspectPreserveRestore",
       "pos": [
-        12666,
+        12634,
         1789
       ],
       "size": [
@@ -5318,7 +5318,7 @@
       "id": 115,
       "type": "PrimitiveString",
       "pos": [
-        12666,
+        12634,
         2038
       ],
       "size": [
@@ -5351,7 +5351,7 @@
       "id": 116,
       "type": "LoraLoader",
       "pos": [
-        6186,
+        6154,
         2359
       ],
       "size": [
@@ -5405,7 +5405,7 @@
       "id": 117,
       "type": "LoraLoader",
       "pos": [
-        6186,
+        6154,
         2566
       ],
       "size": [
@@ -5462,7 +5462,7 @@
       "id": 118,
       "type": "CLIPTextEncode",
       "pos": [
-        6652,
+        6620,
         2325
       ],
       "size": [
@@ -5510,7 +5510,7 @@
       "id": 119,
       "type": "CLIPTextEncode",
       "pos": [
-        7098,
+        7066,
         2359
       ],
       "size": [
@@ -5557,7 +5557,7 @@
       "id": 120,
       "type": "ConditioningZeroOut",
       "pos": [
-        7544,
+        7512,
         2325
       ],
       "size": [
@@ -5594,7 +5594,7 @@
       "id": 121,
       "type": "Any Switch (rgthree)",
       "pos": [
-        7544,
+        7512,
         2430
       ],
       "size": [
@@ -5642,7 +5642,7 @@
       "id": 122,
       "type": "ResolutionSelector",
       "pos": [
-        7934,
+        7902,
         2325
       ],
       "size": [
@@ -5694,7 +5694,7 @@
       "id": 123,
       "type": "EmptyLatentImage",
       "pos": [
-        7934,
+        7902,
         2505
       ],
       "size": [
@@ -5746,7 +5746,7 @@
       "id": 124,
       "type": "KSampler",
       "pos": [
-        8344,
+        8312,
         2325
       ],
       "size": [
@@ -5838,7 +5838,7 @@
       "id": 125,
       "type": "VAEDecode",
       "pos": [
-        8754,
+        8722,
         2325
       ],
       "size": [
@@ -5881,7 +5881,7 @@
       "id": 126,
       "type": "PrimitiveString",
       "pos": [
-        8754,
+        8722,
         2451
       ],
       "size": [
@@ -5914,7 +5914,7 @@
       "id": 127,
       "type": "Any Switch (rgthree)",
       "pos": [
-        13684,
+        13652,
         48
       ],
       "size": [
@@ -5972,7 +5972,7 @@
       "id": 128,
       "type": "Any Switch (rgthree)",
       "pos": [
-        13684,
+        13652,
         237
       ],
       "size": [
@@ -6029,7 +6029,7 @@
       "id": 129,
       "type": "Any Switch (rgthree)",
       "pos": [
-        13684,
+        13652,
         426
       ],
       "size": [
@@ -6086,7 +6086,7 @@
       "id": 130,
       "type": "Any Switch (rgthree)",
       "pos": [
-        14094,
+        14062,
         48
       ],
       "size": [
@@ -6133,7 +6133,7 @@
       "id": 131,
       "type": "Any Switch (rgthree)",
       "pos": [
-        14094,
+        14062,
         195
       ],
       "size": [
@@ -6181,7 +6181,7 @@
       "id": 132,
       "type": "Any Switch (rgthree)",
       "pos": [
-        14094,
+        14062,
         342
       ],
       "size": [
@@ -6228,7 +6228,7 @@
       "id": 133,
       "type": "Note",
       "pos": [
-        14484,
+        14452,
         48
       ],
       "size": [
@@ -6252,7 +6252,7 @@
       "id": 134,
       "type": "ModelSamplingAuraFlow",
       "pos": [
-        13700,
+        13668,
         769
       ],
       "size": [
@@ -6291,7 +6291,7 @@
       "id": 135,
       "type": "PrimitiveStringMultiline",
       "pos": [
-        13700,
+        13668,
         901
       ],
       "size": [
@@ -6324,7 +6324,7 @@
       "id": 136,
       "type": "CLIPTextEncode",
       "pos": [
-        14170,
+        14138,
         769
       ],
       "size": [
@@ -6371,7 +6371,7 @@
       "id": 137,
       "type": "UltralyticsDetectorProvider",
       "pos": [
-        14170,
+        14138,
         922
       ],
       "size": [
@@ -6410,7 +6410,7 @@
       "id": 138,
       "type": "SAMLoader",
       "pos": [
-        14170,
+        14138,
         1075
       ],
       "size": [
@@ -6444,7 +6444,7 @@
       "id": 139,
       "type": "FaceDetailer",
       "pos": [
-        14600,
+        14568,
         769
       ],
       "size": [
@@ -6584,7 +6584,7 @@
       "id": 140,
       "type": "Any Switch (rgthree)",
       "pos": [
-        15106,
+        15074,
         735
       ],
       "size": [
@@ -6633,7 +6633,7 @@
       "id": 141,
       "type": "UNETLoader",
       "pos": [
-        14532,
+        14500,
         1939
       ],
       "size": [
@@ -6667,7 +6667,7 @@
       "id": 142,
       "type": "CLIPLoader",
       "pos": [
-        14532,
+        14500,
         2098
       ],
       "size": [
@@ -6702,7 +6702,7 @@
       "id": 143,
       "type": "VAELoader",
       "pos": [
-        14532,
+        14500,
         2284
       ],
       "size": [
@@ -6736,7 +6736,7 @@
       "id": 144,
       "type": "VRAM_Debug",
       "pos": [
-        13700,
+        13668,
         1939
       ],
       "size": [
@@ -6806,7 +6806,7 @@
       "id": 145,
       "type": "Any Switch (rgthree)",
       "pos": [
-        14126,
+        14094,
         1905
       ],
       "size": [
@@ -6853,7 +6853,7 @@
       "id": 146,
       "type": "ImageScaleToTotalPixels",
       "pos": [
-        15042,
+        15010,
         1939
       ],
       "size": [
@@ -6896,7 +6896,7 @@
       "id": 147,
       "type": "GetImageSize",
       "pos": [
-        15542,
+        15510,
         1939
       ],
       "size": [
@@ -6949,7 +6949,7 @@
       "id": 148,
       "type": "VAEEncode",
       "pos": [
-        15542,
+        15510,
         2086
       ],
       "size": [
@@ -6992,7 +6992,7 @@
       "id": 149,
       "type": "PrimitiveStringMultiline",
       "pos": [
-        15042,
+        15010,
         2125
       ],
       "size": [
@@ -7025,7 +7025,7 @@
       "id": 150,
       "type": "CLIPTextEncode",
       "pos": [
-        15542,
+        15510,
         2212
       ],
       "size": [
@@ -7073,7 +7073,7 @@
       "id": 151,
       "type": "ReferenceLatent",
       "pos": [
-        15952,
+        15920,
         1939
       ],
       "size": [
@@ -7115,7 +7115,7 @@
       "id": 152,
       "type": "ConditioningZeroOut",
       "pos": [
-        15952,
+        15920,
         2065
       ],
       "size": [
@@ -7152,7 +7152,7 @@
       "id": 153,
       "type": "ReferenceLatent",
       "pos": [
-        15952,
+        15920,
         2170
       ],
       "size": [
@@ -7194,7 +7194,7 @@
       "id": 154,
       "type": "CFGGuider",
       "pos": [
-        16362,
+        16330,
         1939
       ],
       "size": [
@@ -7243,7 +7243,7 @@
       "id": 155,
       "type": "Flux2Scheduler",
       "pos": [
-        16362,
+        16330,
         2113
       ],
       "size": [
@@ -7295,7 +7295,7 @@
       "id": 156,
       "type": "KSamplerSelect",
       "pos": [
-        16362,
+        16330,
         2266
       ],
       "size": [
@@ -7328,7 +7328,7 @@
       "id": 157,
       "type": "RandomNoise",
       "pos": [
-        16362,
+        16330,
         2398
       ],
       "size": [
@@ -7371,7 +7371,7 @@
       "id": 158,
       "type": "EmptyFlux2LatentImage",
       "pos": [
-        16362,
+        16330,
         2557
       ],
       "size": [
@@ -7423,7 +7423,7 @@
       "id": 159,
       "type": "SamplerCustomAdvanced",
       "pos": [
-        16752,
+        16720,
         1939
       ],
       "size": [
@@ -7486,7 +7486,7 @@
       "id": 160,
       "type": "VAEDecode",
       "pos": [
-        16752,
+        16720,
         2128
       ],
       "size": [
@@ -7528,7 +7528,7 @@
       "id": 161,
       "type": "ColorMatch",
       "pos": [
-        17162,
+        17130,
         1939
       ],
       "size": [
@@ -7574,7 +7574,7 @@
       "id": 162,
       "type": "ImageSharpen",
       "pos": [
-        17162,
+        17130,
         2146
       ],
       "size": [
@@ -7615,7 +7615,7 @@
       "id": 163,
       "type": "Any Switch (rgthree)",
       "pos": [
-        17608,
+        17576,
         1905
       ],
       "size": [
@@ -7663,7 +7663,7 @@
       "id": 164,
       "type": "RTXVideoSuperResolution",
       "pos": [
-        13700,
+        13668,
         2880
       ],
       "size": [
@@ -7704,7 +7704,7 @@
       "id": 165,
       "type": "Any Switch (rgthree)",
       "pos": [
-        14166,
+        14134,
         2846
       ],
       "size": [
@@ -7752,7 +7752,7 @@
       "id": 166,
       "type": "VRAM_Debug",
       "pos": [
-        13700,
+        13668,
         3236
       ],
       "size": [
@@ -7822,7 +7822,7 @@
       "id": 167,
       "type": "Any Switch (rgthree)",
       "pos": [
-        14126,
+        14094,
         3202
       ],
       "size": [
@@ -7871,7 +7871,7 @@
       "id": 168,
       "type": "Note",
       "pos": [
-        14126,
+        14094,
         3349
       ],
       "size": [
@@ -7895,7 +7895,7 @@
       "id": 169,
       "type": "SaveImage",
       "pos": [
-        14636,
+        14604,
         3202
       ],
       "size": [
@@ -7933,7 +7933,7 @@
       "id": 170,
       "type": "PreviewImage",
       "pos": [
-        15126,
+        15094,
         3202
       ],
       "size": [
@@ -7961,7 +7961,7 @@
       "id": 171,
       "type": "Image Comparer (rgthree)",
       "pos": [
-        15616,
+        15584,
         3202
       ],
       "size": [
@@ -8001,7 +8001,7 @@
       "id": 172,
       "type": "Note",
       "pos": [
-        14636,
+        14604,
         3702
       ],
       "size": [
@@ -10351,7 +10351,7 @@
       "bounding": [
         0,
         0,
-        5928,
+        5896,
         1220
       ],
       "color": "#2a363b",
@@ -10364,7 +10364,7 @@
       "bounding": [
         0,
         1310,
-        5928,
+        5896,
         507
       ],
       "color": "#3f5159",
@@ -10377,7 +10377,7 @@
       "bounding": [
         0,
         1907,
-        5928,
+        5896,
         612
       ],
       "color": "#3f5159",
@@ -10390,7 +10390,7 @@
       "bounding": [
         0,
         2609,
-        5928,
+        5896,
         480
       ],
       "color": "#443322",
@@ -10455,7 +10455,7 @@
       "bounding": [
         3240,
         3227,
-        472,
+        882,
         703
       ],
       "color": "#353535",
@@ -10466,7 +10466,7 @@
       "id": 10,
       "title": "TOGGLE: ENHANCER VISION",
       "bounding": [
-        3782,
+        4192,
         3227,
         352,
         703
@@ -10477,24 +10477,11 @@
     },
     {
       "id": 11,
-      "title": "FREE VRAM: AFTER A SEPARATE ENHANCER LLM",
-      "bounding": [
-        4674,
-        3227,
-        372,
-        703
-      ],
-      "color": "#353535",
-      "font_size": 22,
-      "flags": {}
-    },
-    {
-      "id": 12,
       "title": "5 - PROMPT ENHANCER (LLM)  - mute this group to use your typed prompt",
       "bounding": [
         0,
         3179,
-        5928,
+        5896,
         769
       ],
       "color": "#332233",
@@ -10502,10 +10489,23 @@
       "flags": {}
     },
     {
+      "id": 12,
+      "title": "FREE VRAM: AFTER A SEPARATE ENHANCER LLM",
+      "bounding": [
+        3754,
+        3259,
+        364,
+        282
+      ],
+      "color": "#2f2f2f",
+      "font_size": 20,
+      "flags": {}
+    },
+    {
       "id": 13,
       "title": "BYPASS: P1 LORA STACK",
       "bounding": [
-        6170,
+        6138,
         48,
         412,
         590
@@ -10518,7 +10518,7 @@
       "id": 14,
       "title": "TOGGLE: P1 REMOVE BACKGROUND",
       "bounding": [
-        6652,
+        6620,
         48,
         372,
         590
@@ -10531,7 +10531,7 @@
       "id": 15,
       "title": "TOGGLE: P1 REFERENCE 2  (use_reference)",
       "bounding": [
-        8244,
+        8212,
         48,
         1112,
         590
@@ -10544,7 +10544,7 @@
       "id": 16,
       "title": "TOGGLE: P1 ASPECT+MP SIZE",
       "bounding": [
-        9426,
+        9394,
         48,
         372,
         590
@@ -10557,7 +10557,7 @@
       "id": 17,
       "title": "TOGGLE: P1 NEGATIVE PROMPT",
       "bounding": [
-        11428,
+        11396,
         48,
         412,
         590
@@ -10570,7 +10570,7 @@
       "id": 18,
       "title": "PIPELINE 1 - CLASSIC EDIT  (two references)",
       "bounding": [
-        6148,
+        6116,
         0,
         7294,
         656
@@ -10583,7 +10583,7 @@
       "id": 19,
       "title": "BYPASS: P2 LORA STACK",
       "bounding": [
-        6170,
+        6138,
         794,
         412,
         839
@@ -10596,7 +10596,7 @@
       "id": 20,
       "title": "TOGGLE: P2 ASPECT+MP SIZE",
       "bounding": [
-        7082,
+        7050,
         794,
         372,
         839
@@ -10609,7 +10609,7 @@
       "id": 21,
       "title": "TOGGLE: P2 REFERENCE 2  (use_reference)",
       "bounding": [
-        8244,
+        8212,
         794,
         742,
         839
@@ -10622,7 +10622,7 @@
       "id": 22,
       "title": "TOGGLE: P2 MODE A - NATIVE KREA2EDIT",
       "bounding": [
-        9056,
+        9024,
         794,
         432,
         839
@@ -10635,7 +10635,7 @@
       "id": 23,
       "title": "TOGGLE: P2 MODE B - OSTRIS EDIT",
       "bounding": [
-        9558,
+        9526,
         794,
         862,
         839
@@ -10648,7 +10648,7 @@
       "id": 24,
       "title": "PIPELINE 2 - IDENTITY / OSTRIS EDIT",
       "bounding": [
-        6148,
+        6116,
         746,
         7294,
         905
@@ -10661,7 +10661,7 @@
       "id": 25,
       "title": "BYPASS: P3 LORA STACK",
       "bounding": [
-        6170,
+        6138,
         1789,
         412,
         380
@@ -10674,7 +10674,7 @@
       "id": 26,
       "title": "TOGGLE: P3 MODE A - INPAINT (you paint)",
       "bounding": [
-        6652,
+        6620,
         1789,
         1422,
         380
@@ -10687,7 +10687,7 @@
       "id": 27,
       "title": "TOGGLE: P3 MODE B - OUTPAINT (auto green)",
       "bounding": [
-        8144,
+        8112,
         1789,
         1542,
         380
@@ -10700,7 +10700,7 @@
       "id": 28,
       "title": "PIPELINE 3 - GREEN-MASK INPAINT / OUTPAINT",
       "bounding": [
-        6148,
+        6116,
         1741,
         7294,
         446
@@ -10713,7 +10713,7 @@
       "id": 29,
       "title": "BYPASS: P4 LORA STACK",
       "bounding": [
-        6170,
+        6138,
         2325,
         412,
         428
@@ -10726,7 +10726,7 @@
       "id": 30,
       "title": "TOGGLE: P4 NEGATIVE PROMPT",
       "bounding": [
-        7082,
+        7050,
         2325,
         392,
         428
@@ -10739,7 +10739,7 @@
       "id": 31,
       "title": "PIPELINE 4 - TEXT TO IMAGE",
       "bounding": [
-        6148,
+        6116,
         2277,
         7294,
         494
@@ -10752,7 +10752,7 @@
       "id": 32,
       "title": "6 - PIPELINE SELECT  (Any Switch merge)",
       "bounding": [
-        13662,
+        13630,
         0,
         4288,
         597
@@ -10765,7 +10765,7 @@
       "id": 33,
       "title": "TOGGLE: FACE DETAIL PASS",
       "bounding": [
-        13684,
+        13652,
         735,
         1352,
         1014
@@ -10778,7 +10778,7 @@
       "id": 34,
       "title": "7 - FACE DETAIL PASS  (Impact Pack, optional)",
       "bounding": [
-        13662,
+        13630,
         687,
         4288,
         1080
@@ -10791,7 +10791,7 @@
       "id": 35,
       "title": "FREE VRAM: BEFORE THE FLUX 2 UPSCALE",
       "bounding": [
-        13684,
+        13652,
         1905,
         372,
         785
@@ -10804,7 +10804,7 @@
       "id": 36,
       "title": "TOGGLE: FLUX 2 KLEIN UPSCALE",
       "bounding": [
-        14516,
+        14484,
         1905,
         3022,
         785
@@ -10817,7 +10817,7 @@
       "id": 37,
       "title": "8 - PIPELINE 5: FLUX 2 KLEIN DETAIL UPSCALE  (optional)",
       "bounding": [
-        13662,
+        13630,
         1857,
         4288,
         851
@@ -10830,7 +10830,7 @@
       "id": 38,
       "title": "TOGGLE: NVIDIA RTX VSR",
       "bounding": [
-        13684,
+        13652,
         2846,
         412,
         200
@@ -10843,7 +10843,7 @@
       "id": 39,
       "title": "9 - NVIDIA RTX VSR  (optional, last stage)",
       "bounding": [
-        13662,
+        13630,
         2798,
         4288,
         266
@@ -10856,7 +10856,7 @@
       "id": 40,
       "title": "FREE VRAM: AFTER THE RUN, BEFORE SAVING",
       "bounding": [
-        13684,
+        13652,
         3202,
         372,
         704
@@ -10869,7 +10869,7 @@
       "id": 41,
       "title": "10 - OUTPUT",
       "bounding": [
-        13662,
+        13630,
         3154,
         4288,
         770
