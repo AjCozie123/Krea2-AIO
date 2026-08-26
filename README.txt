@@ -41,6 +41,17 @@ TO UPDATE later to the newest version, run:
 Then open  example_workflows/Krea2_AIO.json  — or just drag that .json file onto
 the ComfyUI canvas.
 
+There is a SECOND example workflow next to it:
+
+  example_workflows/Krea2_AIO_Expanded_Workflow.json
+
+That is the exact same 5-pipeline setup rebuilt as an ORDINARY graph — every step
+the AIO runs internally laid out as real nodes and noodles (164 of them), so you can
+see, learn from, or modify any part of it. You switch pipeline there with the Fast
+Groups Muter (rgthree) panel instead of the tab bar. It is for reading and tinkering;
+the AIO node is still the quick way to actually work. It needs rgthree-comfy for the
+group muter, the Any Switch nodes and the image comparer.
+
 There is nothing to build, pip-install or compile — it is plain Python + JavaScript.
 
 
@@ -110,6 +121,17 @@ refuses, your typed prompt is used unchanged, so a run is never blocked.
 Note: for the edit workflows the enhancer can be shown your reference image(s), but a
 small 4B model is unreliable at image-grounded editing — text-to-image is where it
 shines. Edit prompts are best kept short and written by hand anyway.
+
+SEEING WHAT THE ENHANCER WROTE
+There is a small round eye button next to the "Prompt Enhancer (LLM)" tick. Click it
+after a run and it shows what you typed, what the LLM rewrote it into, and the final
+prompt that was actually sampled with (trigger words are appended AFTER the rewrite,
+which is why the last two can differ), plus a Copy button. The button picks up a blue
+ring once there is something to show.
+
+Because the enhancer falls back to your typed prompt on any error, empty result or
+refusal, that panel also TELLS you when the rewrite did not happen — otherwise a
+fallback is invisible and looks like the LLM simply chose not to change much.
 
 
 DEPENDENCIES  (the core ones are now BUNDLED)

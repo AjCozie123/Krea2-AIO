@@ -217,6 +217,21 @@ const CSS = `
 .kaio .refbtn.plainbtn:hover{background:#2a2a2a;color:var(--txt)}
 .kaio .refbtn i{font-style:italic;font-weight:700;display:inline-flex;align-items:center;
  justify-content:center;width:15px;height:15px;border-radius:50%;background:#2c3d52;flex:none}
+/* Small round "reveal" button — shows the prompt the enhancer actually produced. */
+.kaio .roundbtn{flex:none;width:21px;height:21px;padding:0;border-radius:50%;cursor:pointer;
+ display:inline-flex;align-items:center;justify-content:center;background:#1d2530;
+ border:1px solid #2c3d52;color:#9dc4ea;font-family:inherit;line-height:0}
+.kaio .roundbtn:hover{background:#25334a;color:#cfe3f7;border-color:#4c8dff}
+.kaio .roundbtn svg{width:12px;height:12px;display:block}
+.kaio .roundbtn.has{border-color:#4c8dff;box-shadow:0 0 0 2px rgba(76,141,255,.16)}
+.kaio .roundbtn.empty{opacity:.45}
+.kaio .enhrow{display:flex;align-items:center;gap:8px}
+.kaio .enhrow > label{flex:1;min-width:0}
+.kaio .promptout{white-space:pre-wrap;word-break:break-word;background:var(--field);
+ border:1px solid var(--line);border-radius:6px;padding:8px 9px;font-size:11px;line-height:1.5;
+ color:var(--txt);margin:0 0 4px;font-family:inherit;max-height:none}
+.kaio .promptmeta{font-size:10px;color:var(--dim);margin:0 0 8px}
+.kaio .promptwarn{font-size:10.5px;color:var(--warn);margin:0 0 8px;line-height:1.45}
 .kaio .ovl{position:absolute;inset:0;background:rgba(22,22,22,.985);z-index:30;
  display:flex;flex-direction:column;border-radius:6px}
 .kaio .ovl.hide{display:none!important}
@@ -1136,7 +1151,26 @@ class AIO {
     this.enhChk.onchange = () => { this.setP("enhance_prompt", this.enhChk.checked); this.sync(); };
     ehHd.appendChild(this.enhChk);
     ehHd.appendChild(el("span", null, "Prompt Enhancer (LLM)"));
-    this.enhSec.appendChild(ehHd);
+    // The tick sits in a row with a small round button that reveals the prompt the LLM
+    // actually wrote. The AIO samples internally, so unlike the expanded graph there is no
+    // node downstream showing the rewritten text — this is the only way to read it back.
+    // It must live OUTSIDE the <label>, or clicking it would toggle the checkbox.
+    const ehRow = el("div", "enhrow");
+    ehRow.appendChild(ehHd);
+    this.enhShowBtn = el("button", "roundbtn empty");
+    this.enhShowBtn.type = "button";
+    this.enhShowBtn.title = "Show the prompt the enhancer produced";
+    this.enhShowBtn.innerHTML =
+      '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" ' +
+      'stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">' +
+      '<path d="M1.5 12S5 5 12 5s10.5 7 10.5 7-3.5 7-10.5 7S1.5 12 1.5 12z"/>' +
+      '<circle cx="12" cy="12" r="3"/></svg>';
+    this.enhShowBtn.onclick = (e) => {
+      e.preventDefault(); e.stopPropagation();
+      this.openOverlay("Enhanced prompt", this.buildEnhResult());
+    };
+    ehRow.appendChild(this.enhShowBtn);
+    this.enhSec.appendChild(ehRow);
     this.enhInfoBtn = el("button", "refbtn");
     this.enhInfoBtn.style.marginTop = "5px";
     this.enhInfoBtn.appendChild(el("i", null, "i"));
@@ -1157,6 +1191,12 @@ class AIO {
     etf.appendChild(this.enhTok); this.enhCfg.appendChild(etf);
     this.enhSec.appendChild(this.enhCfg);
     L.appendChild(this.enhSec);   // Prompt Enhancer on the LEFT column (below the LoRA stack)
+    // ComfyUI keeps the last ui payload per node in app.nodeOutputs, so the reveal button
+    // still has something to show after a browser refresh within the same session.
+    try {
+      const cached = app.nodeOutputs?.[this.node.id]?.kaio_done?.[0];
+      if (cached) this.setEnhResult(cached);
+    } catch (e) { }
 
 
 
@@ -1727,6 +1767,87 @@ class AIO {
     this.ovl.classList.remove("hide");
   }
 
+  // Store the prompt payload the backend returned (controller.py -> ui.kaio_done) and light
+  // up the round reveal button so it is obvious there is something to look at.
+  setEnhResult(d) {
+    if (!d) return;
+    this.enhResult = d;
+    if (this.enhShowBtn) {
+      const has = !!(d.prompt_final || d.prompt_enhanced);
+      this.enhShowBtn.classList.toggle("has", has && !!d.enhancer_on);
+      this.enhShowBtn.classList.toggle("empty", !has);
+      this.enhShowBtn.title = has
+        ? "Show the prompt this node last generated with"
+        : "Show the prompt the enhancer produced";
+    }
+  }
+
+  // Contents of the reveal panel: what you typed, what the LLM wrote, and what was actually
+  // sampled with (trigger words are appended AFTER the rewrite, so the last one can differ).
+  buildEnhResult() {
+    const wrap = el("div");
+    const d = this.enhResult;
+    if (!d || !(d.prompt_final || d.prompt_enhanced || d.prompt_typed)) {
+      wrap.appendChild(el("p", "promptmeta",
+        "Nothing to show yet. Tick Prompt Enhancer (LLM), type a prompt and queue the node — " +
+        "the rewritten prompt appears here as soon as the run finishes."));
+      return wrap;
+    }
+    const block = (title, text, cls) => {
+      const h = el("div", "promptmeta", title);
+      h.style.cssText += "text-transform:uppercase;letter-spacing:.06em;color:#9dc4ea;margin-bottom:3px";
+      wrap.appendChild(h);
+      const pre = el("pre", cls || "promptout", text || "(empty)");
+      wrap.appendChild(pre);
+      return pre;
+    };
+
+    if (!d.enhancer_on) {
+      wrap.appendChild(el("p", "promptmeta",
+        "The enhancer was OFF for this run — your prompt was sampled exactly as typed."));
+    } else if (!d.enhancer_changed) {
+      wrap.appendChild(el("p", "promptwarn",
+        "The enhancer returned nothing usable and your prompt was used unchanged. That is the " +
+        "deliberate fallback: an error, an empty result, a refusal, or a small model echoing its " +
+        "own instructions all fall back rather than blocking the run. Check the ComfyUI console " +
+        "for the reason, or pick an abliterated Qwen3-VL."));
+    }
+
+    block("You typed", d.prompt_typed);
+    if (d.enhancer_on && d.enhancer_changed) block("Enhancer wrote", d.prompt_enhanced);
+    const finalPre = block("Sampled with (final)", d.prompt_final);
+
+    if (d.trigger_words) {
+      wrap.appendChild(el("p", "promptmeta",
+        "Trigger words appended after the rewrite: " + d.trigger_words));
+    }
+    const meta = [];
+    if (d.pipeline) meta.push("pipeline " + d.pipeline);
+    if (d.enhancer_on && d.enhancer_model) meta.push("LLM: " + d.enhancer_model);
+    if (d.enhancer_on && d.llm_max_token) meta.push("max tokens: " + d.llm_max_token);
+    if (meta.length) wrap.appendChild(el("p", "promptmeta", meta.join("  ·  ")));
+
+    const copy = el("button", "refbtn plainbtn");
+    copy.type = "button";
+    copy.style.marginTop = "4px";
+    copy.appendChild(el("span", null, "Copy the final prompt"));
+    copy.onclick = async () => {
+      try {
+        await navigator.clipboard.writeText(d.prompt_final || "");
+        copy.querySelector("span").textContent = "Copied";
+      } catch (e) {
+        // Clipboard is blocked on insecure origins — select it so Ctrl+C works instead.
+        const r = document.createRange();
+        r.selectNodeContents(finalPre);
+        const s = window.getSelection(); s.removeAllRanges(); s.addRange(r);
+        copy.querySelector("span").textContent = "Selected — press Ctrl+C";
+      }
+      setTimeout(() => { copy.querySelector("span").textContent = "Copy the final prompt"; }, 2200);
+    };
+    wrap.appendChild(copy);
+    return wrap;
+  }
+
   // Per-workflow explanation of the LLM prompt enhancer (opened by the "i" in its section).
   buildEnhInfo() {
     const wrap = el("div");
@@ -1964,7 +2085,12 @@ app.registerExtension({
     nodeType.prototype.onExecuted = function (output) {
       const out = onExecuted ? onExecuted.apply(this, arguments) : undefined;
       try {
-        if (output && output.kaio_done) this._kaio?.chime();
+        if (output && output.kaio_done) {
+          this._kaio?.chime();
+          // Same payload carries the prompt the run actually sampled with, for the round
+          // reveal button in the enhancer section.
+          this._kaio?.setEnhResult(output.kaio_done[0]);
+        }
       } catch (e) { console.warn("[KreaAIO] chime failed:", e); }
       return out;
     };

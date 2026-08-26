@@ -103,6 +103,12 @@ def finalize_prompt(ctx, clip):
     prompt (see prompt_enhancer.enhance).
     """
     base = (ctx.get("prompt") or "").strip()
+    # Record what the user actually typed, so the node UI can show the before/after. The
+    # enhancer silently falls back to the raw prompt on any failure, and there is otherwise
+    # no way to tell from the outside whether the rewrite happened.
+    ctx.prompt_typed = base
+    ctx.prompt_enhanced = ""
+    ctx.enhancer_changed = False
     if ctx.get("enhance_prompt"):
         idx = int(ctx.get("pipeline_idx", 4) or 4)
         enh_clip = clip
@@ -134,6 +140,8 @@ def finalize_prompt(ctx, clip):
             elif src is not None:
                 vis_image = src
         base = prompt_enhancer.enhance(ctx, enh_clip, idx, base, image=vis_image)
+        ctx.prompt_enhanced = base
+        ctx.enhancer_changed = base.strip() != ctx.prompt_typed.strip()
     tw = (ctx.get("trigger_words") or "").strip()
     if tw:
         base = f"{base}, {tw}" if base else tw

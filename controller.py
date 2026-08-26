@@ -474,5 +474,18 @@ class KreaAIO(io.ComfyNode):
         # We DO return a tiny non-image ui payload: that is what makes ComfyUI call the
         # frontend's node.onExecuted() hook, which is how the finish chime fires (the same
         # mechanism pysssss's PlaySound uses). A custom key never triggers the image layout.
-        return io.NodeOutput(image, source, save_path,
-                             ui={"kaio_done": [{"pipeline": idx, "upscaled": bool(upscale)}]})
+        # The prompt actually sampled with. With the enhancer on there is no other way to
+        # see what the LLM wrote — the AIO node samples internally, so nothing in the graph
+        # exposes it. The node UI reads these back for its "show the enhanced prompt" panel.
+        return io.NodeOutput(image, source, save_path, ui={"kaio_done": [{
+            "pipeline": idx,
+            "upscaled": bool(upscale),
+            "enhancer_on": bool(enhance_prompt),
+            "enhancer_changed": bool(ctx.get("enhancer_changed")),
+            "prompt_typed": ctx.get("prompt_typed") or "",
+            "prompt_enhanced": ctx.get("prompt_enhanced") or "",
+            "prompt_final": ctx.get("prompt") or "",
+            "trigger_words": tw,
+            "enhancer_model": str(enhancer_model or ""),
+            "llm_max_token": str(llm_max_token or ""),
+        }]})
