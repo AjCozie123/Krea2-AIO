@@ -46,11 +46,14 @@ There is a SECOND example workflow next to it:
   example_workflows/Krea2_AIO_Expanded_Workflow.json
 
 That is the exact same 5-pipeline setup rebuilt as an ORDINARY graph — every step
-the AIO runs internally laid out as real nodes and noodles (164 of them), so you can
+the AIO runs internally laid out as real nodes and noodles (172 of them), so you can
 see, learn from, or modify any part of it. You switch pipeline there with the Fast
 Groups Muter (rgthree) panel instead of the tab bar. It is for reading and tinkering;
-the AIO node is still the quick way to actually work. It needs rgthree-comfy for the
-group muter, the Any Switch nodes and the image comparer.
+the AIO node is still the quick way to actually work.
+
+It REQUIRES rgthree-comfy (group muter, Any Switch, image comparer) and, only if you
+switch on the three FREE VRAM: groups, ComfyUI-KJNodes. See DEPENDENCIES OF THE
+EXPANDED EXAMPLE WORKFLOW below.
 
 There is nothing to build, pip-install or compile — it is plain Python + JavaScript.
 
@@ -199,17 +202,56 @@ name in ComfyUI-Manager), then restart:
     https://github.com/akanametov/yolo-face/releases/download/1.0.0/yolov12l-face.pt
   pipeline 1 background removal:
     https://github.com/yolain/ComfyUI-Easy-Use
-  colour match on the Flux upscale:
+  colour match on the Flux upscale  (ColorMatch):
     https://github.com/kijai/ComfyUI-KJNodes
-  before/after comparer (example workflow only):
-    https://github.com/rgthree/rgthree-comfy
   NVIDIA RTX Video Super Resolution (final upscale, OFF by default):
     https://github.com/whmc76/ComfyUI-NVIDIA-RTX-VSR-Pro
     (or Comfy's stock Nvidia_RTX_Nodes_ComfyUI — either provides the node)
     also needs an NVIDIA RTX GPU and:  pip install nvidia-vfx
 
-FluxKontextMultiReferenceLatentMethod, ImageSharpen, Flux2Scheduler, ResolutionSelector
-and SamplerCustomAdvanced are ComfyUI core — nothing to install.
+None of the above is needed by the AIO node's default path. Miss one out and the
+node logs a warning and skips that step; it never fails the run.
+
+
+DEPENDENCIES OF THE EXPANDED EXAMPLE WORKFLOW
+---------------------------------------------
+Krea2_AIO_Expanded_Workflow.json is a normal graph, so it needs the real nodes on
+the canvas rather than the AIO node's graceful skipping. Two packs are REQUIRED to
+open it without missing-node errors:
+
+  rgthree-comfy      REQUIRED.  Any Switch (rgthree) joins the four pipeline lanes
+                     and every optional stage; Fast Groups Muter / Bypasser are the
+                     panels you switch pipeline with; Image Comparer is the
+                     before/after. Without it the graph will not run.
+                     https://github.com/rgthree/rgthree-comfy
+
+  ComfyUI-KJNodes    REQUIRED only if you use the three FREE VRAM: groups, which
+                     hold VRAM_Debug. They ship MUTED, so the graph opens and runs
+                     without KJNodes — you will just see three missing nodes. Also
+                     provides ColorMatch in the Flux 2 upscale group.
+                     https://github.com/kijai/ComfyUI-KJNodes
+
+The same optional packs as above apply to their groups in the graph: Impact Pack +
+Subpack for the FACE DETAIL group, ComfyUI-Easy-Use for pipeline 1's REMOVE
+BACKGROUND group, and an RTX VSR pack for the NVIDIA RTX VSR group. All three ship
+muted, so a missing pack costs you that group, not the workflow.
+
+The four bundled packs above cover every Krea2-specific node in the graph, so no
+extra install is needed for the pipelines themselves.
+
+
+COMFYUI CORE NODES USED  (nothing to install)
+---------------------------------------------
+FluxKontextMultiReferenceLatentMethod, ResolutionSelector, Flux2Scheduler,
+EmptyFlux2LatentImage, SamplerCustomAdvanced, CFGGuider, ReferenceLatent,
+EmptyHunyuanLatentVideo, ImageScaleToTotalPixels, ImagePadForOutpaint,
+ImageSharpen, GetImageSize, GrowMask / MaskToImage / ImageToMask / ImageBlur,
+ImageCompositeMasked, ImageBatch, StringConcatenate, the Primitive* nodes, and
+TextGenerate (the LLM prompt enhancer) are all ComfyUI core.
+
+TextGenerate in particular is recent core — if the enhancer says the node is
+missing, update ComfyUI rather than hunting for a pack. Developed and verified
+against ComfyUI 0.33.1 with frontend 1.48.7.
 
 The optional links are inside the node itself, under "Optional extras & LoRAs".
 
