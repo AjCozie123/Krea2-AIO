@@ -155,6 +155,21 @@ The AIO builds its final prompt internally - LLM enhancement first, then your tr
 words - so the text that reached the sampler is NOT the text you typed, and after the
 run it was gone. The Prompt Log node writes it to disk.
 
+SAVE ON / SAVE OFF.  The biggest control on the node is a two-button master switch at
+the top, so you decide per generation whether that run gets written - one click, and
+you can read the state across the canvas without zooming in.
+
+  SAVE ON    green.  Every generation writes its prompt to the folder shown below it.
+  SAVE OFF   red.    Nothing is written at all.
+
+With it off the rest of the panel dims, and the destination box says "SAVE is OFF -
+this run will not be written" instead of a path, so there is no doubt about what will
+happen when you queue. The prompt still passes THROUGH the node either way, so turning
+saving off never breaks anything wired after it.
+
+The switch is the node's `enabled` input, so it is saved with your workflow and can be
+driven from another node if you want to automate it.
+
 WIRING.  The AIO node has two outputs for this:
 
   prompt        the finished prompt, exactly as sampled

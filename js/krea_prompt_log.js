@@ -39,6 +39,17 @@ const CSS = `
 .kplog .hd{display:flex;align-items:center;gap:8px;margin-bottom:9px}
 .kplog .hd b{font-size:12.5px;letter-spacing:.02em}
 .kplog .hd .sp{flex:1}
+/* master switch — the most prominent control on the node */
+.kplog .power{display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-bottom:6px}
+.kplog .power button{padding:9px 6px;border-radius:8px;background:var(--panel2);
+ border:1px solid var(--line);color:var(--dim);cursor:pointer;font-family:inherit;
+ display:flex;flex-direction:column;align-items:center;gap:2px;line-height:1.2}
+.kplog .power button b{font-size:12.5px;font-weight:700;letter-spacing:.04em}
+.kplog .power button i{font-style:normal;font-size:9px;opacity:.8}
+.kplog .power button:hover{border-color:var(--acc-b)}
+.kplog .power button.on{background:#12301e;border-color:var(--ok);color:var(--ok)}
+.kplog .power button.off{background:#301616;border-color:#e06a6a;color:#f0a0a0}
+.kplog .phint{font-size:9.5px;color:var(--dim);margin-bottom:8px;line-height:1.4}
 .kplog .sec{background:var(--panel);border:1px solid var(--line);border-radius:8px;
  padding:8px 9px;margin-bottom:8px}
 .kplog .cap{display:block;font-size:9.5px;text-transform:uppercase;letter-spacing:.07em;
@@ -104,17 +115,28 @@ class PromptLogUI {
   build() {
     const R = this.root;
 
-    // header: enable tick
     const hd = el("div", "hd");
     hd.appendChild(el("b", null, "PROMPT LOG"));
-    hd.appendChild(el("div", "sp"));
-    const en = el("label", "row");
-    this.enChk = el("input"); this.enChk.type = "checkbox";
-    this.enChk.onchange = () => { this.sv("enabled", this.enChk.checked); this.sync(); };
-    en.appendChild(el("span", null, "Save"));
-    en.appendChild(this.enChk);
-    hd.appendChild(en);
     R.appendChild(hd);
+
+    // ---- the master switch ----
+    // Deliberately the biggest control on the node: whether a run gets written at all is
+    // the decision you make most often, so it should be readable at a glance and take one
+    // click, not a checkbox you have to hunt for.
+    this.power = el("div", "power");
+    this.onBtn = el("button"); this.onBtn.type = "button";
+    this.onBtn.appendChild(el("b", null, "SAVE ON"));
+    this.onBtn.appendChild(el("i", null, "log every run"));
+    this.onBtn.onclick = () => { this.sv("enabled", true); this.sync(); };
+    this.offBtn = el("button"); this.offBtn.type = "button";
+    this.offBtn.appendChild(el("b", null, "SAVE OFF"));
+    this.offBtn.appendChild(el("i", null, "write nothing"));
+    this.offBtn.onclick = () => { this.sv("enabled", false); this.sync(); };
+    this.power.appendChild(this.onBtn);
+    this.power.appendChild(this.offBtn);
+    R.appendChild(this.power);
+    this.powerHint = el("div", "phint");
+    R.appendChild(this.powerHint);
 
     // ---- destination preview (server-resolved) ----
     this.dest = el("div", "dest");
@@ -243,7 +265,17 @@ class PromptLogUI {
   }
 
   sync() {
-    this.enChk.checked = !!this.gv("enabled");
+    const on = !!this.gv("enabled");
+    this.onBtn.classList.toggle("on", on);
+    this.offBtn.classList.toggle("off", !on);
+    this.powerHint.textContent = on
+      ? "Every generation writes its prompt to the folder below."
+      : "Nothing is written. The prompt still passes through to any node wired after this one.";
+    // Everything below the switch is irrelevant while saving is off.
+    for (const sec of this.root.querySelectorAll(".sec, .dest")) {
+      sec.style.opacity = on ? "1" : "0.4";
+      sec.style.pointerEvents = on ? "" : "none";
+    }
     const dest = String(this.gv("destination") || DESTS[0].v);
     this.destBtns.forEach((b, i) => b.classList.toggle("on", DESTS[i].v === dest));
     this.customWrap.classList.toggle("hide", !dest.startsWith("Custom"));
@@ -254,7 +286,6 @@ class PromptLogUI {
     this.prefixIn.value = this.gv("filename_prefix") || "prompt";
     this.metaChk.checked = !!this.gv("include_metadata");
     this.dupChk.checked = !!this.gv("skip_duplicates");
-    this.root.style.opacity = this.enChk.checked ? "1" : "0.55";
     this.resolve();
   }
 
@@ -289,6 +320,11 @@ class PromptLogUI {
         : mode.startsWith("Append to a daily")
           ? `${pre}_${today}${ext}`
           : `${pre}_log${ext}`;
+      if (!this.gv("enabled")) {
+        this.destFile.textContent = "";
+        this.destMeta.textContent = "SAVE is OFF — this run will not be written";
+        return;
+      }
       this.destMeta.textContent = j.exists
         ? `folder exists · ${j.files} file${j.files === 1 ? "" : "s"} in it`
         : "folder will be created on the first save";
