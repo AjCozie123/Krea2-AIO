@@ -2,6 +2,7 @@ import logging
 
 from .controller import KreaAIO
 from .live_preview import Krea2LivePreview
+from .prompt_log import Krea2PromptLog
 
 from comfy_api.latest import ComfyExtension, io
 from typing_extensions import override
@@ -28,17 +29,19 @@ except Exception as _e:
 class KreaAIOExtension(ComfyExtension):
     @override
     async def get_node_list(self) -> list[type[io.ComfyNode]]:
-        return [KreaAIO, Krea2LivePreview]
+        return [KreaAIO, Krea2LivePreview, Krea2PromptLog]
 
 
 async def comfy_entrypoint() -> KreaAIOExtension:
     return KreaAIOExtension()
 
 
-NODE_CLASS_MAPPINGS = {"KreaAIO": KreaAIO, "Krea2LivePreview": Krea2LivePreview}
+NODE_CLASS_MAPPINGS = {"KreaAIO": KreaAIO, "Krea2LivePreview": Krea2LivePreview,
+                       "Krea2PromptLog": Krea2PromptLog}
 NODE_DISPLAY_NAME_MAPPINGS = {
     "KreaAIO": "Krea2 AIO AJ",
     "Krea2LivePreview": "Krea2 Live Preview (AJ)",
+    "Krea2PromptLog": "Krea2 Prompt Log (AJ)",
 }
 
 WEB_DIRECTORY = "./js"

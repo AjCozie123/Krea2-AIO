@@ -371,6 +371,13 @@ class KreaAIO(io.ComfyNode):
                 # Wire this into SaveImage.filename_prefix and every pipeline files
                 # itself into its own folder with no typing.
                 io.String.Output(display_name="save_path"),
+                # The prompt this run ACTUALLY sampled with — after LLM enhancement and
+                # with trigger words appended. Feed it to the Krea2 Prompt Log node, or to
+                # any string node. Appended last so saved workflows keep their slot indices.
+                io.String.Output(display_name="prompt"),
+                # The same payload the node UI reads, as JSON: workflow, seed, sampler,
+                # model, LoRA stack. The Prompt Log node uses it to file itself correctly.
+                io.String.Output(display_name="prompt_json"),
             ],
         )
 
@@ -497,7 +504,7 @@ class KreaAIO(io.ComfyNode):
         # The prompt actually sampled with. With the enhancer on there is no other way to
         # see what the LLM wrote — the AIO node samples internally, so nothing in the graph
         # exposes it. The node UI reads these back for its "show the enhanced prompt" panel.
-        return io.NodeOutput(image, source, save_path, ui={"kaio_done": [{
+        payload = {
             "pipeline": idx,
             "upscaled": bool(upscale),
             "enhancer_on": bool(enhance_prompt),
@@ -508,4 +515,17 @@ class KreaAIO(io.ComfyNode):
             "trigger_words": tw,
             "enhancer_model": str(enhancer_model or ""),
             "llm_max_token": str(llm_max_token or ""),
-        }]})
+            # extra fields the Prompt Log node records alongside the prompt
+            "workflow_name": pipeline,
+            "negative_prompt": (negative_prompt or "").strip(),
+            "seed": int(seed), "steps": int(steps), "cfg": float(cfg),
+            "denoise": float(denoise), "sampler": sampler, "scheduler": scheduler,
+            "unet_name": unet_name, "clip_name": clip_name,
+            "loras": ", ".join(
+                f"{l.get('lora')}@{l.get('strength')}" for l in loras
+                if isinstance(l, dict) and l.get("on") and l.get("lora")),
+            "save_path": save_path,
+        }
+        return io.NodeOutput(image, source, save_path, payload["prompt_final"],
+                             json.dumps(payload, ensure_ascii=False),
+                             ui={"kaio_done": [payload]})

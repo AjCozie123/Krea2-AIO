@@ -1,8 +1,8 @@
 {
-  "id": "dc1b8baf-48e2-44d7-b8b3-73c5de41ce37",
+  "id": "97c617b5-ca86-46e8-921a-9f1da1fbd8a9",
   "revision": 0,
-  "last_node_id": 172,
-  "last_link_id": 290,
+  "last_node_id": 178,
+  "last_link_id": 296,
   "nodes": [
     {
       "id": 1,
@@ -1592,7 +1592,8 @@
             106,
             114,
             167,
-            195
+            195,
+            295
           ],
           "slot_index": 0
         }
@@ -2872,6 +2873,39 @@
           "name": "STRING",
           "type": "STRING",
           "links": [
+            291
+          ],
+          "slot_index": 0
+        }
+      ],
+      "properties": {
+        "Node name for S&R": "PrimitiveString"
+      },
+      "widgets_values": [
+        "1 - Classic edit"
+      ],
+      "title": "prompt-log folder P1"
+    },
+    {
+      "id": 68,
+      "type": "PrimitiveString",
+      "pos": [
+        13068,
+        452
+      ],
+      "size": [
+        320,
+        92
+      ],
+      "flags": {},
+      "order": 68,
+      "mode": 2,
+      "inputs": [],
+      "outputs": [
+        {
+          "name": "STRING",
+          "type": "STRING",
+          "links": [
             222
           ],
           "slot_index": 0
@@ -2886,7 +2920,7 @@
       "title": "save prefix P1"
     },
     {
-      "id": 68,
+      "id": 69,
       "type": "LoraLoaderModelOnly",
       "pos": [
         6154,
@@ -2897,7 +2931,7 @@
         119
       ],
       "flags": {},
-      "order": 68,
+      "order": 69,
       "mode": 2,
       "inputs": [
         {
@@ -2926,7 +2960,7 @@
       "title": "P2 LoRA slot 1"
     },
     {
-      "id": 69,
+      "id": 70,
       "type": "LoraLoaderModelOnly",
       "pos": [
         6154,
@@ -2937,7 +2971,7 @@
         119
       ],
       "flags": {},
-      "order": 69,
+      "order": 70,
       "mode": 2,
       "inputs": [
         {
@@ -2967,7 +3001,7 @@
       "title": "P2 LoRA slot 2  (EMPTY - pick a LoRA)"
     },
     {
-      "id": 70,
+      "id": 71,
       "type": "KreaImageAspectPreservePrepare",
       "pos": [
         6620,
@@ -2978,7 +3012,7 @@
         170
       ],
       "flags": {},
-      "order": 70,
+      "order": 71,
       "mode": 2,
       "inputs": [
         {
@@ -3045,7 +3079,7 @@
       "title": "prepare  (aspect preserve)"
     },
     {
-      "id": 71,
+      "id": 72,
       "type": "ResolutionSelector",
       "pos": [
         7066,
@@ -3056,7 +3090,7 @@
         140
       ],
       "flags": {},
-      "order": 71,
+      "order": 72,
       "mode": 2,
       "inputs": [
         {
@@ -3097,7 +3131,7 @@
       "title": "aspect + megapixels"
     },
     {
-      "id": 72,
+      "id": 73,
       "type": "Any Switch (rgthree)",
       "pos": [
         7492,
@@ -3108,7 +3142,7 @@
         107
       ],
       "flags": {},
-      "order": 72,
+      "order": 73,
       "mode": 2,
       "inputs": [
         {
@@ -3144,7 +3178,7 @@
       "title": "width"
     },
     {
-      "id": 73,
+      "id": 74,
       "type": "Any Switch (rgthree)",
       "pos": [
         7492,
@@ -3155,7 +3189,7 @@
         107
       ],
       "flags": {},
-      "order": 73,
+      "order": 74,
       "mode": 2,
       "inputs": [
         {
@@ -3191,7 +3225,7 @@
       "title": "height"
     },
     {
-      "id": 74,
+      "id": 75,
       "type": "VAEEncode",
       "pos": [
         7822,
@@ -3202,7 +3236,7 @@
         86
       ],
       "flags": {},
-      "order": 74,
+      "order": 75,
       "mode": 2,
       "inputs": [
         {
@@ -3233,7 +3267,7 @@
       "title": "encode prepared source"
     },
     {
-      "id": 75,
+      "id": 76,
       "type": "EmptyHunyuanLatentVideo",
       "pos": [
         7822,
@@ -3244,7 +3278,7 @@
         140
       ],
       "flags": {},
-      "order": 75,
+      "order": 76,
       "mode": 2,
       "inputs": [
         {
@@ -3287,7 +3321,7 @@
       "title": "target latent  (Wan21 empty)"
     },
     {
-      "id": 76,
+      "id": 77,
       "type": "Any Switch (rgthree)",
       "pos": [
         8228,
@@ -3298,7 +3332,7 @@
         106
       ],
       "flags": {},
-      "order": 76,
+      "order": 77,
       "mode": 2,
       "inputs": [
         {
@@ -3330,7 +3364,7 @@
       "title": "reference in use"
     },
     {
-      "id": 77,
+      "id": 78,
       "type": "ImageScaleToTotalPixels",
       "pos": [
         8598,
@@ -3341,7 +3375,7 @@
         146
       ],
       "flags": {},
-      "order": 77,
+      "order": 78,
       "mode": 2,
       "inputs": [
         {
@@ -3372,7 +3406,7 @@
       "title": "scale reference to 1.4 MP"
     },
     {
-      "id": 78,
+      "id": 79,
       "type": "VAEEncode",
       "pos": [
         8598,
@@ -3383,7 +3417,7 @@
         86
       ],
       "flags": {},
-      "order": 78,
+      "order": 79,
       "mode": 2,
       "inputs": [
         {
@@ -3414,7 +3448,7 @@
       "title": "encode reference"
     },
     {
-      "id": 79,
+      "id": 80,
       "type": "Krea2EditModelPatch",
       "pos": [
         9040,
@@ -3425,7 +3459,7 @@
         293
       ],
       "flags": {},
-      "order": 79,
+      "order": 80,
       "mode": 2,
       "inputs": [
         {
@@ -3493,7 +3527,7 @@
       "title": "MODE A method: Krea2EditModelPatch"
     },
     {
-      "id": 80,
+      "id": 81,
       "type": "Krea2EditGroundedEncode",
       "pos": [
         9040,
@@ -3504,7 +3538,7 @@
         206
       ],
       "flags": {},
-      "order": 80,
+      "order": 81,
       "mode": 2,
       "inputs": [
         {
@@ -3555,7 +3589,7 @@
       "title": "MODE A positive"
     },
     {
-      "id": 81,
+      "id": 82,
       "type": "Krea2EditGroundedEncode",
       "pos": [
         9040,
@@ -3566,7 +3600,7 @@
         206
       ],
       "flags": {},
-      "order": 81,
+      "order": 82,
       "mode": 2,
       "inputs": [
         {
@@ -3617,7 +3651,7 @@
       "title": "MODE A negative"
     },
     {
-      "id": 82,
+      "id": 83,
       "type": "TextEncodeKrea2OstrisEdit",
       "pos": [
         9542,
@@ -3628,7 +3662,7 @@
         176
       ],
       "flags": {},
-      "order": 82,
+      "order": 83,
       "mode": 2,
       "inputs": [
         {
@@ -3679,7 +3713,7 @@
       "title": "MODE B positive"
     },
     {
-      "id": 83,
+      "id": 84,
       "type": "TextEncodeKrea2OstrisEdit",
       "pos": [
         9542,
@@ -3690,7 +3724,7 @@
         168
       ],
       "flags": {},
-      "order": 83,
+      "order": 84,
       "mode": 2,
       "inputs": [
         {
@@ -3736,7 +3770,7 @@
       "title": "MODE B negative"
     },
     {
-      "id": 84,
+      "id": 85,
       "type": "FluxKontextMultiReferenceLatentMethod",
       "pos": [
         9992,
@@ -3747,7 +3781,7 @@
         92
       ],
       "flags": {},
-      "order": 84,
+      "order": 85,
       "mode": 2,
       "inputs": [
         {
@@ -3775,7 +3809,7 @@
       "title": "REQUIRED: index_timestep_zero  (pos)"
     },
     {
-      "id": 85,
+      "id": 86,
       "type": "FluxKontextMultiReferenceLatentMethod",
       "pos": [
         9992,
@@ -3786,7 +3820,7 @@
         92
       ],
       "flags": {},
-      "order": 85,
+      "order": 86,
       "mode": 2,
       "inputs": [
         {
@@ -3814,7 +3848,7 @@
       "title": "REQUIRED: index_timestep_zero  (neg)"
     },
     {
-      "id": 86,
+      "id": 87,
       "type": "Any Switch (rgthree)",
       "pos": [
         10458,
@@ -3825,7 +3859,7 @@
         107
       ],
       "flags": {},
-      "order": 86,
+      "order": 87,
       "mode": 2,
       "inputs": [
         {
@@ -3861,7 +3895,7 @@
       "title": "model: MODE A patch, else plain"
     },
     {
-      "id": 87,
+      "id": 88,
       "type": "Any Switch (rgthree)",
       "pos": [
         10458,
@@ -3872,7 +3906,7 @@
         107
       ],
       "flags": {},
-      "order": 87,
+      "order": 88,
       "mode": 2,
       "inputs": [
         {
@@ -3908,7 +3942,7 @@
       "title": "positive: A, else B"
     },
     {
-      "id": 88,
+      "id": 89,
       "type": "Any Switch (rgthree)",
       "pos": [
         10458,
@@ -3919,7 +3953,7 @@
         107
       ],
       "flags": {},
-      "order": 88,
+      "order": 89,
       "mode": 2,
       "inputs": [
         {
@@ -3955,7 +3989,7 @@
       "title": "negative: A, else B"
     },
     {
-      "id": 89,
+      "id": 90,
       "type": "KSampler",
       "pos": [
         10848,
@@ -3966,7 +4000,7 @@
         266
       ],
       "flags": {},
-      "order": 89,
+      "order": 90,
       "mode": 2,
       "inputs": [
         {
@@ -4047,7 +4081,7 @@
       "title": "KSampler  P2"
     },
     {
-      "id": 90,
+      "id": 91,
       "type": "VAEDecode",
       "pos": [
         11258,
@@ -4058,7 +4092,7 @@
         86
       ],
       "flags": {},
-      "order": 90,
+      "order": 91,
       "mode": 2,
       "inputs": [
         {
@@ -4089,7 +4123,7 @@
       "title": "decode P2"
     },
     {
-      "id": 91,
+      "id": 92,
       "type": "KreaImageUniversalAspectPreserveRestore",
       "pos": [
         11628,
@@ -4100,7 +4134,7 @@
         317
       ],
       "flags": {},
-      "order": 91,
+      "order": 92,
       "mode": 2,
       "inputs": [
         {
@@ -4167,7 +4201,7 @@
       "title": "restore onto the original"
     },
     {
-      "id": 92,
+      "id": 93,
       "type": "Any Switch (rgthree)",
       "pos": [
         11628,
@@ -4178,7 +4212,7 @@
         106
       ],
       "flags": {},
-      "order": 92,
+      "order": 93,
       "mode": 2,
       "inputs": [
         {
@@ -4209,7 +4243,7 @@
       "title": "BEFORE = the original source"
     },
     {
-      "id": 93,
+      "id": 94,
       "type": "PrimitiveString",
       "pos": [
         11628,
@@ -4220,7 +4254,40 @@
         92
       ],
       "flags": {},
-      "order": 93,
+      "order": 94,
+      "mode": 2,
+      "inputs": [],
+      "outputs": [
+        {
+          "name": "STRING",
+          "type": "STRING",
+          "links": [
+            292
+          ],
+          "slot_index": 0
+        }
+      ],
+      "properties": {
+        "Node name for S&R": "PrimitiveString"
+      },
+      "widgets_values": [
+        "2 - Identity / Ostris edit"
+      ],
+      "title": "prompt-log folder P2"
+    },
+    {
+      "id": 95,
+      "type": "PrimitiveString",
+      "pos": [
+        11628,
+        1429
+      ],
+      "size": [
+        320,
+        92
+      ],
+      "flags": {},
+      "order": 95,
       "mode": 2,
       "inputs": [],
       "outputs": [
@@ -4242,7 +4309,7 @@
       "title": "save prefix P2"
     },
     {
-      "id": 94,
+      "id": 96,
       "type": "LoraLoaderModelOnly",
       "pos": [
         6154,
@@ -4253,7 +4320,7 @@
         119
       ],
       "flags": {},
-      "order": 94,
+      "order": 96,
       "mode": 2,
       "inputs": [
         {
@@ -4282,7 +4349,7 @@
       "title": "P3 LoRA slot 1"
     },
     {
-      "id": 95,
+      "id": 97,
       "type": "LoraLoaderModelOnly",
       "pos": [
         6154,
@@ -4293,7 +4360,7 @@
         119
       ],
       "flags": {},
-      "order": 95,
+      "order": 97,
       "mode": 2,
       "inputs": [
         {
@@ -4322,7 +4389,7 @@
       "title": "P3 LoRA slot 2  (EMPTY - pick a LoRA)"
     },
     {
-      "id": 96,
+      "id": 98,
       "type": "GrowMask",
       "pos": [
         6636,
@@ -4333,7 +4400,7 @@
         119
       ],
       "flags": {},
-      "order": 96,
+      "order": 98,
       "mode": 2,
       "inputs": [
         {
@@ -4362,7 +4429,7 @@
       "title": "grow painted mask"
     },
     {
-      "id": 97,
+      "id": 99,
       "type": "MaskToImage",
       "pos": [
         7006,
@@ -4373,7 +4440,7 @@
         65
       ],
       "flags": {},
-      "order": 97,
+      "order": 99,
       "mode": 2,
       "inputs": [
         {
@@ -4399,7 +4466,7 @@
       "title": "mask -> image"
     },
     {
-      "id": 98,
+      "id": 100,
       "type": "ImageBlur",
       "pos": [
         7356,
@@ -4410,7 +4477,7 @@
         119
       ],
       "flags": {},
-      "order": 98,
+      "order": 100,
       "mode": 2,
       "inputs": [
         {
@@ -4439,7 +4506,7 @@
       "title": "feather"
     },
     {
-      "id": 99,
+      "id": 101,
       "type": "ImageToMask",
       "pos": [
         7726,
@@ -4450,7 +4517,7 @@
         92
       ],
       "flags": {},
-      "order": 99,
+      "order": 101,
       "mode": 2,
       "inputs": [
         {
@@ -4478,7 +4545,7 @@
       "title": "image -> mask"
     },
     {
-      "id": 100,
+      "id": 102,
       "type": "ImagePadForOutpaint",
       "pos": [
         8128,
@@ -4489,7 +4556,7 @@
         221
       ],
       "flags": {},
-      "order": 100,
+      "order": 102,
       "mode": 2,
       "inputs": [
         {
@@ -4531,7 +4598,7 @@
       "title": "pad canvas  (bottom 256)"
     },
     {
-      "id": 101,
+      "id": 103,
       "type": "GetImageSize",
       "pos": [
         8538,
@@ -4542,7 +4609,7 @@
         107
       ],
       "flags": {},
-      "order": 101,
+      "order": 103,
       "mode": 2,
       "inputs": [
         {
@@ -4582,7 +4649,7 @@
       "title": "canvas size"
     },
     {
-      "id": 102,
+      "id": 104,
       "type": "EmptyImage",
       "pos": [
         8908,
@@ -4593,7 +4660,7 @@
         140
       ],
       "flags": {},
-      "order": 102,
+      "order": 104,
       "mode": 2,
       "inputs": [
         {
@@ -4635,7 +4702,7 @@
       "title": "solid neon green  #00FF00"
     },
     {
-      "id": 103,
+      "id": 105,
       "type": "ImageCompositeMasked",
       "pos": [
         9298,
@@ -4646,7 +4713,7 @@
         188
       ],
       "flags": {},
-      "order": 103,
+      "order": 105,
       "mode": 2,
       "inputs": [
         {
@@ -4686,7 +4753,7 @@
       "title": "paint the green border"
     },
     {
-      "id": 104,
+      "id": 106,
       "type": "Any Switch (rgthree)",
       "pos": [
         9724,
@@ -4697,7 +4764,7 @@
         107
       ],
       "flags": {},
-      "order": 104,
+      "order": 106,
       "mode": 2,
       "inputs": [
         {
@@ -4735,7 +4802,7 @@
       "title": "canvas: outpaint, else source"
     },
     {
-      "id": 105,
+      "id": 107,
       "type": "Any Switch (rgthree)",
       "pos": [
         9724,
@@ -4746,7 +4813,7 @@
         107
       ],
       "flags": {},
-      "order": 105,
+      "order": 107,
       "mode": 2,
       "inputs": [
         {
@@ -4783,7 +4850,7 @@
       "title": "mask: outpaint pad, else painted"
     },
     {
-      "id": 106,
+      "id": 108,
       "type": "KreaAspectPreservePrepare",
       "pos": [
         10114,
@@ -4794,7 +4861,7 @@
         191
       ],
       "flags": {},
-      "order": 106,
+      "order": 108,
       "mode": 2,
       "inputs": [
         {
@@ -4868,7 +4935,7 @@
       "title": "prepare  (paints the green region)"
     },
     {
-      "id": 107,
+      "id": 109,
       "type": "EmptyHunyuanLatentVideo",
       "pos": [
         10564,
@@ -4879,7 +4946,7 @@
         140
       ],
       "flags": {},
-      "order": 107,
+      "order": 109,
       "mode": 2,
       "inputs": [
         {
@@ -4921,7 +4988,7 @@
       "title": "target latent  (Wan21 empty)"
     },
     {
-      "id": 108,
+      "id": 110,
       "type": "TextEncodeKrea2OstrisEdit",
       "pos": [
         10954,
@@ -4932,7 +4999,7 @@
         168
       ],
       "flags": {},
-      "order": 108,
+      "order": 110,
       "mode": 2,
       "inputs": [
         {
@@ -4978,7 +5045,7 @@
       "title": "positive"
     },
     {
-      "id": 109,
+      "id": 111,
       "type": "TextEncodeKrea2OstrisEdit",
       "pos": [
         10954,
@@ -4989,7 +5056,7 @@
         168
       ],
       "flags": {},
-      "order": 109,
+      "order": 111,
       "mode": 2,
       "inputs": [
         {
@@ -5035,7 +5102,7 @@
       "title": "negative"
     },
     {
-      "id": 110,
+      "id": 112,
       "type": "FluxKontextMultiReferenceLatentMethod",
       "pos": [
         11404,
@@ -5046,7 +5113,7 @@
         92
       ],
       "flags": {},
-      "order": 110,
+      "order": 112,
       "mode": 2,
       "inputs": [
         {
@@ -5074,7 +5141,7 @@
       "title": "REQUIRED: index_timestep_zero  (pos)"
     },
     {
-      "id": 111,
+      "id": 113,
       "type": "FluxKontextMultiReferenceLatentMethod",
       "pos": [
         11404,
@@ -5085,7 +5152,7 @@
         92
       ],
       "flags": {},
-      "order": 111,
+      "order": 113,
       "mode": 2,
       "inputs": [
         {
@@ -5113,7 +5180,7 @@
       "title": "REQUIRED: index_timestep_zero  (neg)"
     },
     {
-      "id": 112,
+      "id": 114,
       "type": "KSampler",
       "pos": [
         11854,
@@ -5124,7 +5191,7 @@
         266
       ],
       "flags": {},
-      "order": 112,
+      "order": 114,
       "mode": 2,
       "inputs": [
         {
@@ -5205,7 +5272,7 @@
       "title": "KSampler  P3"
     },
     {
-      "id": 113,
+      "id": 115,
       "type": "VAEDecode",
       "pos": [
         12264,
@@ -5216,7 +5283,7 @@
         86
       ],
       "flags": {},
-      "order": 113,
+      "order": 115,
       "mode": 2,
       "inputs": [
         {
@@ -5247,7 +5314,7 @@
       "title": "decode P3"
     },
     {
-      "id": 114,
+      "id": 116,
       "type": "KreaAspectPreserveRestore",
       "pos": [
         12634,
@@ -5258,7 +5325,7 @@
         209
       ],
       "flags": {},
-      "order": 114,
+      "order": 116,
       "mode": 2,
       "inputs": [
         {
@@ -5315,7 +5382,7 @@
       "title": "restore + seam blend"
     },
     {
-      "id": 115,
+      "id": 117,
       "type": "PrimitiveString",
       "pos": [
         12634,
@@ -5326,7 +5393,40 @@
         92
       ],
       "flags": {},
-      "order": 115,
+      "order": 117,
+      "mode": 2,
+      "inputs": [],
+      "outputs": [
+        {
+          "name": "STRING",
+          "type": "STRING",
+          "links": [
+            293
+          ],
+          "slot_index": 0
+        }
+      ],
+      "properties": {
+        "Node name for S&R": "PrimitiveString"
+      },
+      "widgets_values": [
+        "3 - Inpaint / Outpaint"
+      ],
+      "title": "prompt-log folder P3"
+    },
+    {
+      "id": 118,
+      "type": "PrimitiveString",
+      "pos": [
+        12634,
+        2170
+      ],
+      "size": [
+        320,
+        92
+      ],
+      "flags": {},
+      "order": 118,
       "mode": 2,
       "inputs": [],
       "outputs": [
@@ -5348,18 +5448,18 @@
       "title": "save prefix P3"
     },
     {
-      "id": 116,
+      "id": 119,
       "type": "LoraLoader",
       "pos": [
         6154,
-        2359
+        2456
       ],
       "size": [
         380,
         167
       ],
       "flags": {},
-      "order": 116,
+      "order": 119,
       "mode": 4,
       "inputs": [
         {
@@ -5402,18 +5502,18 @@
       "title": "P4 LoRA slot 1  (EMPTY - pick a LoRA)"
     },
     {
-      "id": 117,
+      "id": 120,
       "type": "LoraLoader",
       "pos": [
         6154,
-        2566
+        2663
       ],
       "size": [
         380,
         167
       ],
       "flags": {},
-      "order": 117,
+      "order": 120,
       "mode": 4,
       "inputs": [
         {
@@ -5459,18 +5559,18 @@
       "title": "P4 LoRA slot 2  (EMPTY - pick a LoRA)"
     },
     {
-      "id": 118,
+      "id": 121,
       "type": "CLIPTextEncode",
       "pos": [
         6620,
-        2325
+        2422
       ],
       "size": [
         360,
         113
       ],
       "flags": {},
-      "order": 118,
+      "order": 121,
       "mode": 0,
       "inputs": [
         {
@@ -5507,18 +5607,18 @@
       "title": "positive"
     },
     {
-      "id": 119,
+      "id": 122,
       "type": "CLIPTextEncode",
       "pos": [
         7066,
-        2359
+        2456
       ],
       "size": [
         360,
         113
       ],
       "flags": {},
-      "order": 119,
+      "order": 122,
       "mode": 2,
       "inputs": [
         {
@@ -5554,18 +5654,18 @@
       "title": "negative  (cfg > 1 only)"
     },
     {
-      "id": 120,
+      "id": 123,
       "type": "ConditioningZeroOut",
       "pos": [
         7512,
-        2325
+        2422
       ],
       "size": [
         320,
         65
       ],
       "flags": {},
-      "order": 120,
+      "order": 123,
       "mode": 0,
       "inputs": [
         {
@@ -5591,18 +5691,18 @@
       "title": "zeroed negative  (turbo, cfg 1.0)"
     },
     {
-      "id": 121,
+      "id": 124,
       "type": "Any Switch (rgthree)",
       "pos": [
         7512,
-        2430
+        2527
       ],
       "size": [
         300,
         107
       ],
       "flags": {},
-      "order": 121,
+      "order": 124,
       "mode": 0,
       "inputs": [
         {
@@ -5639,18 +5739,18 @@
       "title": "negative"
     },
     {
-      "id": 122,
+      "id": 125,
       "type": "ResolutionSelector",
       "pos": [
         7902,
-        2325
+        2422
       ],
       "size": [
         340,
         140
       ],
       "flags": {},
-      "order": 122,
+      "order": 125,
       "mode": 0,
       "inputs": [
         {
@@ -5691,18 +5791,18 @@
       "title": "aspect + megapixels"
     },
     {
-      "id": 123,
+      "id": 126,
       "type": "EmptyLatentImage",
       "pos": [
         7902,
-        2505
+        2602
       ],
       "size": [
         320,
         113
       ],
       "flags": {},
-      "order": 123,
+      "order": 126,
       "mode": 0,
       "inputs": [
         {
@@ -5743,18 +5843,18 @@
       "title": "empty latent"
     },
     {
-      "id": 124,
+      "id": 127,
       "type": "KSampler",
       "pos": [
         8312,
-        2325
+        2422
       ],
       "size": [
         340,
         266
       ],
       "flags": {},
-      "order": 124,
+      "order": 127,
       "mode": 0,
       "inputs": [
         {
@@ -5835,18 +5935,18 @@
       "title": "KSampler  P4"
     },
     {
-      "id": 125,
+      "id": 128,
       "type": "VAEDecode",
       "pos": [
         8722,
-        2325
+        2422
       ],
       "size": [
         300,
         86
       ],
       "flags": {},
-      "order": 125,
+      "order": 128,
       "mode": 0,
       "inputs": [
         {
@@ -5878,18 +5978,51 @@
       "title": "decode P4"
     },
     {
-      "id": 126,
+      "id": 129,
       "type": "PrimitiveString",
       "pos": [
         8722,
-        2451
+        2548
       ],
       "size": [
         320,
         92
       ],
       "flags": {},
-      "order": 126,
+      "order": 129,
+      "mode": 0,
+      "inputs": [],
+      "outputs": [
+        {
+          "name": "STRING",
+          "type": "STRING",
+          "links": [
+            294
+          ],
+          "slot_index": 0
+        }
+      ],
+      "properties": {
+        "Node name for S&R": "PrimitiveString"
+      },
+      "widgets_values": [
+        "4 - Text to image"
+      ],
+      "title": "prompt-log folder P4"
+    },
+    {
+      "id": 130,
+      "type": "PrimitiveString",
+      "pos": [
+        8722,
+        2680
+      ],
+      "size": [
+        320,
+        92
+      ],
+      "flags": {},
+      "order": 130,
       "mode": 0,
       "inputs": [],
       "outputs": [
@@ -5911,7 +6044,7 @@
       "title": "save prefix P4"
     },
     {
-      "id": 127,
+      "id": 131,
       "type": "Any Switch (rgthree)",
       "pos": [
         13652,
@@ -5922,7 +6055,7 @@
         149
       ],
       "flags": {},
-      "order": 127,
+      "order": 131,
       "mode": 0,
       "inputs": [
         {
@@ -5969,7 +6102,7 @@
       "title": "RESULT of the active lane"
     },
     {
-      "id": 128,
+      "id": 132,
       "type": "Any Switch (rgthree)",
       "pos": [
         13652,
@@ -5980,7 +6113,7 @@
         149
       ],
       "flags": {},
-      "order": 128,
+      "order": 132,
       "mode": 0,
       "inputs": [
         {
@@ -6026,7 +6159,7 @@
       "title": "BEFORE image  (comparer A)"
     },
     {
-      "id": 129,
+      "id": 133,
       "type": "Any Switch (rgthree)",
       "pos": [
         13652,
@@ -6037,7 +6170,7 @@
         149
       ],
       "flags": {},
-      "order": 129,
+      "order": 133,
       "mode": 0,
       "inputs": [
         {
@@ -6083,7 +6216,7 @@
       "title": "save prefix of the active lane"
     },
     {
-      "id": 130,
+      "id": 134,
       "type": "Any Switch (rgthree)",
       "pos": [
         14062,
@@ -6094,7 +6227,7 @@
         107
       ],
       "flags": {},
-      "order": 130,
+      "order": 134,
       "mode": 0,
       "inputs": [
         {
@@ -6130,7 +6263,7 @@
       "title": "face pass model  (P1 patch, else P4)"
     },
     {
-      "id": 131,
+      "id": 135,
       "type": "Any Switch (rgthree)",
       "pos": [
         14062,
@@ -6141,7 +6274,7 @@
         107
       ],
       "flags": {},
-      "order": 131,
+      "order": 135,
       "mode": 0,
       "inputs": [
         {
@@ -6178,7 +6311,7 @@
       "title": "face pass clip"
     },
     {
-      "id": 132,
+      "id": 136,
       "type": "Any Switch (rgthree)",
       "pos": [
         14062,
@@ -6189,7 +6322,7 @@
         107
       ],
       "flags": {},
-      "order": 132,
+      "order": 136,
       "mode": 0,
       "inputs": [
         {
@@ -6225,7 +6358,7 @@
       "title": "face pass negative"
     },
     {
-      "id": 133,
+      "id": 137,
       "type": "Note",
       "pos": [
         14452,
@@ -6236,7 +6369,7 @@
         230
       ],
       "flags": {},
-      "order": 133,
+      "order": 137,
       "mode": 0,
       "inputs": [],
       "outputs": [],
@@ -6249,7 +6382,7 @@
       "title": "how the merge works"
     },
     {
-      "id": 134,
+      "id": 138,
       "type": "ModelSamplingAuraFlow",
       "pos": [
         13668,
@@ -6260,7 +6393,7 @@
         92
       ],
       "flags": {},
-      "order": 134,
+      "order": 138,
       "mode": 2,
       "inputs": [
         {
@@ -6288,7 +6421,7 @@
       "title": "sampling shift 0.7"
     },
     {
-      "id": 135,
+      "id": 139,
       "type": "PrimitiveStringMultiline",
       "pos": [
         13668,
@@ -6299,7 +6432,7 @@
         160
       ],
       "flags": {},
-      "order": 135,
+      "order": 139,
       "mode": 2,
       "inputs": [],
       "outputs": [
@@ -6321,7 +6454,7 @@
       "title": "FACE PROMPT"
     },
     {
-      "id": 136,
+      "id": 140,
       "type": "CLIPTextEncode",
       "pos": [
         14138,
@@ -6332,7 +6465,7 @@
         113
       ],
       "flags": {},
-      "order": 136,
+      "order": 140,
       "mode": 2,
       "inputs": [
         {
@@ -6368,7 +6501,7 @@
       "title": "face positive"
     },
     {
-      "id": 137,
+      "id": 141,
       "type": "UltralyticsDetectorProvider",
       "pos": [
         14138,
@@ -6379,7 +6512,7 @@
         113
       ],
       "flags": {},
-      "order": 137,
+      "order": 141,
       "mode": 2,
       "inputs": [],
       "outputs": [
@@ -6407,7 +6540,7 @@
       "title": "face detector"
     },
     {
-      "id": 138,
+      "id": 142,
       "type": "SAMLoader",
       "pos": [
         14138,
@@ -6418,7 +6551,7 @@
         119
       ],
       "flags": {},
-      "order": 138,
+      "order": 142,
       "mode": 2,
       "inputs": [],
       "outputs": [
@@ -6441,7 +6574,7 @@
       "title": "SAM"
     },
     {
-      "id": 139,
+      "id": 143,
       "type": "FaceDetailer",
       "pos": [
         14568,
@@ -6452,7 +6585,7 @@
         960
       ],
       "flags": {},
-      "order": 139,
+      "order": 143,
       "mode": 2,
       "inputs": [
         {
@@ -6581,7 +6714,7 @@
       "title": "FaceDetailer  (Impact Pack)"
     },
     {
-      "id": 140,
+      "id": 144,
       "type": "Any Switch (rgthree)",
       "pos": [
         15074,
@@ -6592,7 +6725,7 @@
         107
       ],
       "flags": {},
-      "order": 140,
+      "order": 144,
       "mode": 0,
       "inputs": [
         {
@@ -6630,7 +6763,7 @@
       "title": "after face detail"
     },
     {
-      "id": 141,
+      "id": 145,
       "type": "UNETLoader",
       "pos": [
         14500,
@@ -6641,7 +6774,7 @@
         119
       ],
       "flags": {},
-      "order": 141,
+      "order": 145,
       "mode": 2,
       "inputs": [],
       "outputs": [
@@ -6664,7 +6797,7 @@
       "title": "FLUX 2 KLEIN model"
     },
     {
-      "id": 142,
+      "id": 146,
       "type": "CLIPLoader",
       "pos": [
         14500,
@@ -6675,7 +6808,7 @@
         146
       ],
       "flags": {},
-      "order": 142,
+      "order": 146,
       "mode": 2,
       "inputs": [],
       "outputs": [
@@ -6699,7 +6832,7 @@
       "title": "FLUX 2 text encoder  (type: flux2)"
     },
     {
-      "id": 143,
+      "id": 147,
       "type": "VAELoader",
       "pos": [
         14500,
@@ -6710,7 +6843,7 @@
         92
       ],
       "flags": {},
-      "order": 143,
+      "order": 147,
       "mode": 2,
       "inputs": [],
       "outputs": [
@@ -6733,7 +6866,7 @@
       "title": "FLUX 2 VAE"
     },
     {
-      "id": 144,
+      "id": 148,
       "type": "VRAM_Debug",
       "pos": [
         13668,
@@ -6744,7 +6877,7 @@
         230
       ],
       "flags": {},
-      "order": 144,
+      "order": 148,
       "mode": 2,
       "inputs": [
         {
@@ -6803,7 +6936,7 @@
       "title": "free VRAM - Krea 2 is finished"
     },
     {
-      "id": 145,
+      "id": 149,
       "type": "Any Switch (rgthree)",
       "pos": [
         14094,
@@ -6814,7 +6947,7 @@
         107
       ],
       "flags": {},
-      "order": 145,
+      "order": 149,
       "mode": 0,
       "inputs": [
         {
@@ -6850,7 +6983,7 @@
       "title": "image into the upscale"
     },
     {
-      "id": 146,
+      "id": 150,
       "type": "ImageScaleToTotalPixels",
       "pos": [
         15010,
@@ -6861,7 +6994,7 @@
         146
       ],
       "flags": {},
-      "order": 146,
+      "order": 150,
       "mode": 2,
       "inputs": [
         {
@@ -6893,7 +7026,7 @@
       "title": "scale to 4.0 MP  (absolute)"
     },
     {
-      "id": 147,
+      "id": 151,
       "type": "GetImageSize",
       "pos": [
         15510,
@@ -6904,7 +7037,7 @@
         107
       ],
       "flags": {},
-      "order": 147,
+      "order": 151,
       "mode": 2,
       "inputs": [
         {
@@ -6946,7 +7079,7 @@
       "title": "upscale size"
     },
     {
-      "id": 148,
+      "id": 152,
       "type": "VAEEncode",
       "pos": [
         15510,
@@ -6957,7 +7090,7 @@
         86
       ],
       "flags": {},
-      "order": 148,
+      "order": 152,
       "mode": 2,
       "inputs": [
         {
@@ -6989,7 +7122,7 @@
       "title": "encode for reference latent"
     },
     {
-      "id": 149,
+      "id": 153,
       "type": "PrimitiveStringMultiline",
       "pos": [
         15010,
@@ -7000,7 +7133,7 @@
         220
       ],
       "flags": {},
-      "order": 149,
+      "order": 153,
       "mode": 2,
       "inputs": [],
       "outputs": [
@@ -7022,7 +7155,7 @@
       "title": "UPSCALE PROMPT"
     },
     {
-      "id": 150,
+      "id": 154,
       "type": "CLIPTextEncode",
       "pos": [
         15510,
@@ -7033,7 +7166,7 @@
         113
       ],
       "flags": {},
-      "order": 150,
+      "order": 154,
       "mode": 2,
       "inputs": [
         {
@@ -7070,7 +7203,7 @@
       "title": "upscale conditioning"
     },
     {
-      "id": 151,
+      "id": 155,
       "type": "ReferenceLatent",
       "pos": [
         15920,
@@ -7081,7 +7214,7 @@
         86
       ],
       "flags": {},
-      "order": 151,
+      "order": 155,
       "mode": 2,
       "inputs": [
         {
@@ -7112,7 +7245,7 @@
       "title": "positive reference latent"
     },
     {
-      "id": 152,
+      "id": 156,
       "type": "ConditioningZeroOut",
       "pos": [
         15920,
@@ -7123,7 +7256,7 @@
         65
       ],
       "flags": {},
-      "order": 152,
+      "order": 156,
       "mode": 2,
       "inputs": [
         {
@@ -7149,7 +7282,7 @@
       "title": "zero out"
     },
     {
-      "id": 153,
+      "id": 157,
       "type": "ReferenceLatent",
       "pos": [
         15920,
@@ -7160,7 +7293,7 @@
         86
       ],
       "flags": {},
-      "order": 153,
+      "order": 157,
       "mode": 2,
       "inputs": [
         {
@@ -7191,7 +7324,7 @@
       "title": "negative reference latent"
     },
     {
-      "id": 154,
+      "id": 158,
       "type": "CFGGuider",
       "pos": [
         16330,
@@ -7202,7 +7335,7 @@
         134
       ],
       "flags": {},
-      "order": 154,
+      "order": 158,
       "mode": 2,
       "inputs": [
         {
@@ -7240,7 +7373,7 @@
       "title": "guider"
     },
     {
-      "id": 155,
+      "id": 159,
       "type": "Flux2Scheduler",
       "pos": [
         16330,
@@ -7251,7 +7384,7 @@
         113
       ],
       "flags": {},
-      "order": 155,
+      "order": 159,
       "mode": 2,
       "inputs": [
         {
@@ -7292,7 +7425,7 @@
       "title": "sigmas  (2 steps)"
     },
     {
-      "id": 156,
+      "id": 160,
       "type": "KSamplerSelect",
       "pos": [
         16330,
@@ -7303,7 +7436,7 @@
         92
       ],
       "flags": {},
-      "order": 156,
+      "order": 160,
       "mode": 2,
       "inputs": [],
       "outputs": [
@@ -7325,7 +7458,7 @@
       "title": "sampler"
     },
     {
-      "id": 157,
+      "id": 161,
       "type": "RandomNoise",
       "pos": [
         16330,
@@ -7336,7 +7469,7 @@
         119
       ],
       "flags": {},
-      "order": 157,
+      "order": 161,
       "mode": 2,
       "inputs": [
         {
@@ -7368,7 +7501,7 @@
       "title": "noise"
     },
     {
-      "id": 158,
+      "id": 162,
       "type": "EmptyFlux2LatentImage",
       "pos": [
         16330,
@@ -7379,7 +7512,7 @@
         113
       ],
       "flags": {},
-      "order": 158,
+      "order": 162,
       "mode": 2,
       "inputs": [
         {
@@ -7420,7 +7553,7 @@
       "title": "empty flux2 latent"
     },
     {
-      "id": 159,
+      "id": 163,
       "type": "SamplerCustomAdvanced",
       "pos": [
         16720,
@@ -7431,7 +7564,7 @@
         149
       ],
       "flags": {},
-      "order": 159,
+      "order": 163,
       "mode": 2,
       "inputs": [
         {
@@ -7483,7 +7616,7 @@
       "title": "SamplerCustomAdvanced"
     },
     {
-      "id": 160,
+      "id": 164,
       "type": "VAEDecode",
       "pos": [
         16720,
@@ -7494,7 +7627,7 @@
         86
       ],
       "flags": {},
-      "order": 160,
+      "order": 164,
       "mode": 2,
       "inputs": [
         {
@@ -7525,7 +7658,7 @@
       "title": "decode upscale"
     },
     {
-      "id": 161,
+      "id": 165,
       "type": "ColorMatch",
       "pos": [
         17130,
@@ -7536,7 +7669,7 @@
         167
       ],
       "flags": {},
-      "order": 161,
+      "order": 165,
       "mode": 2,
       "inputs": [
         {
@@ -7571,7 +7704,7 @@
       "title": "colour match to the source  (KJNodes)"
     },
     {
-      "id": 162,
+      "id": 166,
       "type": "ImageSharpen",
       "pos": [
         17130,
@@ -7582,7 +7715,7 @@
         146
       ],
       "flags": {},
-      "order": 162,
+      "order": 166,
       "mode": 2,
       "inputs": [
         {
@@ -7612,7 +7745,7 @@
       "title": "final sharpen"
     },
     {
-      "id": 163,
+      "id": 167,
       "type": "Any Switch (rgthree)",
       "pos": [
         17576,
@@ -7623,7 +7756,7 @@
         107
       ],
       "flags": {},
-      "order": 163,
+      "order": 167,
       "mode": 0,
       "inputs": [
         {
@@ -7660,7 +7793,7 @@
       "title": "after Flux 2 upscale"
     },
     {
-      "id": 164,
+      "id": 168,
       "type": "RTXVideoSuperResolution",
       "pos": [
         13668,
@@ -7671,7 +7804,7 @@
         146
       ],
       "flags": {},
-      "order": 164,
+      "order": 168,
       "mode": 2,
       "inputs": [
         {
@@ -7701,7 +7834,7 @@
       "title": "NVIDIA RTX Video Super Resolution"
     },
     {
-      "id": 165,
+      "id": 169,
       "type": "Any Switch (rgthree)",
       "pos": [
         14134,
@@ -7712,7 +7845,7 @@
         107
       ],
       "flags": {},
-      "order": 165,
+      "order": 169,
       "mode": 0,
       "inputs": [
         {
@@ -7749,7 +7882,7 @@
       "title": "FINAL image"
     },
     {
-      "id": 166,
+      "id": 170,
       "type": "VRAM_Debug",
       "pos": [
         13668,
@@ -7760,7 +7893,7 @@
         230
       ],
       "flags": {},
-      "order": 166,
+      "order": 170,
       "mode": 2,
       "inputs": [
         {
@@ -7819,7 +7952,7 @@
       "title": "free VRAM - the run is finished"
     },
     {
-      "id": 167,
+      "id": 171,
       "type": "Any Switch (rgthree)",
       "pos": [
         14094,
@@ -7830,7 +7963,7 @@
         107
       ],
       "flags": {},
-      "order": 167,
+      "order": 171,
       "mode": 0,
       "inputs": [
         {
@@ -7868,7 +8001,7 @@
       "title": "FINAL image, purged or not"
     },
     {
-      "id": 168,
+      "id": 172,
       "type": "Note",
       "pos": [
         14094,
@@ -7879,7 +8012,7 @@
         320
       ],
       "flags": {},
-      "order": 168,
+      "order": 172,
       "mode": 0,
       "inputs": [],
       "outputs": [],
@@ -7892,7 +8025,7 @@
       "title": "about freeing memory"
     },
     {
-      "id": 169,
+      "id": 173,
       "type": "SaveImage",
       "pos": [
         14604,
@@ -7903,7 +8036,7 @@
         460
       ],
       "flags": {},
-      "order": 169,
+      "order": 173,
       "mode": 0,
       "inputs": [
         {
@@ -7930,7 +8063,7 @@
       "title": "SAVE"
     },
     {
-      "id": 170,
+      "id": 174,
       "type": "PreviewImage",
       "pos": [
         15094,
@@ -7941,7 +8074,7 @@
         420
       ],
       "flags": {},
-      "order": 170,
+      "order": 174,
       "mode": 0,
       "inputs": [
         {
@@ -7958,7 +8091,7 @@
       "title": "PREVIEW"
     },
     {
-      "id": 171,
+      "id": 175,
       "type": "Image Comparer (rgthree)",
       "pos": [
         15584,
@@ -7969,7 +8102,7 @@
         460
       ],
       "flags": {},
-      "order": 171,
+      "order": 175,
       "mode": 0,
       "inputs": [
         {
@@ -7998,7 +8131,126 @@
       "title": "BEFORE / AFTER"
     },
     {
-      "id": 172,
+      "id": 176,
+      "type": "Any Switch (rgthree)",
+      "pos": [
+        16094,
+        3202
+      ],
+      "size": [
+        340,
+        149
+      ],
+      "flags": {},
+      "order": 176,
+      "mode": 0,
+      "inputs": [
+        {
+          "name": "any_01",
+          "type": "STRING",
+          "link": 291
+        },
+        {
+          "name": "any_02",
+          "type": "STRING",
+          "link": 292
+        },
+        {
+          "name": "any_03",
+          "type": "STRING",
+          "link": 293
+        },
+        {
+          "name": "any_04",
+          "type": "STRING",
+          "link": 294
+        },
+        {
+          "name": "any_05",
+          "type": "STRING",
+          "link": null
+        }
+      ],
+      "outputs": [
+        {
+          "name": "STRING",
+          "type": "STRING",
+          "links": [
+            296
+          ],
+          "slot_index": 0
+        }
+      ],
+      "properties": {
+        "Node name for S&R": "Any Switch (rgthree)"
+      },
+      "widgets_values": [],
+      "title": "prompt-log folder of the active lane"
+    },
+    {
+      "id": 177,
+      "type": "Krea2PromptLog",
+      "pos": [
+        16094,
+        3391
+      ],
+      "size": [
+        460,
+        560
+      ],
+      "flags": {},
+      "order": 177,
+      "mode": 0,
+      "inputs": [
+        {
+          "name": "prompt",
+          "type": "STRING",
+          "link": 295,
+          "widget": {
+            "name": "prompt"
+          }
+        },
+        {
+          "name": "workflow",
+          "type": "STRING",
+          "link": 296,
+          "widget": {
+            "name": "workflow"
+          }
+        }
+      ],
+      "outputs": [
+        {
+          "name": "prompt",
+          "type": "STRING",
+          "links": [],
+          "slot_index": 0
+        },
+        {
+          "name": "saved_to",
+          "type": "STRING",
+          "links": [],
+          "slot_index": 1
+        }
+      ],
+      "properties": {
+        "Node name for S&R": "Krea2PromptLog"
+      },
+      "widgets_values": [
+        true,
+        "Auto - output/prompts/<workflow>",
+        "",
+        "Auto - from the AIO node",
+        "One file per prompt",
+        "Text (.txt)",
+        "prompt",
+        true,
+        true
+      ],
+      "title": "PROMPT LOG"
+    },
+    {
+      "id": 178,
       "type": "Note",
       "pos": [
         14604,
@@ -8009,7 +8261,7 @@
         200
       ],
       "flags": {},
-      "order": 172,
+      "order": 178,
       "mode": 0,
       "inputs": [],
       "outputs": [],
@@ -8665,9 +8917,9 @@
     ],
     [
       81,
-      68,
-      0,
       69,
+      0,
+      70,
       0,
       "MODEL"
     ],
@@ -8675,7 +8927,7 @@
       82,
       9,
       0,
-      68,
+      69,
       0,
       "MODEL"
     ],
@@ -8683,7 +8935,7 @@
       83,
       5,
       0,
-      70,
+      71,
       0,
       "IMAGE"
     ],
@@ -8691,47 +8943,47 @@
       84,
       17,
       0,
-      71,
+      72,
       0,
       "FLOAT"
     ],
     [
       85,
-      71,
-      0,
       72,
+      0,
+      73,
       0,
       "INT"
     ],
     [
       86,
-      70,
+      71,
       2,
-      72,
+      73,
       1,
       "INT"
     ],
     [
       87,
-      71,
+      72,
       1,
-      73,
+      74,
       0,
       "INT"
     ],
     [
       88,
-      70,
+      71,
       3,
-      73,
+      74,
       1,
       "INT"
     ],
     [
       89,
-      70,
+      71,
       0,
-      74,
+      75,
       0,
       "IMAGE"
     ],
@@ -8739,23 +8991,23 @@
       90,
       11,
       0,
-      74,
+      75,
       1,
       "VAE"
     ],
     [
       91,
-      72,
+      73,
       0,
-      75,
+      76,
       0,
       "INT"
     ],
     [
       92,
-      73,
+      74,
       0,
-      75,
+      76,
       1,
       "INT"
     ],
@@ -8763,23 +9015,23 @@
       93,
       6,
       0,
-      76,
+      77,
       0,
       "IMAGE"
     ],
     [
       94,
-      76,
-      0,
       77,
+      0,
+      78,
       0,
       "IMAGE"
     ],
     [
       95,
-      77,
-      0,
       78,
+      0,
+      79,
       0,
       "IMAGE"
     ],
@@ -8787,31 +9039,31 @@
       96,
       11,
       0,
-      78,
+      79,
       1,
       "VAE"
     ],
     [
       97,
-      69,
+      70,
       0,
-      79,
+      80,
       0,
       "MODEL"
     ],
     [
       98,
-      74,
+      75,
       0,
-      79,
+      80,
       1,
       "LATENT"
     ],
     [
       99,
-      78,
-      0,
       79,
+      0,
+      80,
       2,
       "LATENT"
     ],
@@ -8819,31 +9071,31 @@
       100,
       11,
       0,
-      79,
+      80,
       3,
       "VAE"
     ],
     [
       101,
-      70,
+      71,
       0,
-      79,
+      80,
       4,
       "IMAGE"
     ],
     [
       102,
-      77,
+      78,
       0,
-      79,
+      80,
       5,
       "IMAGE"
     ],
     [
       103,
-      75,
+      76,
       0,
-      79,
+      80,
       6,
       "LATENT"
     ],
@@ -8851,7 +9103,7 @@
       104,
       19,
       0,
-      79,
+      80,
       7,
       "FLOAT"
     ],
@@ -8859,7 +9111,7 @@
       105,
       10,
       0,
-      80,
+      81,
       0,
       "CLIP"
     ],
@@ -8867,15 +9119,15 @@
       106,
       41,
       0,
-      80,
+      81,
       1,
       "STRING"
     ],
     [
       107,
-      70,
+      71,
       0,
-      80,
+      81,
       2,
       "IMAGE"
     ],
@@ -8883,7 +9135,7 @@
       108,
       18,
       0,
-      80,
+      81,
       3,
       "INT"
     ],
@@ -8891,7 +9143,7 @@
       109,
       10,
       0,
-      81,
+      82,
       0,
       "CLIP"
     ],
@@ -8899,15 +9151,15 @@
       110,
       22,
       0,
-      81,
+      82,
       1,
       "STRING"
     ],
     [
       111,
-      70,
+      71,
       0,
-      81,
+      82,
       2,
       "IMAGE"
     ],
@@ -8915,7 +9167,7 @@
       112,
       18,
       0,
-      81,
+      82,
       3,
       "INT"
     ],
@@ -8923,7 +9175,7 @@
       113,
       10,
       0,
-      82,
+      83,
       0,
       "CLIP"
     ],
@@ -8931,7 +9183,7 @@
       114,
       41,
       0,
-      82,
+      83,
       1,
       "STRING"
     ],
@@ -8939,23 +9191,23 @@
       115,
       11,
       0,
-      82,
+      83,
       2,
       "VAE"
     ],
     [
       116,
-      70,
+      71,
       0,
-      82,
+      83,
       3,
       "IMAGE"
     ],
     [
       117,
-      76,
+      77,
       0,
-      82,
+      83,
       4,
       "IMAGE"
     ],
@@ -8963,7 +9215,7 @@
       118,
       10,
       0,
-      83,
+      84,
       0,
       "CLIP"
     ],
@@ -8971,7 +9223,7 @@
       119,
       22,
       0,
-      83,
+      84,
       1,
       "STRING"
     ],
@@ -8979,28 +9231,20 @@
       120,
       11,
       0,
-      83,
+      84,
       2,
       "VAE"
     ],
     [
       121,
-      70,
+      71,
       0,
-      83,
+      84,
       3,
       "IMAGE"
     ],
     [
       122,
-      82,
-      0,
-      84,
-      0,
-      "CONDITIONING"
-    ],
-    [
-      123,
       83,
       0,
       85,
@@ -9008,39 +9252,31 @@
       "CONDITIONING"
     ],
     [
-      124,
-      79,
+      123,
+      84,
       0,
       86,
+      0,
+      "CONDITIONING"
+    ],
+    [
+      124,
+      80,
+      0,
+      87,
       0,
       "MODEL"
     ],
     [
       125,
-      69,
+      70,
       0,
-      86,
+      87,
       1,
       "MODEL"
     ],
     [
       126,
-      80,
-      0,
-      87,
-      0,
-      "CONDITIONING"
-    ],
-    [
-      127,
-      84,
-      0,
-      87,
-      1,
-      "CONDITIONING"
-    ],
-    [
-      128,
       81,
       0,
       88,
@@ -9048,7 +9284,7 @@
       "CONDITIONING"
     ],
     [
-      129,
+      127,
       85,
       0,
       88,
@@ -9056,10 +9292,26 @@
       "CONDITIONING"
     ],
     [
+      128,
+      82,
+      0,
+      89,
+      0,
+      "CONDITIONING"
+    ],
+    [
+      129,
+      86,
+      0,
+      89,
+      1,
+      "CONDITIONING"
+    ],
+    [
       130,
       13,
       0,
-      89,
+      90,
       4,
       "INT"
     ],
@@ -9067,7 +9319,7 @@
       131,
       14,
       0,
-      89,
+      90,
       5,
       "INT"
     ],
@@ -9075,7 +9327,7 @@
       132,
       15,
       0,
-      89,
+      90,
       6,
       "FLOAT"
     ],
@@ -9083,47 +9335,47 @@
       133,
       16,
       0,
-      89,
+      90,
       7,
       "FLOAT"
     ],
     [
       134,
-      86,
+      87,
       0,
-      89,
+      90,
       0,
       "MODEL"
     ],
     [
       135,
-      87,
+      88,
       0,
-      89,
+      90,
       1,
       "CONDITIONING"
     ],
     [
       136,
-      88,
-      0,
       89,
+      0,
+      90,
       2,
       "CONDITIONING"
     ],
     [
       137,
-      75,
+      76,
       0,
-      89,
+      90,
       3,
       "LATENT"
     ],
     [
       138,
-      89,
-      0,
       90,
+      0,
+      91,
       0,
       "LATENT"
     ],
@@ -9131,7 +9383,7 @@
       139,
       11,
       0,
-      90,
+      91,
       1,
       "VAE"
     ],
@@ -9139,15 +9391,15 @@
       140,
       5,
       0,
-      91,
+      92,
       0,
       "IMAGE"
     ],
     [
       141,
-      90,
-      0,
       91,
+      0,
+      92,
       1,
       "IMAGE"
     ],
@@ -9155,15 +9407,15 @@
       142,
       5,
       1,
-      91,
+      92,
       2,
       "MASK"
     ],
     [
       143,
-      70,
+      71,
       1,
-      91,
+      92,
       3,
       "KREA_IMAGE_ASPECT_MAP"
     ],
@@ -9171,15 +9423,15 @@
       144,
       5,
       0,
-      92,
+      93,
       0,
       "IMAGE"
     ],
     [
       145,
-      94,
+      96,
       0,
-      95,
+      97,
       0,
       "MODEL"
     ],
@@ -9187,7 +9439,7 @@
       146,
       9,
       0,
-      94,
+      96,
       0,
       "MODEL"
     ],
@@ -9195,31 +9447,31 @@
       147,
       5,
       1,
-      96,
+      98,
       0,
       "MASK"
     ],
     [
       148,
-      96,
+      98,
       0,
-      97,
+      99,
       0,
       "MASK"
     ],
     [
       149,
-      97,
+      99,
       0,
-      98,
+      100,
       0,
       "IMAGE"
     ],
     [
       150,
-      98,
+      100,
       0,
-      99,
+      101,
       0,
       "IMAGE"
     ],
@@ -9227,63 +9479,63 @@
       151,
       5,
       0,
-      100,
+      102,
       0,
       "IMAGE"
     ],
     [
       152,
-      100,
+      102,
       0,
-      101,
+      103,
       0,
       "IMAGE"
     ],
     [
       153,
-      101,
+      103,
       0,
-      102,
+      104,
       0,
       "INT"
     ],
     [
       154,
-      101,
+      103,
       1,
-      102,
+      104,
       1,
       "INT"
     ],
     [
       155,
-      100,
+      102,
       0,
-      103,
+      105,
       0,
       "IMAGE"
     ],
     [
       156,
-      102,
+      104,
       0,
-      103,
+      105,
       1,
       "IMAGE"
     ],
     [
       157,
-      100,
+      102,
       1,
-      103,
+      105,
       2,
       "MASK"
     ],
     [
       158,
-      103,
+      105,
       0,
-      104,
+      106,
       0,
       "IMAGE"
     ],
@@ -9291,55 +9543,55 @@
       159,
       5,
       0,
-      104,
+      106,
       1,
       "IMAGE"
     ],
     [
       160,
-      100,
+      102,
       1,
-      105,
+      107,
       0,
       "MASK"
     ],
     [
       161,
-      99,
+      101,
       0,
-      105,
+      107,
       1,
       "MASK"
     ],
     [
       162,
-      104,
-      0,
       106,
+      0,
+      108,
       0,
       "IMAGE"
     ],
     [
       163,
-      105,
+      107,
       0,
-      106,
+      108,
       1,
       "MASK"
     ],
     [
       164,
-      106,
+      108,
       3,
-      107,
+      109,
       0,
       "INT"
     ],
     [
       165,
-      106,
+      108,
       4,
-      107,
+      109,
       1,
       "INT"
     ],
@@ -9347,7 +9599,7 @@
       166,
       10,
       0,
-      108,
+      110,
       0,
       "CLIP"
     ],
@@ -9355,7 +9607,7 @@
       167,
       41,
       0,
-      108,
+      110,
       1,
       "STRING"
     ],
@@ -9363,15 +9615,15 @@
       168,
       11,
       0,
-      108,
+      110,
       2,
       "VAE"
     ],
     [
       169,
-      106,
-      0,
       108,
+      0,
+      110,
       3,
       "IMAGE"
     ],
@@ -9379,7 +9631,7 @@
       170,
       10,
       0,
-      109,
+      111,
       0,
       "CLIP"
     ],
@@ -9387,7 +9639,7 @@
       171,
       22,
       0,
-      109,
+      111,
       1,
       "STRING"
     ],
@@ -9395,31 +9647,31 @@
       172,
       11,
       0,
-      109,
+      111,
       2,
       "VAE"
     ],
     [
       173,
-      106,
+      108,
       0,
-      109,
+      111,
       3,
       "IMAGE"
     ],
     [
       174,
-      108,
-      0,
       110,
+      0,
+      112,
       0,
       "CONDITIONING"
     ],
     [
       175,
-      109,
-      0,
       111,
+      0,
+      113,
       0,
       "CONDITIONING"
     ],
@@ -9427,7 +9679,7 @@
       176,
       13,
       0,
-      112,
+      114,
       4,
       "INT"
     ],
@@ -9435,7 +9687,7 @@
       177,
       14,
       0,
-      112,
+      114,
       5,
       "INT"
     ],
@@ -9443,7 +9695,7 @@
       178,
       15,
       0,
-      112,
+      114,
       6,
       "FLOAT"
     ],
@@ -9451,47 +9703,47 @@
       179,
       16,
       0,
-      112,
+      114,
       7,
       "FLOAT"
     ],
     [
       180,
-      95,
+      97,
       0,
-      112,
+      114,
       0,
       "MODEL"
     ],
     [
       181,
-      110,
-      0,
       112,
+      0,
+      114,
       1,
       "CONDITIONING"
     ],
     [
       182,
-      111,
+      113,
       0,
-      112,
+      114,
       2,
       "CONDITIONING"
     ],
     [
       183,
-      107,
+      109,
       0,
-      112,
+      114,
       3,
       "LATENT"
     ],
     [
       184,
-      112,
+      114,
       0,
-      113,
+      115,
       0,
       "LATENT"
     ],
@@ -9499,55 +9751,55 @@
       185,
       11,
       0,
-      113,
+      115,
       1,
       "VAE"
     ],
     [
       186,
-      104,
+      106,
       0,
-      114,
+      116,
       0,
       "IMAGE"
     ],
     [
       187,
-      113,
+      115,
       0,
-      114,
+      116,
       1,
       "IMAGE"
     ],
     [
       188,
-      105,
+      107,
       0,
-      114,
+      116,
       2,
       "MASK"
     ],
     [
       189,
-      106,
+      108,
       2,
-      114,
+      116,
       3,
       "KREA_ASPECT_MAP"
     ],
     [
       190,
-      116,
+      119,
       0,
-      117,
+      120,
       0,
       "MODEL"
     ],
     [
       191,
-      116,
+      119,
       1,
-      117,
+      120,
       1,
       "CLIP"
     ],
@@ -9555,7 +9807,7 @@
       192,
       9,
       0,
-      116,
+      119,
       0,
       "MODEL"
     ],
@@ -9563,15 +9815,15 @@
       193,
       10,
       0,
-      116,
+      119,
       1,
       "CLIP"
     ],
     [
       194,
-      117,
+      120,
       1,
-      118,
+      121,
       0,
       "CLIP"
     ],
@@ -9579,15 +9831,15 @@
       195,
       41,
       0,
-      118,
+      121,
       1,
       "STRING"
     ],
     [
       196,
-      117,
+      120,
       1,
-      119,
+      122,
       0,
       "CLIP"
     ],
@@ -9595,31 +9847,31 @@
       197,
       22,
       0,
-      119,
+      122,
       1,
       "STRING"
     ],
     [
       198,
-      118,
+      121,
       0,
-      120,
+      123,
       0,
       "CONDITIONING"
     ],
     [
       199,
-      119,
+      122,
       0,
-      121,
+      124,
       0,
       "CONDITIONING"
     ],
     [
       200,
-      120,
+      123,
       0,
-      121,
+      124,
       1,
       "CONDITIONING"
     ],
@@ -9627,23 +9879,23 @@
       201,
       17,
       0,
-      122,
+      125,
       0,
       "FLOAT"
     ],
     [
       202,
-      122,
+      125,
       0,
-      123,
+      126,
       0,
       "INT"
     ],
     [
       203,
-      122,
+      125,
       1,
-      123,
+      126,
       1,
       "INT"
     ],
@@ -9651,7 +9903,7 @@
       204,
       13,
       0,
-      124,
+      127,
       4,
       "INT"
     ],
@@ -9659,7 +9911,7 @@
       205,
       14,
       0,
-      124,
+      127,
       5,
       "INT"
     ],
@@ -9667,7 +9919,7 @@
       206,
       15,
       0,
-      124,
+      127,
       6,
       "FLOAT"
     ],
@@ -9675,47 +9927,47 @@
       207,
       16,
       0,
-      124,
+      127,
       7,
       "FLOAT"
     ],
     [
       208,
-      117,
+      120,
       0,
-      124,
+      127,
       0,
       "MODEL"
     ],
     [
       209,
-      118,
+      121,
       0,
-      124,
+      127,
       1,
       "CONDITIONING"
     ],
     [
       210,
-      121,
-      0,
       124,
+      0,
+      127,
       2,
       "CONDITIONING"
     ],
     [
       211,
-      123,
+      126,
       0,
-      124,
+      127,
       3,
       "LATENT"
     ],
     [
       212,
-      124,
+      127,
       0,
-      125,
+      128,
       0,
       "LATENT"
     ],
@@ -9723,7 +9975,7 @@
       213,
       11,
       0,
-      125,
+      128,
       1,
       "VAE"
     ],
@@ -9731,31 +9983,31 @@
       214,
       65,
       0,
-      127,
+      131,
       0,
       "IMAGE"
     ],
     [
       215,
-      91,
+      92,
       0,
-      127,
+      131,
       1,
       "IMAGE"
     ],
     [
       216,
-      114,
+      116,
       0,
-      127,
+      131,
       2,
       "IMAGE"
     ],
     [
       217,
-      125,
+      128,
       0,
-      127,
+      131,
       3,
       "IMAGE"
     ],
@@ -9763,63 +10015,63 @@
       218,
       66,
       0,
-      128,
+      132,
       0,
       "IMAGE"
     ],
     [
       219,
-      92,
+      93,
       0,
-      128,
+      132,
       1,
       "IMAGE"
     ],
     [
       220,
-      104,
+      106,
       0,
-      128,
+      132,
       2,
       "IMAGE"
     ],
     [
       221,
-      125,
-      0,
       128,
+      0,
+      132,
       3,
       "IMAGE"
     ],
     [
       222,
-      67,
+      68,
       0,
-      129,
+      133,
       0,
       "STRING"
     ],
     [
       223,
-      93,
+      95,
       0,
-      129,
+      133,
       1,
       "STRING"
     ],
     [
       224,
-      115,
+      118,
       0,
-      129,
+      133,
       2,
       "STRING"
     ],
     [
       225,
-      126,
+      130,
       0,
-      129,
+      133,
       3,
       "STRING"
     ],
@@ -9827,23 +10079,23 @@
       226,
       58,
       0,
-      130,
+      134,
       0,
       "MODEL"
     ],
     [
       227,
-      117,
+      120,
       0,
-      130,
+      134,
       1,
       "MODEL"
     ],
     [
       228,
-      117,
+      120,
       1,
-      131,
+      135,
       0,
       "CLIP"
     ],
@@ -9851,7 +10103,7 @@
       229,
       10,
       0,
-      131,
+      135,
       1,
       "CLIP"
     ],
@@ -9859,63 +10111,63 @@
       230,
       62,
       0,
-      132,
+      136,
       0,
       "CONDITIONING"
     ],
     [
       231,
-      121,
+      124,
       0,
-      132,
+      136,
       1,
       "CONDITIONING"
     ],
     [
       232,
-      130,
-      0,
       134,
+      0,
+      138,
       0,
       "MODEL"
     ],
     [
       233,
-      131,
+      135,
       0,
-      136,
+      140,
       0,
       "CLIP"
     ],
     [
       234,
-      135,
+      139,
       0,
-      136,
+      140,
       1,
       "STRING"
     ],
     [
       235,
-      127,
+      131,
       0,
-      139,
+      143,
       0,
       "IMAGE"
     ],
     [
       236,
-      134,
+      138,
       0,
-      139,
+      143,
       1,
       "MODEL"
     ],
     [
       237,
-      131,
+      135,
       0,
-      139,
+      143,
       2,
       "CLIP"
     ],
@@ -9923,39 +10175,39 @@
       238,
       11,
       0,
-      139,
+      143,
       3,
       "VAE"
     ],
     [
       239,
-      136,
+      140,
       0,
-      139,
+      143,
       4,
       "CONDITIONING"
     ],
     [
       240,
-      132,
+      136,
       0,
-      139,
+      143,
       5,
       "CONDITIONING"
     ],
     [
       241,
-      137,
+      141,
       0,
-      139,
+      143,
       6,
       "BBOX_DETECTOR"
     ],
     [
       242,
-      138,
+      142,
       0,
-      139,
+      143,
       7,
       "SAM_MODEL"
     ],
@@ -9963,175 +10215,175 @@
       243,
       13,
       0,
-      139,
+      143,
       8,
       "INT"
     ],
     [
       244,
-      139,
+      143,
       0,
-      140,
+      144,
       0,
       "IMAGE"
     ],
     [
       245,
-      127,
+      131,
       0,
-      140,
+      144,
       1,
       "IMAGE"
     ],
     [
       246,
-      140,
-      0,
       144,
+      0,
+      148,
       1,
       "IMAGE"
     ],
     [
       247,
-      144,
+      148,
       1,
-      145,
+      149,
       0,
       "IMAGE"
     ],
     [
       248,
-      140,
+      144,
       0,
-      145,
+      149,
       1,
       "IMAGE"
     ],
     [
       249,
-      145,
+      149,
       0,
-      146,
+      150,
       0,
       "IMAGE"
     ],
     [
       250,
-      146,
+      150,
       0,
-      147,
+      151,
       0,
       "IMAGE"
     ],
     [
       251,
-      146,
+      150,
       0,
-      148,
+      152,
       0,
       "IMAGE"
     ],
     [
       252,
-      143,
+      147,
       0,
-      148,
+      152,
       1,
       "VAE"
     ],
     [
       253,
-      142,
+      146,
       0,
-      150,
+      154,
       0,
       "CLIP"
     ],
     [
       254,
-      149,
+      153,
       0,
-      150,
+      154,
       1,
       "STRING"
     ],
     [
       255,
-      150,
+      154,
       0,
-      151,
+      155,
       0,
       "CONDITIONING"
     ],
     [
       256,
-      148,
+      152,
       0,
-      151,
+      155,
       1,
       "LATENT"
     ],
     [
       257,
-      150,
+      154,
       0,
-      152,
+      156,
       0,
       "CONDITIONING"
     ],
     [
       258,
-      152,
+      156,
       0,
-      153,
+      157,
       0,
       "CONDITIONING"
     ],
     [
       259,
-      148,
+      152,
       0,
-      153,
+      157,
       1,
       "LATENT"
     ],
     [
       260,
-      141,
+      145,
       0,
-      154,
+      158,
       0,
       "MODEL"
     ],
     [
       261,
-      151,
+      155,
       0,
-      154,
+      158,
       1,
       "CONDITIONING"
     ],
     [
       262,
-      153,
+      157,
       0,
-      154,
+      158,
       2,
       "CONDITIONING"
     ],
     [
       263,
-      147,
+      151,
       0,
-      155,
+      159,
       0,
       "INT"
     ],
     [
       264,
-      147,
+      151,
       1,
-      155,
+      159,
       1,
       "INT"
     ],
@@ -10139,209 +10391,257 @@
       265,
       13,
       0,
-      157,
+      161,
       0,
       "INT"
     ],
     [
       266,
-      147,
+      151,
       0,
-      158,
+      162,
       0,
       "INT"
     ],
     [
       267,
-      147,
+      151,
       1,
-      158,
+      162,
       1,
       "INT"
     ],
     [
       268,
-      157,
+      161,
       0,
-      159,
+      163,
       0,
       "NOISE"
     ],
     [
       269,
-      154,
+      158,
       0,
-      159,
+      163,
       1,
       "GUIDER"
     ],
     [
       270,
-      156,
+      160,
       0,
-      159,
+      163,
       2,
       "SAMPLER"
     ],
     [
       271,
-      155,
-      0,
       159,
+      0,
+      163,
       3,
       "SIGMAS"
     ],
     [
       272,
-      158,
+      162,
       0,
-      159,
+      163,
       4,
       "LATENT"
     ],
     [
       273,
-      159,
+      163,
       0,
-      160,
+      164,
       0,
       "LATENT"
     ],
     [
       274,
-      143,
+      147,
       0,
-      160,
+      164,
       1,
       "VAE"
     ],
     [
       275,
-      146,
+      150,
       0,
-      161,
+      165,
       0,
       "IMAGE"
     ],
     [
       276,
-      160,
+      164,
       0,
-      161,
+      165,
       1,
       "IMAGE"
     ],
     [
       277,
-      161,
+      165,
       0,
-      162,
+      166,
       0,
       "IMAGE"
     ],
     [
       278,
-      162,
+      166,
       0,
-      163,
+      167,
       0,
       "IMAGE"
     ],
     [
       279,
-      140,
+      144,
       0,
-      163,
+      167,
       1,
       "IMAGE"
     ],
     [
       280,
-      163,
+      167,
       0,
-      164,
+      168,
       0,
       "IMAGE"
     ],
     [
       281,
-      164,
+      168,
       0,
-      165,
+      169,
       0,
       "IMAGE"
     ],
     [
       282,
-      163,
+      167,
       0,
-      165,
+      169,
       1,
       "IMAGE"
     ],
     [
       283,
-      165,
+      169,
       0,
-      166,
+      170,
       1,
       "IMAGE"
     ],
     [
       284,
-      166,
+      170,
       1,
-      167,
+      171,
       0,
       "IMAGE"
     ],
     [
       285,
-      165,
+      169,
       0,
-      167,
+      171,
       1,
       "IMAGE"
     ],
     [
       286,
-      167,
+      171,
       0,
-      169,
+      173,
       0,
       "IMAGE"
     ],
     [
       287,
-      129,
+      133,
       0,
-      169,
+      173,
       1,
       "STRING"
     ],
     [
       288,
-      167,
+      171,
       0,
-      170,
+      174,
       0,
       "IMAGE"
     ],
     [
       289,
-      128,
+      132,
       0,
-      171,
+      175,
       0,
       "IMAGE"
     ],
     [
       290,
-      167,
-      0,
       171,
+      0,
+      175,
       1,
       "IMAGE"
+    ],
+    [
+      291,
+      67,
+      0,
+      176,
+      0,
+      "STRING"
+    ],
+    [
+      292,
+      94,
+      0,
+      176,
+      1,
+      "STRING"
+    ],
+    [
+      293,
+      117,
+      0,
+      176,
+      2,
+      "STRING"
+    ],
+    [
+      294,
+      129,
+      0,
+      176,
+      3,
+      "STRING"
+    ],
+    [
+      295,
+      41,
+      0,
+      177,
+      0,
+      "STRING"
+    ],
+    [
+      296,
+      176,
+      0,
+      177,
+      1,
+      "STRING"
     ]
   ],
   "groups": [
@@ -10664,7 +10964,7 @@
         6138,
         1789,
         412,
-        380
+        477
       ],
       "color": "#353535",
       "font_size": 22,
@@ -10677,7 +10977,7 @@
         6620,
         1789,
         1422,
-        380
+        477
       ],
       "color": "#353535",
       "font_size": 22,
@@ -10690,7 +10990,7 @@
         8112,
         1789,
         1542,
-        380
+        477
       ],
       "color": "#353535",
       "font_size": 22,
@@ -10703,7 +11003,7 @@
         6116,
         1741,
         7294,
-        446
+        543
       ],
       "color": "#22402a",
       "font_size": 30,
@@ -10714,7 +11014,7 @@
       "title": "BYPASS: P4 LORA STACK",
       "bounding": [
         6138,
-        2325,
+        2422,
         412,
         428
       ],
@@ -10727,7 +11027,7 @@
       "title": "TOGGLE: P4 NEGATIVE PROMPT",
       "bounding": [
         7050,
-        2325,
+        2422,
         392,
         428
       ],
@@ -10740,7 +11040,7 @@
       "title": "PIPELINE 4 - TEXT TO IMAGE",
       "bounding": [
         6116,
-        2277,
+        2374,
         7294,
         494
       ],
@@ -10859,7 +11159,7 @@
         13652,
         3202,
         372,
-        704
+        753
       ],
       "color": "#353535",
       "font_size": 22,
@@ -10872,7 +11172,7 @@
         13630,
         3154,
         4288,
-        770
+        819
       ],
       "color": "#22443a",
       "font_size": 30,

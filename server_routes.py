@@ -64,6 +64,34 @@ def register_routes():
     if inst is None:
         return
 
+    @inst.routes.get("/kaio/prompt_dest")
+    async def _prompt_dest(request):
+        """Resolve the folder the Prompt Log node would write to, for the live preview.
+
+        The panel must show the REAL path before anything runs, and only the server knows
+        where ComfyUI's output directory is. Calls the same resolve_folder() the node uses,
+        so the preview can never disagree with what actually happens.
+        """
+        q = request.rel_url.query
+        try:
+            from . import prompt_log
+            idx = int(q.get("workflow") or 4)
+            folder = prompt_log.resolve_folder(q.get("destination", ""),
+                                               q.get("custom_folder", ""), idx)
+            exists = os.path.isdir(folder)
+            count = 0
+            if exists:
+                try:
+                    count = sum(1 for f in os.listdir(folder)
+                                if os.path.isfile(os.path.join(folder, f)))
+                except OSError:
+                    pass
+            return web.json_response({"folder": folder, "exists": exists, "files": count})
+        except Exception as e:
+            log.debug("[KreaAIO] prompt_dest failed: %s", e)
+            return web.json_response({"folder": "", "exists": False, "files": 0,
+                                      "error": str(e)})
+
     @inst.routes.get("/kaio/lora_triggers")
     async def _lora_triggers(request):
         name = request.rel_url.query.get("name", "")

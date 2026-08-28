@@ -46,7 +46,7 @@ There is a SECOND example workflow next to it:
   example_workflows/Krea2_AIO_Expanded_Workflow.json
 
 That is the exact same 5-pipeline setup rebuilt as an ORDINARY graph — every step
-the AIO runs internally laid out as real nodes and noodles (172 of them), so you can
+the AIO runs internally laid out as real nodes and noodles (178 of them), so you can
 see, learn from, or modify any part of it. You switch pipeline there with the Fast
 Groups Muter (rgthree) panel instead of the tab bar. It is for reading and tinkering;
 the AIO node is still the quick way to actually work.
@@ -58,13 +58,15 @@ EXPANDED EXAMPLE WORKFLOW below.
 There is nothing to build, pip-install or compile — it is plain Python + JavaScript.
 
 
-TWO NODES IN THIS PACK
-----------------------
+THREE NODES IN THIS PACK
+------------------------
   Krea2 AIO             the 5-pipeline workflow node (below).
   Krea2 Live Preview    a large, resizable window that shows the sampler preview
                         WHILE generating, so you can watch the image form. Drop it
                         next to the AIO node. It needs live previews turned on:
                         Settings -> Preview method = Auto (or --preview-method auto).
+  Krea2 Prompt Log      saves the prompt each run actually sampled with, filed into
+                        its own folder per workflow. See PROMPT LOG below.
 
 The pack also bundles a GREEN MASK ENFORCER (js/krea_green_mask.js) that pins the
 ComfyUI Mask Editor paint colour to neon green (#00FF00) reliably on any frontend
@@ -145,6 +147,71 @@ There the enhancer purge is NESTED inside the "SEPARATE ENHANCER LLM" group, bec
 VRAM_Debug has no required inputs and would otherwise run whenever the prompt chain is
 needed - enhancer or no enhancer. Nesting means muting the enhancer, or that group,
 necessarily mutes the purge too, while it can still be switched off on its own.
+
+
+PROMPT LOG  (separate node)
+---------------------------
+The AIO builds its final prompt internally - LLM enhancement first, then your trigger
+words - so the text that reached the sampler is NOT the text you typed, and after the
+run it was gone. The Prompt Log node writes it to disk.
+
+WIRING.  The AIO node has two outputs for this:
+
+  prompt        the finished prompt, exactly as sampled
+  prompt_json   the run's settings (workflow, seed, steps, cfg, sampler, model,
+                encoder, LoRA stack, trigger words, negative, save path)
+
+Wire both into the Prompt Log node. `prompt` alone is enough to save the text;
+`prompt_json` is what lets it file itself into the right folder automatically and
+record the settings next to the prompt.
+
+Both outputs were APPENDED to the node, so existing saved workflows keep working -
+image / source / save_path are still slots 0, 1 and 2.
+
+WHERE IT SAVES.  By default:
+
+  ComfyUI/output/prompts/1_Classic/
+  ComfyUI/output/prompts/2_Identity/
+  ComfyUI/output/prompts/3_Inpaint_Outpaint/
+  ComfyUI/output/prompts/4_TextToImage/
+
+One folder per workflow, numbered so they sort in pipeline order, sitting beside the
+images they produced. Nothing to configure - the node reads the workflow from
+prompt_json, so switching pipeline in the AIO re-files the prompts too.
+
+Three destination choices in the panel:
+
+  AUTO         output/prompts/<workflow>            (the default)
+  AUTO + DATE  output/prompts/<workflow>/2026-08-26
+  CUSTOM       anywhere you like, absolute or relative to the ComfyUI folder
+
+The panel always shows the REAL resolved path and the exact filename pattern before
+you run anything, and tells you whether the folder already exists and how many files
+are in it. That preview is answered by the server using the SAME function the node
+saves with, so it cannot disagree with what actually happens.
+
+HOW IT SAVES.
+
+  File mode    One file per prompt   prompt_0001.txt, prompt_0002.txt, ...
+               Append to a daily log prompt_2026-08-26.txt
+               Append to one master  prompt_log.txt
+  Format       Text, Markdown, JSON Lines, or CSV (opens straight in a spreadsheet)
+  Metadata     on = seed, steps, cfg, sampler, model, encoder and LoRAs recorded
+               alongside the prompt. off = just the prompt text.
+  Duplicates   on = a re-queue with the same prompt does not fill the folder with
+               identical files.
+
+The numbered mode scans the folder and continues from the highest number already
+there, so restarting ComfyUI never overwrites yesterday's prompts. Illegal filename
+characters and Windows reserved names (con, nul, ...) are handled for you.
+
+It passes the prompt straight through, so it can sit inline rather than being a dead
+end, and the `saved_to` output gives you the path it wrote.
+
+In the EXPANDED example workflow there is no AIO node, so the workflow folder comes
+from a per-lane label switched by the same Any Switch pattern as the save prefixes.
+Settings metadata is not available there - the graph has no prompt_json - so that
+copy logs the prompt, timestamp and workflow only.
 
 
 PROMPT ENHANCER (LLM, optional)
