@@ -41,6 +41,23 @@ FACE_DETECTOR = "bbox/yolov12l-face.pt"
 
 GREEN = 65280  # 0x00FF00
 
+# Every model dropdown starts here. Nothing is pre-selected: the constants below are the
+# files this pack was developed against, kept as documentation of what works, NOT as silent
+# defaults. Loading whatever happened to be first in someone's folder produces a confusing
+# failure deep in sampling; naming the empty dropdown does not.
+PICK_MODEL = "(choose a model)"
+
+
+def require_model(name, kind, where):
+    """Return a model filename, or explain exactly which dropdown still needs picking."""
+    name = (name or "").strip()
+    if not name or name == PICK_MODEL:
+        raise PipelineInputError(
+            f"No {kind} selected for {where}. Open the node's MODELS panel and choose one "
+            f"in the '{kind}' dropdown."
+        )
+    return name
+
 
 class Ctx:
     def __init__(self, **kw):
@@ -87,9 +104,10 @@ def resolve_aspect(value):
 
 
 def krea_base(ctx):
-    model = models.unet(ctx.get("unet_name") or KREA_UNET)
-    clip = models.clip(ctx.get("clip_name") or KREA_CLIP, KREA_CLIP_TYPE)
-    vae = models.vae(ctx.get("vae_name") or KREA_VAE)
+    model = models.unet(require_model(ctx.get("unet_name"), "Diffusion", "KREA 2"))
+    clip = models.clip(require_model(ctx.get("clip_name"), "Text enc.", "KREA 2"),
+                       KREA_CLIP_TYPE)
+    vae = models.vae(require_model(ctx.get("vae_name"), "VAE", "KREA 2"))
     return model, clip, vae
 
 
@@ -615,9 +633,12 @@ def klein_upscale(ctx, image):
     # The Krea 2 image is finished; this layer only consumes those pixels. Unloading the
     # Krea 2 family first is the difference between fitting and thrashing on 8 GB.
     free_vram(ctx, "upscale")
-    model = models.unet(ctx.get("flux_unet_name") or FLUX_UNET)
-    clip = models.clip(ctx.get("flux_clip_name") or FLUX_CLIP, FLUX_CLIP_TYPE)
-    vae = models.vae(ctx.get("flux_vae_name") or FLUX_VAE)
+    model = models.unet(require_model(ctx.get("flux_unet_name"), "Diffusion",
+                                      "the FLUX 2 KLEIN UPSCALE"))
+    clip = models.clip(require_model(ctx.get("flux_clip_name"), "Text enc.",
+                                     "the FLUX 2 KLEIN UPSCALE"), FLUX_CLIP_TYPE)
+    vae = models.vae(require_model(ctx.get("flux_vae_name"), "VAE",
+                                   "the FLUX 2 KLEIN UPSCALE"))
 
     # ABSOLUTE megapixel target, not a multiplier
     scaled = engine.call1("ImageScaleToTotalPixels", image=image, upscale_method="lanczos",

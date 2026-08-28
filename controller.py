@@ -30,6 +30,12 @@ PIPELINES = [
 EDIT_MODES = ["A - Native Krea2Edit (identity)", "B - Ostris Edit (ai-toolkit)"]
 FILL_MODES = ["A - INPAINT (you paint the mask)", "B - OUTPAINT (auto green border)"]
 
+# Sentinel that every model dropdown starts on. The pack ships with no model pre-selected:
+# the author's own filenames were being presented as if they were a recommendation, and on
+# any other install they were simply wrong. The run stops with a clear message naming the
+# dropdown instead of silently loading whatever happened to be first in the folder.
+PICK_MODEL = pipelines.PICK_MODEL
+
 # Sentinel for the prompt-enhancer model dropdown meaning "reuse the loaded text encoder".
 ENHANCER_LOADED = "(loaded text encoder · low VRAM)"
 
@@ -97,29 +103,6 @@ def _base(name):
     return str(name).replace("\\", "/").split("/")[-1].lower()
 
 
-def _pick_default(options, preferred):
-    """Choose a default that actually EXISTS in this install.
-
-    The hardcoded preferred paths (pipelines.KREA_* / FLUX_*) use the author's own
-    model-folder layout (subfolders + backslashes). On any other machine those exact
-    strings are not in the file list, so ComfyUI fails prompt validation with
-    'Value not in list' before the node even runs. This resolves to:
-      1. the exact preferred path if present,
-      2. otherwise any file with the SAME filename in a different folder,
-      3. otherwise the first available file (always valid),
-    so a fresh install never hard-fails and flat model folders auto-match.
-    """
-    if not options:
-        return "none"
-    if preferred in options:
-        return preferred
-    pb = _base(preferred)
-    for o in options:
-        if _base(o) == pb:
-            return o
-    return options[0]
-
-
 def _images():
     try:
         return sorted(folder_paths.filter_files_content_types(
@@ -166,13 +149,14 @@ class KreaAIO(io.ComfyNode):
     @classmethod
     def define_schema(cls):
         imgs = _images() or ["example.png"]
-        _unet_opts = _files("diffusion_models") or ["none"]
-        _clip_opts = _files("text_encoders") or ["none"]
-        _vae_opts = _files("vae") or ["none"]
+        # PICK_MODEL first so it is the default and sits at the top of every dropdown.
+        _unet_opts = [PICK_MODEL] + (_files("diffusion_models") or [])
+        _clip_opts = [PICK_MODEL] + (_files("text_encoders") or [])
+        _vae_opts = [PICK_MODEL] + (_files("vae") or [])
         # Prompt-enhancer LLM choice. The first option reuses whatever text encoder the
         # pipeline already loads (Qwen3-VL) — zero extra VRAM. Any other pick loads that
         # encoder just for the rewrite (use an abliterated Qwen3-VL here for no refusals).
-        _enh_opts = [ENHANCER_LOADED] + _clip_opts
+        _enh_opts = [ENHANCER_LOADED] + [o for o in _clip_opts if o != PICK_MODEL]
         return io.Schema(
             node_id="KreaAIO",
             display_name="Krea2 AIO",
@@ -239,21 +223,21 @@ class KreaAIO(io.ComfyNode):
                                 tooltip="LoRA stack, managed by the node UI."),
 
                 io.Combo.Input("unet_name", options=_unet_opts,
-                               default=_pick_default(_unet_opts, pipelines.KREA_UNET)),
+                               default=PICK_MODEL),
                 io.Combo.Input("clip_name", options=_clip_opts,
-                               default=_pick_default(_clip_opts, pipelines.KREA_CLIP)),
+                               default=PICK_MODEL),
                 io.Combo.Input("vae_name", options=_vae_opts,
-                               default=_pick_default(_vae_opts, pipelines.KREA_VAE)),
+                               default=PICK_MODEL),
 
                 # Pipeline 5 runs a different model family, so it needs its own loaders.
                 io.Combo.Input("flux_unet_name", options=_unet_opts,
-                               default=_pick_default(_unet_opts, pipelines.FLUX_UNET),
+                               default=PICK_MODEL,
                                tooltip="Upscale only: Flux 2 Klein diffusion model."),
                 io.Combo.Input("flux_clip_name", options=_clip_opts,
-                               default=_pick_default(_clip_opts, pipelines.FLUX_CLIP),
+                               default=PICK_MODEL,
                                tooltip="Upscale only: Flux 2 text encoder (type flux2)."),
                 io.Combo.Input("flux_vae_name", options=_vae_opts,
-                               default=_pick_default(_vae_opts, pipelines.FLUX_VAE),
+                               default=PICK_MODEL,
                                tooltip="Upscale only: Flux 2 VAE."),
                 io.Int.Input("upscale_steps", default=2, min=1, max=50,
                              tooltip="Upscale only."),

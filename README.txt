@@ -348,6 +348,21 @@ LORAS  (direct downloads, into ComfyUI/models/loras/Krea2/)
 
 REQUIRED MODELS
 ---------------
+NOTHING IS PRE-SELECTED. Every model dropdown - the three KREA 2 loaders and the three
+FLUX 2 KLEIN UPSCALE loaders - starts on "(choose a model)", in the node and in both
+example workflows. You pick what loads.
+
+That is deliberate. The paths below are the files this pack was developed against, kept
+as a record of what works, not as defaults. Shipping them pre-filled meant one person's
+filenames looked like a recommendation, and on anyone else's install they were simply
+wrong. If you queue the AIO node without picking, it stops immediately and names the
+dropdown that still needs choosing, instead of failing deep inside sampling.
+
+In the EXPANDED workflow the loaders are ComfyUI core nodes, whose dropdowns have no
+"none" entry, so the placeholder is not one of their options: pick a real file before
+queueing or ComfyUI will refuse the prompt with "Value not in list".
+
+
 Pipelines 1-4:
   diffusion_models/  Krea2/pornmasterKrea2_v2TurboInt8.safetensors
   text_encoders/     Qwen/qwen3vl_4b_fp8_scaled.safetensors     (CLIP type: krea2)

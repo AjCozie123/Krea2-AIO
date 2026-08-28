@@ -1,5 +1,5 @@
 {
-  "id": "97c617b5-ca86-46e8-921a-9f1da1fbd8a9",
+  "id": "d452de4b-cde2-4080-aee7-5323bb56a152",
   "revision": 0,
   "last_node_id": 178,
   "last_link_id": 296,
@@ -284,7 +284,7 @@
         "Node name for S&R": "UNETLoader"
       },
       "widgets_values": [
-        "Krea2\\pornmasterKrea2_v2TurboInt8.safetensors",
+        "(choose a model)",
         "default"
       ],
       "title": "KREA 2 diffusion model"
@@ -328,7 +328,7 @@
         "Node name for S&R": "CLIPLoader"
       },
       "widgets_values": [
-        "Qwen\\qwen3vl_4b_fp8_scaled.safetensors",
+        "(choose a model)",
         "krea2",
         "default"
       ],
@@ -377,7 +377,7 @@
         "Node name for S&R": "VAELoader"
       },
       "widgets_values": [
-        "wan\\wan_2.1_vae.safetensors"
+        "(choose a model)"
       ],
       "title": "KREA 2 VAE  (wan 2.1)"
     },
@@ -1228,7 +1228,7 @@
         "Node name for S&R": "CLIPLoader"
       },
       "widgets_values": [
-        "Qwen\\qwen3-vl-4b-heretic_fp8_e4m3fn.safetensors",
+        "(choose a model)",
         "krea2",
         "default"
       ],
@@ -6791,7 +6791,7 @@
         "Node name for S&R": "UNETLoader"
       },
       "widgets_values": [
-        "Flux 2 9B\\flux-2-klein-9b-fp8.safetensors",
+        "(choose a model)",
         "default"
       ],
       "title": "FLUX 2 KLEIN model"
@@ -6825,7 +6825,7 @@
         "Node name for S&R": "CLIPLoader"
       },
       "widgets_values": [
-        "Qwen\\qwen_3_8b_fp8mixed.safetensors",
+        "(choose a model)",
         "flux2",
         "default"
       ],
@@ -6861,7 +6861,7 @@
         "Node name for S&R": "VAELoader"
       },
       "widgets_values": [
-        "Flux 2 9b\\full_encoder_small_decoder.safetensors"
+        "(choose a model)"
       ],
       "title": "FLUX 2 VAE"
     },
